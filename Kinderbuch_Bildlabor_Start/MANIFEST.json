@@ -1,0 +1,58 @@
+{
+  "package": "Kinderbuch-Bildlabor – Startpaket für Claude",
+  "packaged_at_utc": "2026-11-06T14:11:13.739988+00:00",
+  "available_pilot_records": 1,
+  "target_records_first_demo": 6,
+  "files": [
+    {
+      "file": "AUFTRAG_CLAUDE.md",
+      "sha256": "acd45efef2cda63a09d21c418183afbc952f5173a2a1d1edf1dadbca3f056c76",
+      "bytes": 11424
+    },
+    {
+      "file": "pilot_001.json",
+      "sha256": "909e4a1b680266e787e35cfb6c32ca3c568fa03c374a521443f15a71817cb656",
+      "bytes": 4088
+    },
+    {
+      "file": "pilot_001_image_info.json",
+      "sha256": "c85d30ca9be84000cda33f1096b4b51710862735e015d13621bc37799658aa79",
+      "bytes": 1197
+    },
+    {
+      "file": "pilot_001_page.jpg",
+      "sha256": "f0ce6352263b3f9a01004fc86a7c79dc5290a4c3030e514e8c9f2d96a85b95b7",
+      "bytes": 476259
+    },
+    {
+      "file": "pilot_001_title.jpg",
+      "sha256": "a5101e951b36993b19bb4b6910bff5926072672a9809a19ac28d46974594b7dc",
+      "bytes": 7081
+    },
+    {
+      "file": "pilot_001_title_ocr.json",
+      "sha256": "0c4c28d4e1844a0e2fafeb1030f2a2e0f7a052bc75538cd9cc63c4e65900c555",
+      "bytes": 970
+    },
+    {
+      "file": "pilot_001_oai_mets.xml",
+      "sha256": "ebdd306de94e9b6a108c534d6cdbec1cfad9f474e81af97720876fba6d6232ad",
+      "bytes": 163666
+    }
+  ],
+  "additional_sources": [
+    {
+      "file": "pilot_001_page.jpg",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1814684999-00000006/full/full/0/default.jpg",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "JPEG dekodiert; Abmessungen 1183 × 1950 stimmen mit der IIIF-Antwort überein."
+    },
+    {
+      "file": "pilot_001_oai_mets.xml",
+      "url": "https://oai.sbb.berlin/?verb=GetRecord&metadataPrefix=mets&identifier=oai:digital.staatsbibliothek-berlin.de:PPN1814684999",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "XML geparst; OAI-Datensatzkennung, METS und MODS geprüft. Keine XSD-Validierung ausgeführt."
+    }
+  ],
+  "status_de": "Arbeitsstand: ein Pilotobjekt mit offenen fachlichen Prüfungen. Noch keine Anwendung implementiert."
+}

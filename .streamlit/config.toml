@@ -1,0 +1,9 @@
+# Lokale Demo: nur auf diesem Rechner erreichbar, keine Nutzungsstatistik an Streamlit
+[server]
+address = "localhost"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"

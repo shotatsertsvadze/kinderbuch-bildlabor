@@ -1,0 +1,90 @@
+{
+  "id": "pilot-001",
+  "status": "draft_pending_final_review",
+  "recorded_on": "2026-11-06",
+  "source": {
+    "institution": "Staatsbibliothek zu Berlin – Preußischer Kulturbesitz",
+    "ppn": "PPN1814684999",
+    "physical_page_id": "PHYS_0006",
+    "scan_number": 6,
+    "printed_page_number": null,
+    "image_info_url": "https://content.staatsbibliothek-berlin.de/dc/PPN1814684999-00000006/info.json",
+    "image_width": 1183,
+    "image_height": 1950,
+    "viewer_url": "https://digital.staatsbibliothek-berlin.de/werkansicht?PPN=PPN1814684999&PHYSID=PHYS_0006&DMDID=DMDLOG_0001",
+    "caption_reference_url": "https://content.staatsbibliothek-berlin.de/dc/PPN1814684999-00000006/pct:0,82,100,18/full/0/default.jpg",
+    "colibri_dataset_url": "https://huggingface.co/datasets/SBB/Colibri",
+    "colibri_file_reference": "data/PPN1814684999/00000006_0.jpg",
+    "colibri_dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+    "colibri_dataset_credit": "Sebastian Schmideler, Sigrun Putjenter, Jörg Lehmann; Staatsbibliothek zu Berlin; Colibri, 2025."
+  },
+  "bibliographic_metadata_from_colibri": {
+    "title": "Die Heimath in Amerika",
+    "author_display": "Schmid, Christoph, von",
+    "publication_place": "Augsburg",
+    "publication_date": "1850",
+    "publisher": "J. A. Schlosser's Buch- und Kunsthandlung",
+    "rights_statement": "Public Domain Mark 1.0"
+  },
+  "image_description": {
+    "object_type": "Abbildung",
+    "observation_de": "Vier Personen sind zu sehen: eine Frau, ein Mann und ein Kind sowie eine weitere Person, die im Hintergrund steht.",
+    "working_description_de": "Vier Personen in einer Landschaft mit einem Baum: eine Frau, ein Mann und ein Kind im Vordergrund sowie eine weitere Person im Hintergrund.",
+    "illustrator": null
+  },
+  "transcription": {
+    "initial_user_transcription": "Die Heimath in Amerika\nVerlag der L.L Setyerschen Buchhandlung in Rottweil.",
+    "working_title": "Die Heimath in Amerika.",
+    "working_publisher_statement": "Verlag der I.P.Setzer'schen Buchhandlung in Rottweil.",
+    "review_status": "provisional",
+    "review_note_de": "Die vorgeschlagene Lesung wurde anhand der vergrößerten Vorlage vorläufig bestätigt. Vor der Verwendung als Referenztranskription ist eine abschließende Prüfung erforderlich."
+  },
+  "review_items": [
+    {
+      "code": "IMPRINT_CONTEXT",
+      "note_de": "Verlagsname und Erscheinungsort in der unteren Bildunterschrift unterscheiden sich von den bibliografischen Angaben in Colibri. Beide Angaben bleiben in ihrem jeweiligen Kontext erhalten. Die Abweichung allein gilt nicht als Nachweis eines Katalogisierungsfehlers."
+    },
+    {
+      "code": "ILLUSTRATOR_ATTRIBUTION",
+      "note_de": "Buchautor und Illustrator sind unterschiedliche Rollen. Der Illustrator ist bislang nicht ermittelt."
+    }
+  ],
+  "region_annotations": [
+    {
+      "id": "pilot-001-region-01",
+      "label_de": "Illustration",
+      "region_type": "illustration",
+      "keywords_de": ["Personengruppe", "Baum", "Landschaft"],
+      "keyword_vocabulary": "project-local",
+      "keyword_review_status": "accepted_by_user",
+      "xywh": [210, 260, 930, 1365],
+      "coordinate_unit": "pixel",
+      "review_status": "draft_pending_visual_review"
+    },
+    {
+      "id": "pilot-001-region-02",
+      "label_de": "Bildtitel",
+      "region_type": "text",
+      "xywh": [400, 1640, 550, 80],
+      "coordinate_unit": "pixel",
+      "transcription_field": "working_title",
+      "review_status": "draft_pending_visual_review"
+    },
+    {
+      "id": "pilot-001-region-03",
+      "label_de": "Verlagsangabe auf dem Bildblatt",
+      "region_type": "text",
+      "xywh": [320, 1730, 730, 55],
+      "coordinate_unit": "pixel",
+      "transcription_field": "working_publisher_statement",
+      "review_status": "draft_pending_visual_review"
+    }
+  ],
+  "ocr_result": {
+    "region_id": "pilot-001-region-02",
+    "result_file": "pilot_001_title_ocr.json",
+    "raw_text": "‘Die Geimatly „ir Amerika.\n",
+    "review_status": "unreviewed"
+  },
+  "evaluation": null
+}

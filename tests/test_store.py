@@ -1,0 +1,67 @@
+from kinderbuch_bildlabor import store
+
+
+def test_new_copy_references_source_and_keeps_values():
+    working = store.new_working_copy()
+    assert working["based_on"]["file"] == "Kinderbuch_Bildlabor_Start/pilot_001.json"
+    assert working["based_on"]["sha256"] == store.sha256(store.SOURCE_RECORD)
+    record = working["record"]
+    assert record["id"] == "pilot-001"
+    assert record["image_description"]["illustrator"] is None
+    assert record["source"]["printed_page_number"] is None
+    assert record["ocr_result"]["raw_text"] == "‘Die Geimatly „ir Amerika.\n"
+
+
+def test_saved_edit_survives_reload_and_source_stays_unchanged(tmp_path):
+    source_hash = store.sha256(store.SOURCE_RECORD)
+    working = store.load_working_copy(work_dir=tmp_path)
+    working["record"]["image_description"]["working_description_de"] = "Geänderte Beschreibung"
+    store.save_working_copy(working, "Beschreibung", work_dir=tmp_path)
+
+    reloaded = store.load_working_copy(work_dir=tmp_path)
+    assert reloaded["record"]["image_description"]["working_description_de"] == "Geänderte Beschreibung"
+    assert reloaded["change_log"][-1]["area_de"] == "Beschreibung"
+    assert store.sha256(store.SOURCE_RECORD) == source_hash
+
+
+def old_format_working(status: str = "provisional") -> dict:
+    """Arbeitskopie im bisherigen Format mit einem gemeinsamen Transkriptions-Prüfstand."""
+    working = {"based_on": {"file": "Kinderbuch_Bildlabor_Start/pilot_001.json",
+                            "sha256": store.sha256(store.SOURCE_RECORD)},
+               "change_log": [{"saved_at": "2026-11-06T14:50:11+00:00", "area_de": "Bestätigung Region"}],
+               "record": store.read_json(store.SOURCE_RECORD)}
+    working["record"]["transcription"]["review_status"] = status
+    working["record"]["review_log"] = [{"at": "2026-11-06T14:50:11+00:00", "area": "pilot-001-region-02",
+                                        "action": "Regionsgrenzen visuell bestätigt", "by": "Testperson"}]
+    return working
+
+
+def test_migration_splits_transcription_status_per_field():
+    record = old_format_working("reviewed")["record"]
+    assert store.migrate_record(record) is True
+    assert "review_status" not in record["transcription"]
+    assert record["transcription"]["review_status_by_field"] == {
+        "working_title": "reviewed", "working_publisher_statement": "reviewed"}
+    assert store.migrate_record(record) is False
+
+
+def test_new_working_copy_uses_split_status_and_leaves_source_unchanged():
+    source_hash = store.sha256(store.SOURCE_RECORD)
+    transcription = store.new_working_copy()["record"]["transcription"]
+    assert transcription["review_status_by_field"] == {
+        "working_title": "provisional", "working_publisher_statement": "provisional"}
+    assert store.sha256(store.SOURCE_RECORD) == source_hash
+
+
+def test_existing_work_file_is_migrated_once_and_keeps_history(tmp_path):
+    old = old_format_working()
+    store.write_json(store.work_path("pilot-001", tmp_path), old)
+
+    migrated = store.load_working_copy(work_dir=tmp_path)
+    assert [c["area_de"] for c in migrated["change_log"]] == [
+        "Bestätigung Region", "Modellumstellung: Prüfstand der Transkription je Feld"]
+    assert migrated["record"]["review_log"] == old["record"]["review_log"]
+    assert migrated["record"]["transcription"]["working_title"] == "Die Heimath in Amerika."
+
+    again = store.load_working_copy(work_dir=tmp_path)
+    assert len(again["change_log"]) == 2

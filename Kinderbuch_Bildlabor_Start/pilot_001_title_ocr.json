@@ -1,0 +1,23 @@
+{
+  "engine": "Tesseract",
+  "engine_version": "tesseract 5.5.1",
+  "language_model": "deu",
+  "model_repository": "https://github.com/tesseract-ocr/tessdata_best",
+  "model_revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+  "model_url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/e12c65a915945e4c28e237a9b52bc4a8f39a0cec/deu.traineddata",
+  "model_sha256": "8407331d6aa0229dc927685c01a7938fc5a641d1a9524f74838cdac599f0d06e",
+  "region_id": "pilot-001-region-02",
+  "input_file": "pilot_001_title.jpg",
+  "input_source_url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1814684999-00000006/400,1640,550,80/full/0/default.jpg",
+  "input_sha256": "a5101e951b36993b19bb4b6910bff5926072672a9809a19ac28d46974594b7dc",
+  "input_dimensions": [
+    550,
+    80
+  ],
+  "preprocessing": "none",
+  "engine_mode": 1,
+  "page_segmentation_mode": 7,
+  "raw_text": "‘Die Geimatly „ir Amerika.\n",
+  "stderr": "",
+  "review_status": "unreviewed"
+}

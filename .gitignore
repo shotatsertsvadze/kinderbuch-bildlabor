@@ -18,3 +18,12 @@ data/work/
 .pytest_cache/
 .gg/
 CLAUDE.md
+
+# Local agents, credentials and backups
+.claude/
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+backup*/
+*.bak

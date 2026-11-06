@@ -141,17 +141,19 @@ def check_open_reviews(record: dict) -> list[Finding]:
         findings.append(Finding(REVIEW, "RECORD_FINAL_REVIEW", "Objekt insgesamt: Endprüfung offen."))
     for item in record.get("review_items", []):
         findings.append(Finding(REVIEW, item["code"], item["note_de"]))
+    if record["image_description"]["review_status"] != review.DESCRIPTION_REVIEWED:
+        findings.append(Finding(REVIEW, "DESCRIPTION_NOT_REVIEWED", "Bildbeschreibung: noch nicht am Bild bestätigt."))
     for region in record["region_annotations"]:
         if region["review_status"] != review.REGION_REVIEWED:
             findings.append(Finding(REVIEW, "REGION_NOT_REVIEWED",
                                     f"Region {region['id']} ({region['label_de']}): Grenzen noch nicht visuell bestätigt."))
         if "keywords_de" in region and region.get("keyword_review_status") != review.KEYWORDS_ACCEPTED:
             findings.append(Finding(REVIEW, "KEYWORDS_NOT_REVIEWED",
-                                    f"Region {region['id']}: geänderte Suchbegriffe noch nicht bestätigt."))
-    status_by_field = record["transcription"]["review_status_by_field"]
+                                    f"Region {region['id']}: Suchbegriffe noch nicht bestätigt "
+                                    f"({review.status_label(region.get('keyword_review_status'))})."))
     for region in record["region_annotations"]:
         field = region.get("transcription_field")
-        if field and status_by_field[field] != review.TRANSCRIPTION_REVIEWED:
+        if field and record["transcription"]["review_status_by_field"][field] != review.TRANSCRIPTION_REVIEWED:
             findings.append(Finding(REVIEW, "TRANSCRIPTION_PROVISIONAL",
                                     f"Transkription „{region['label_de']}“ ist vorläufig und nicht bestätigt."))
     return findings
@@ -166,16 +168,16 @@ def not_run_checks(record: dict) -> list[Finding]:
         Finding(NOT_RUN, "GND_LINKING",
                 "Verknüpfung der Suchbegriffe mit der GND: nicht ausgeführt; Begriffe sind projektlokal."),
     ]
-    if record.get("evaluation") is None:
+    if record.get("ocr_result") and record.get("evaluation") is None:
         findings.append(Finding(NOT_RUN, "OCR_EVALUATION",
                                 "OCR-Bewertung (CER/WER): nicht ausgeführt; es gibt keine freigegebene Referenztranskription."))
     return findings
 
 
-def check_oai_source(record: dict) -> list[Finding]:
+def check_oai_source(record: dict, oai_path) -> list[Finding]:
     """Gespeicherte OAI-Antwort: Parsing und Bezug als technische, MODS-Abweichungen als fachliche Befunde."""
     try:
-        root = oai.parse(store.OAI_RECORD)
+        root = oai.parse(oai_path)
     except ET.ParseError as error:
         return [Finding(TECHNICAL, "OAI_PARSE", f"OAI-Antwort ist kein gültiges XML: {error}")]
     findings = [Finding(TECHNICAL, "OAI_CHECK", f"OAI-Prüfung nicht bestanden: {label}")
@@ -184,30 +186,37 @@ def check_oai_source(record: dict) -> list[Finding]:
     return findings + [
         Finding(REVIEW, "MODS_DIFFERENCE",
                 f"{c['label_de']}: lokal „{c['local']}“, im MODS {c['source'] or 'kein Wert'} ({c['outcome']}).")
-        for c in oai.compare(record, rows) if c["outcome"] != "übereinstimmend"]
+        for c in oai.compare(record, rows) if c["outcome"] not in oai.CONSISTENT]
 
 
 def unknown_optional_fields(record: dict) -> list[str]:
     return [label for path, label in OPTIONAL_UNKNOWN_FIELDS if get_path(record, path) is None]
 
 
-def run_all(working: dict) -> list[Finding]:
-    """Alle Prüfungen gegen die gespeicherten Quelldateien, ohne Netzabruf."""
+def run_all(working: dict, src: store.ObjectSource, collection: list[dict] | None = None) -> list[Finding]:
+    """Alle Prüfungen gegen die gespeicherten Quelldateien, ohne Netzabruf.
+
+    collection: alle Datensätze der Sammlung für die ID-Prüfung; sonst nur dieser Datensatz.
+    """
     record = working["record"]
-    manifest = store.read_json(store.MANIFEST)
-    file_hashes = {e["file"]: store.sha256(store.SOURCE_DIR / e["file"]) for e in manifest["files"]}
-    with Image.open(store.PAGE_IMAGE) as image:
+    manifest = store.read_json(src.manifest)
+    file_hashes = {e["file"]: store.sha256(src.manifest.parent / e["file"]) for e in manifest["files"]
+                   if (src.manifest.parent / e["file"]).exists()}
+    with Image.open(src.page_image) as image:
         image_size = image.size
-    ocr_data = store.read_json(store.SOURCE_DIR / record["ocr_result"]["result_file"])
+    ocr_findings = []
+    if record.get("ocr_result"):
+        ocr_data = store.read_json(src.record.parent / record["ocr_result"]["result_file"])
+        ocr_findings = check_ocr_file(record, ocr_data)
     return (
         check_source_integrity(manifest, file_hashes)
-        + check_working_basis(working, store.sha256(store.SOURCE_RECORD))
+        + check_working_basis(working, store.sha256(src.record))
         + check_required(record)
-        + check_duplicate_ids([record])
-        + check_image_dimensions(record, image_size, store.read_json(store.IMAGE_INFO))
+        + check_duplicate_ids(collection or [record])
+        + check_image_dimensions(record, image_size, store.read_json(src.image_info))
         + check_regions(record)
-        + check_ocr_file(record, ocr_data)
-        + check_oai_source(record)
+        + ocr_findings
+        + check_oai_source(record, src.oai_record)
         + check_open_reviews(record)
         + not_run_checks(record)
     )

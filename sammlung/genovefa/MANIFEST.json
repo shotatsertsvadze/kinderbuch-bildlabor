@@ -1,0 +1,162 @@
+{
+  "package": "Kinderbuch-Bildlabor – Genovefa (Augsburg 1810), fünf Illustrationen",
+  "created_on": "2026-11-06",
+  "files": [
+    {
+      "file": "PPN1772789429_oai_mets.xml",
+      "sha256": "26be310b85c82e59f321e5c00c819fd08086deb2ac8ddb1ac53dacd0c19fe51b",
+      "bytes": 225875
+    },
+    {
+      "file": "scan_014.json",
+      "sha256": "a961b8c7b6f8dafbfea7a2c96f5b11af7816bda12d8deb55b66f651c0ab27d38",
+      "bytes": 3197
+    },
+    {
+      "file": "scan_014_image_info.json",
+      "sha256": "afdb3e488aba2a28ba269d422f67d4784429be544b3d718691045b795f9b6f90",
+      "bytes": 832
+    },
+    {
+      "file": "scan_014_page.jpg",
+      "sha256": "4c40def18585b8f6612b767bdaeb8f6af6d8a906a14daf4e1841659d726a47b4",
+      "bytes": 577789
+    },
+    {
+      "file": "scan_016.json",
+      "sha256": "cb85b508d2a921d1127cfa3ba4c55876bd3062e7438d7cf33e5ad6402e7c427a",
+      "bytes": 3195
+    },
+    {
+      "file": "scan_016_image_info.json",
+      "sha256": "17a4bd387aca88bd4e9e1c03b97a9aefac59407d5a1b7de3a490e6f93ea5855f",
+      "bytes": 832
+    },
+    {
+      "file": "scan_016_page.jpg",
+      "sha256": "aa50616010ba042608531b082eb922a6ca84d9a20f6a4a254e1df08df571464f",
+      "bytes": 572114
+    },
+    {
+      "file": "scan_017.json",
+      "sha256": "f0a0579dce2b29f511dd11b357a48be91fb4010a283b0bf6a0f7d50ee4e171b7",
+      "bytes": 3076
+    },
+    {
+      "file": "scan_017_image_info.json",
+      "sha256": "bcb007001e466fbb3ca9a0f1f8a5d92eaebb1bdad3ccba25d3da2eeb78ccbd3b",
+      "bytes": 832
+    },
+    {
+      "file": "scan_017_page.jpg",
+      "sha256": "3ae7e28a8fb830cfe0d9637a656919e3351b40e0468528af138c113fef0c0e90",
+      "bytes": 589576
+    },
+    {
+      "file": "scan_022.json",
+      "sha256": "38453607946b9edd76b1644d77c0abbc0fb87c192c2eadb2d776d052c81d6bff",
+      "bytes": 3040
+    },
+    {
+      "file": "scan_022_image_info.json",
+      "sha256": "17ea2b93c5aef224839858f6f36fbe4e91d6580ee953e86bb95c50f55a3fd893",
+      "bytes": 832
+    },
+    {
+      "file": "scan_022_page.jpg",
+      "sha256": "f056575aa45fb07e02130f7f794bd63a942e7295159d9a4a020e02f22b868b56",
+      "bytes": 581073
+    },
+    {
+      "file": "scan_085.json",
+      "sha256": "7db3fdacfa4e11ac1c24e7406d72052b1e048eb70e9d4ed8993836ddc68449e9",
+      "bytes": 3157
+    },
+    {
+      "file": "scan_085_image_info.json",
+      "sha256": "d1bde076999b273c885791eb77188bad4bd3402dcbb4016b9ed23bc9f5e95a8c",
+      "bytes": 832
+    },
+    {
+      "file": "scan_085_page.jpg",
+      "sha256": "4b40b5c1de9454538ee591deb89516b5c162ef5430b4ba094636f4b959071d53",
+      "bytes": 578867
+    }
+  ],
+  "sources": [
+    {
+      "file": "PPN1772789429_oai_mets.xml",
+      "url": "https://oai.sbb.berlin/?verb=GetRecord&metadataPrefix=mets&identifier=oai:digital.staatsbibliothek-berlin.de:PPN1772789429",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "XML geparst; METS und MODS vorhanden. Keine XSD-Validierung."
+    },
+    {
+      "file": "scan_014_page.jpg",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000014/full/full/0/default.jpg",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "JPEG dekodiert; Abmessungen stimmen mit der IIIF-Antwort überein."
+    },
+    {
+      "file": "scan_016_page.jpg",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000016/full/full/0/default.jpg",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "JPEG dekodiert; Abmessungen stimmen mit der IIIF-Antwort überein."
+    },
+    {
+      "file": "scan_017_page.jpg",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000017/full/full/0/default.jpg",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "JPEG dekodiert; Abmessungen stimmen mit der IIIF-Antwort überein."
+    },
+    {
+      "file": "scan_022_page.jpg",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000022/full/full/0/default.jpg",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "JPEG dekodiert; Abmessungen stimmen mit der IIIF-Antwort überein."
+    },
+    {
+      "file": "scan_085_page.jpg",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000085/full/full/0/default.jpg",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "JPEG dekodiert; Abmessungen stimmen mit der IIIF-Antwort überein."
+    },
+    {
+      "file": "scan_014_image_info.json",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000014/info.json",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "Originale IIIF-Image-API-Antwort, unverändert."
+    },
+    {
+      "file": "scan_016_image_info.json",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000016/info.json",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "Originale IIIF-Image-API-Antwort, unverändert."
+    },
+    {
+      "file": "scan_017_image_info.json",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000017/info.json",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "Originale IIIF-Image-API-Antwort, unverändert."
+    },
+    {
+      "file": "scan_022_image_info.json",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000022/info.json",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "Originale IIIF-Image-API-Antwort, unverändert."
+    },
+    {
+      "file": "scan_085_image_info.json",
+      "url": "https://ngcs-chula.staatsbibliothek-berlin.de/dc/PPN1772789429-00000085/info.json",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "Originale IIIF-Image-API-Antwort, unverändert."
+    },
+    {
+      "file": "ColibriImagesMetadataAnnotations.csv (nicht beigefügt)",
+      "url": "https://huggingface.co/datasets/SBB/Colibri/resolve/main/ColibriImagesMetadataAnnotations.csv",
+      "sha256": "9f8373e7107ad4ed698903bd5a9044fe7c2e169ac7557e15ccac384a9be0493f",
+      "retrieved_on": "2026-11-06",
+      "checks_de": "Nur die Metadatenzeilen dieser fünf Dateien übernommen; keine Colibri-Bilddateien geladen."
+    }
+  ],
+  "records_de": "scan_*.json sind lokale Arbeitsmodelle: Quellenangaben aus Colibri-CSV, METS und IIIF; Beschreibung, Suchbegriffe und Regionsgrenzen sind ungeprüfte Entwürfe."
+}

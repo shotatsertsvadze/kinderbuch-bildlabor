@@ -1,7 +1,8 @@
 """Lesen der unveränderten Quelldateien und Speichern der lokalen Arbeitskopie.
 
-Die Quelldateien im Startpaket werden nie geschrieben. Alle Bearbeitungen landen in
-einer Arbeitskopie, die auf Datei und Prüfsumme der Quelle verweist.
+Die Quelldateien werden nie geschrieben. Alle Bearbeitungen landen je Objekt in einer
+Arbeitskopie, die auf Datei und Prüfsumme der Quelle verweist. Welche Quelldateien zu
+einem Objekt gehören, steht im Katalog sammlung/katalog.json.
 """
 
 import hashlib
@@ -9,6 +10,7 @@ import json
 import os
 import tempfile
 import threading
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -19,11 +21,7 @@ DATA_DIR = Path(os.environ.get("BILDLABOR_DATA_DIR", ROOT))
 WORK_DIR = DATA_DIR / "data" / "work"
 EXPORT_DIR = DATA_DIR / "exports"
 
-SOURCE_RECORD = SOURCE_DIR / "pilot_001.json"
-PAGE_IMAGE = SOURCE_DIR / "pilot_001_page.jpg"
-IMAGE_INFO = SOURCE_DIR / "pilot_001_image_info.json"
-MANIFEST = SOURCE_DIR / "MANIFEST.json"
-OAI_RECORD = SOURCE_DIR / "pilot_001_oai_mets.xml"
+CATALOG = ROOT / "sammlung" / "katalog.json"
 
 
 def sha256(path: Path) -> str:
@@ -36,6 +34,27 @@ def now_utc() -> str:
 
 def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+@dataclass(frozen=True)
+class ObjectSource:
+    """Unveränderliche Quelldateien eines Objekts (Pfade relativ zum Projekt im Katalog)."""
+    id: str
+    record: Path
+    page_image: Path
+    image_info: Path
+    oai_record: Path
+    manifest: Path
+
+
+def catalog() -> list[ObjectSource]:
+    return [ObjectSource(entry["id"], *(ROOT / entry[key] for key in
+                                        ("record", "page_image", "image_info", "oai_record", "manifest")))
+            for entry in read_json(CATALOG)["objects"]]
+
+
+def object_source(object_id: str) -> ObjectSource:
+    return next(src for src in catalog() if src.id == object_id)
 
 
 def write_json(path: Path, data) -> None:
@@ -52,12 +71,13 @@ def write_json(path: Path, data) -> None:
 LOCK = threading.RLock()
 
 MIGRATION_SPLIT_TRANSCRIPTION = "Modellumstellung: Prüfstand der Transkription je Feld"
+MIGRATION_DESCRIPTION_STATUS = "Modellumstellung: eigener Prüfstand der Beschreibung"
 
 
-def migrate_record(record: dict) -> bool:
+def split_transcription_status(record: dict) -> bool:
     """Älteres Format: der gemeinsame Transkriptions-Prüfstand gilt danach für jedes Feld einzeln."""
-    transcription = record["transcription"]
-    if "review_status" not in transcription:
+    transcription = record.get("transcription")
+    if not transcription or "review_status" not in transcription:
         return False
     status = transcription.pop("review_status")
     fields = [r["transcription_field"] for r in record["region_annotations"] if r.get("transcription_field")]
@@ -65,13 +85,31 @@ def migrate_record(record: dict) -> bool:
     return True
 
 
-def new_working_copy(source_path: Path = SOURCE_RECORD) -> dict:
-    record = read_json(source_path)
+def add_description_status(record: dict) -> bool:
+    """Ältere Datensätze hatten keinen Prüfstand der Beschreibung; bestätigt wurde sie nie."""
+    description = record["image_description"]
+    if "review_status" in description:
+        return False
+    description["review_status"] = "unreviewed"
+    return True
+
+
+MIGRATIONS = [(split_transcription_status, MIGRATION_SPLIT_TRANSCRIPTION),
+              (add_description_status, MIGRATION_DESCRIPTION_STATUS)]
+
+
+def migrate_record(record: dict) -> list[str]:
+    """Wendet alle offenen Umstellungen an; liefert ihre Bezeichnungen."""
+    return [label for migrate, label in MIGRATIONS if migrate(record)]
+
+
+def new_working_copy(src: ObjectSource) -> dict:
+    record = read_json(src.record)
     migrate_record(record)
     return {
         "based_on": {
-            "file": source_path.relative_to(ROOT).as_posix(),
-            "sha256": sha256(source_path),
+            "file": src.record.relative_to(ROOT).as_posix(),
+            "sha256": sha256(src.record),
         },
         "change_log": [],
         "record": record,
@@ -82,17 +120,16 @@ def work_path(record_id: str, work_dir: Path | None = None) -> Path:
     return (work_dir or WORK_DIR) / f"{record_id}.json"
 
 
-def load_working_copy(source_path: Path = SOURCE_RECORD, work_dir: Path | None = None) -> dict:
+def load_working_copy(src: ObjectSource, work_dir: Path | None = None) -> dict:
     """Lädt die gespeicherte Arbeitskopie oder legt eine neue aus der Quelle an (ungespeichert)."""
-    record_id = read_json(source_path)["id"]
-    path = work_path(record_id, work_dir)
+    path = work_path(src.id, work_dir)
     with LOCK:
         if not path.exists():
-            return new_working_copy(source_path)
+            return new_working_copy(src)
         working = read_json(path)
         # Einmalige, protokollierte Umstellung gespeicherter Stände im älteren Format
-        if migrate_record(working["record"]):
-            save_working_copy(working, MIGRATION_SPLIT_TRANSCRIPTION, work_dir)
+        for label in migrate_record(working["record"]):
+            save_working_copy(working, label, work_dir)
         return working
 
 
@@ -104,11 +141,10 @@ def save_working_copy(working: dict, area_de: str, work_dir: Path | None = None)
     return path
 
 
-def update_working_copy(change, area_de: str, source_path: Path = SOURCE_RECORD,
-                        work_dir: Path | None = None) -> bool:
+def update_working_copy(src: ObjectSource, change, area_de: str, work_dir: Path | None = None) -> bool:
     """Lädt den gespeicherten Stand, wendet change(record) an und speichert nur echte Änderungen."""
     with LOCK:
-        working = load_working_copy(source_path, work_dir)
+        working = load_working_copy(src, work_dir)
         if not change(working["record"]):
             return False
         save_working_copy(working, area_de, work_dir)

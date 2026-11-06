@@ -95,18 +95,25 @@ def book_mods(root: ET.Element) -> tuple[str, ET.Element]:
     return dmd_id, root.find(book_mods_path(dmd_id), NS)
 
 
-def illustration_for_page(root: ET.Element, phys_id: str) -> dict | None:
-    """Logisches Strukturelement vom Typ illustration, das per smLink auf diese Seite zeigt."""
+TYPE_DE = {"illustration": "Illustration", "chapter": "Kapitel", "section": "Abschnitt", "monograph": "Buch"}
+
+
+def structure_for_page(root: ET.Element, phys_id: str) -> dict | None:
+    """Engstes logisches Strukturelement unterhalb des Buches, das per smLink auf diese Seite zeigt."""
     document = mets(root)
     xlink = "{" + NS["xlink"] + "}"
     linked = {link.get(xlink + "from") for link in document.iter("{" + NS["mets"] + "}smLink")
               if link.get(xlink + "to") == phys_id}
-    for div in document.find("mets:structMap[@TYPE='LOGICAL']", NS).iter("{" + NS["mets"] + "}div"):
-        if div.get("ID") in linked and div.get("TYPE") == "illustration":
-            dmd_id = div.get("DMDID")
-            title = document.findtext(f"mets:dmdSec[@ID='{dmd_id}']//mods:title", namespaces=NS)
-            return {"log_id": div.get("ID"), "dmd_id": dmd_id, "label": div.get("LABEL"), "title": title}
-    return None
+    top = document.find("mets:structMap[@TYPE='LOGICAL']/mets:div", NS)
+    # Dokumentreihenfolge: das zuletzt gefundene Element ist das am tiefsten verschachtelte
+    found = [div for div in top.iter("{" + NS["mets"] + "}div") if div is not top and div.get("ID") in linked]
+    if not found:
+        return None
+    div = found[-1]
+    dmd_id = div.get("DMDID")
+    title = document.findtext(f"mets:dmdSec[@ID='{dmd_id}']//mods:title", namespaces=NS) if dmd_id else None
+    return {"log_id": div.get("ID"), "type": div.get("TYPE"), "type_de": TYPE_DE.get(div.get("TYPE"), div.get("TYPE")),
+            "dmd_id": dmd_id, "label": div.get("LABEL"), "title": title}
 
 
 def page_label(root: ET.Element, phys_id: str) -> str | None:
@@ -187,12 +194,16 @@ COMPARED = [
 ]
 
 
+MATCH, BOTH_EMPTY = "übereinstimmend", "in beiden nicht angegeben"
+CONSISTENT = {MATCH, BOTH_EMPTY}
+
+
 def outcome(local: str | None, source_values: list[str]) -> str:
     if not source_values:
-        return "fehlt im MODS"
+        return BOTH_EMPTY if local is None else "fehlt im MODS"
     if len(source_values) > 1:
         return "mehrdeutig"
-    return "übereinstimmend" if source_values[0] == local else "abweichend"
+    return MATCH if source_values[0] == local else "abweichend"
 
 
 def compare(record: dict, rows: list[SourceValue]) -> list[dict]:
@@ -212,17 +223,19 @@ def content_checks(root: ET.Element, record: dict) -> list[tuple[str, bool]]:
     source = record["source"]
     info = envelope(root)
     dmd_id, mods = book_mods(root)
-    illustration = illustration_for_page(root, source["physical_page_id"])
+    structure = structure_for_page(root, source["physical_page_id"])
     record_id = mods.findtext("mods:recordInfo/mods:recordIdentifier", namespaces=NS) if mods is not None else None
-    return [
+    checks = [
         ("OAI-Antwort ist GetRecord im Format mets",
          info["verb"] == "GetRecord" and info["metadata_prefix"] == "mets"),
         (f"OAI-Kennung bezieht sich auf {source['ppn']}", info["identifier"].endswith(":" + source["ppn"])),
         ("METS-Dokument in der OAI-Hülle vorhanden", mets(root) is not None),
         (f"Buch-MODS über die logische Struktur gefunden ({dmd_id})", mods is not None),
         (f"MODS-Datensatzkennung entspricht {source['ppn']}", record_id == source["ppn"]),
-        (f"Seite {source['physical_page_id']} ist mit einem Strukturelement „illustration“ verknüpft",
-         illustration is not None),
-        ("DMDID dieser Illustration steht in der Viewer-URL des Pilotobjekts",
-         illustration is not None and f"DMDID={illustration['dmd_id']}" in source["viewer_url"]),
+        (f"Seite {source['physical_page_id']} ist mit einem logischen Strukturelement verknüpft",
+         structure is not None),
     ]
+    if "DMDID=" in source["viewer_url"]:
+        checks.append(("DMDID des verknüpften Strukturelements steht in der Viewer-URL",
+                       structure is not None and f"DMDID={structure['dmd_id']}" in source["viewer_url"]))
+    return checks

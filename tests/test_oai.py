@@ -5,11 +5,14 @@ import pytest
 
 from kinderbuch_bildlabor import oai, store
 
-XML_TEXT = store.OAI_RECORD.read_text(encoding="utf-8")
+PILOT = store.object_source("pilot-001")
+GENOVEFA = store.object_source("genovefa-scan-014")
+
+XML_TEXT = PILOT.oai_record.read_text(encoding="utf-8")
 
 
 def real():
-    return oai.parse(store.OAI_RECORD)
+    return oai.parse(PILOT.oai_record)
 
 
 def variant(tmp_path, old: str, new: str):
@@ -29,7 +32,7 @@ def by_path(rows):
 
 
 def pilot_record():
-    return store.new_working_copy()["record"]
+    return store.new_working_copy(PILOT)["record"]
 
 
 def test_oai_envelope_mets_and_mods_are_distinguished():
@@ -48,8 +51,8 @@ def test_book_is_found_via_logical_structure_and_illustration_via_page_link():
     dmd_id, mods = oai.book_mods(root)
     assert dmd_id == "DMDLOG_0000"
     assert mods.findtext("mods:titleInfo/mods:title", namespaces=oai.NS) == "Die Heimath in Amerika"
-    assert oai.illustration_for_page(root, "PHYS_0006") == {
-        "log_id": "LOG_0002", "dmd_id": "DMDLOG_0001",
+    assert oai.structure_for_page(root, "PHYS_0006") == {
+        "log_id": "LOG_0002", "type": "illustration", "type_de": "Illustration", "dmd_id": "DMDLOG_0001",
         "label": "Die Heimath in Amerika.", "title": "Die Heimath in Amerika."}
     assert oai.page_label(root, "PHYS_0006") == " - "
 
@@ -144,6 +147,31 @@ def test_malformed_xml_raises_parse_error(tmp_path):
 
 
 def test_source_xml_stays_unchanged():
-    manifest = {f["file"]: f["sha256"] for f in store.read_json(store.MANIFEST)["files"]}
+    manifest = {f["file"]: f["sha256"] for f in store.read_json(PILOT.manifest)["files"]}
     rows_of(real())
-    assert store.sha256(store.OAI_RECORD) == manifest["pilot_001_oai_mets.xml"]
+    assert store.sha256(PILOT.oai_record) == manifest["pilot_001_oai_mets.xml"]
+
+
+def test_genovefa_page_is_linked_to_chapter_not_to_an_illustration():
+    root = oai.parse(GENOVEFA.oai_record)
+    structure = oai.structure_for_page(root, "PHYS_0014")
+    assert (structure["type"], structure["title"]) == ("chapter", "[Text und Illustrationen]")
+    assert oai.page_label(root, "PHYS_0014") == "8"
+    record = store.read_json(GENOVEFA.record)
+    assert all(ok for _, ok in oai.content_checks(root, record))
+    assert len(oai.content_checks(root, record)) == 6
+
+
+def test_publisher_missing_in_colibri_and_mods_is_consistent_not_a_difference():
+    record = store.read_json(GENOVEFA.record)
+    result = {c["field"]: c for c in oai.compare(record, rows_of(oai.parse(GENOVEFA.oai_record)))}
+    assert record["bibliographic_metadata_from_colibri"]["publisher"] is None
+    assert result["publisher"]["outcome"] == "in beiden nicht angegeben"
+    assert {c["outcome"] for c in result.values()} <= oai.CONSISTENT
+
+
+def test_every_catalog_source_file_matches_its_manifest():
+    for src in store.catalog():
+        manifest = {f["file"]: f["sha256"] for f in store.read_json(src.manifest)["files"]}
+        for path in (src.record, src.page_image, src.image_info, src.oai_record):
+            assert store.sha256(path) == manifest[path.name], path

@@ -8,9 +8,9 @@ from kinderbuch_bildlabor import oai, store
 
 
 @st.cache_resource
-def parsed_source() -> ET.Element:
+def parsed_source(path) -> ET.Element:
     """Die Quelldatei ist unveränderlich; einmal geparst genügt."""
-    return oai.parse(store.OAI_RECORD)
+    return oai.parse(path)
 
 
 def target_label(target: str | None) -> str:
@@ -19,11 +19,11 @@ def target_label(target: str | None) -> str:
     return target if target.startswith("source.") else f"bibliographic_metadata_from_colibri.{target}"
 
 
-def render(record: dict) -> None:
-    st.caption(f"Gespeicherte OAI-PMH-Antwort aus {store.OAI_RECORD.name}. Kein Live-Abruf. "
+def render(record: dict, src: store.ObjectSource) -> None:
+    st.caption("Ausgewertet wird die gespeicherte OAI-PMH-Antwort zum Buch, ohne Live-Abruf. "
                "Es wird nichts automatisch in den lokalen Datensatz übernommen.")
     try:
-        root = parsed_source()
+        root = parsed_source(src.oai_record)
     except ET.ParseError as error:
         st.error(f"XML-Parsing fehlgeschlagen: {error}", icon=":material/error:")
         return
@@ -44,10 +44,10 @@ def render(record: dict) -> None:
     rows = oai.mapping_rows(mods)
     structure(root, dmd_id, len(rows))
     comparison(record, rows)
-    pilot_link(root, record)
+    page_link(root, record)
     people(mods)
     mapping(rows, dmd_id)
-    technical(root, checks, dmd_id)
+    technical(root, checks, dmd_id, src)
 
 
 def structure(root: ET.Element, dmd_id: str, row_count: int) -> None:
@@ -71,25 +71,30 @@ def comparison(record: dict, rows: list[oai.SourceValue]) -> None:
     st.caption("Exakter Zeichenvergleich ohne Normalisierung. Unterschiede werden angezeigt, nicht übernommen.")
 
 
-def pilot_link(root: ET.Element, record: dict) -> None:
+def page_link(root: ET.Element, record: dict) -> None:
     source = record["source"]
-    illustration = oai.illustration_for_page(root, source["physical_page_id"])
-    st.markdown("#### Bezug zum Pilotobjekt")
-    if illustration is None:
-        st.warning(f"Kein Strukturelement „illustration“ ist mit {source['physical_page_id']} verknüpft.")
+    phys_id = source["physical_page_id"]
+    structure = oai.structure_for_page(root, phys_id)
+    st.markdown("#### Bezug dieser Seite im METS")
+    if structure is None:
+        st.warning(f"Die Seite {phys_id} ist mit keinem logischen Strukturelement verknüpft.")
         return
-    label = oai.page_label(root, source["physical_page_id"])
-    title = record["transcription"]["working_title"]
+    label = (oai.page_label(root, phys_id) or "").strip()
+    page_text = (f"Seitenbezeichnung im METS: „{label}“" if label not in ("", "-")
+                 else "Keine Seitenbezeichnung im METS (passt zu „gedruckte Seitenzahl unbekannt“)")
     st.markdown(
-        f"- Strukturelement `{illustration['log_id']}` (Typ illustration) ist mit `{source['physical_page_id']}` "
-        f"verknüpft; Beschreibung in `{illustration['dmd_id']}`\n"
-        f"- Titel der Illustration im METS/MODS: „{illustration['title']}“\n"
-        f"- Seitenbezeichnung im METS: „{label}“, also keine gedruckte Seitenzahl "
-        f"(passt zu „gedruckte Seitenzahl unbekannt“)")
-    same = "gleich lautend" if illustration["title"] == title else "abweichend"
-    st.caption(f"Die lokale Arbeitstranskription des Bildtitels lautet „{title}“ ({same}). Das ist nur ein Hinweis; "
-               "Prüfstände ändern sich dadurch nicht. Die Verlagsangabe auf dem Bildblatt gehört zu einem anderen "
-               "Beschreibungskontext und wird nicht mit den Buchdaten verglichen.")
+        f"- {phys_id} gehört zum Strukturelement {structure['type_de']} „{structure['title'] or structure['label']}“ "
+        f"(`{structure['log_id']}`, Beschreibung in `{structure['dmd_id']}`)\n"
+        f"- {page_text}")
+    if structure["type"] == "illustration":
+        title = record["transcription"]["working_title"]
+        same = "gleich lautend" if structure["title"] == title else "abweichend"
+        st.caption(f"Die Arbeitstranskription des Bildtitels lautet „{title}“ ({same}). Das ist nur ein Hinweis; "
+                   "Prüfstände ändern sich dadurch nicht. Die Verlagsangabe auf dem Bildblatt gehört zu einem "
+                   "anderen Beschreibungskontext und wird nicht mit den Buchdaten verglichen.")
+    else:
+        st.caption("Die Illustration ist im METS nicht als eigenes Strukturelement erfasst; die Region in "
+                   "diesem Projekt ist deshalb die einzige Auszeichnung der Abbildung auf dieser Seite.")
 
 
 def people(mods: ET.Element) -> None:
@@ -114,7 +119,7 @@ def mapping(rows: list[oai.SourceValue], dmd_id: str) -> None:
         st.dataframe(mapping_table(rows), hide_index=True)
 
 
-def technical(root: ET.Element, checks: list[tuple[str, bool]], dmd_id: str) -> None:
+def technical(root: ET.Element, checks: list[tuple[str, bool]], dmd_id: str, src: store.ObjectSource) -> None:
     with st.expander("Technische Details"):
         st.markdown("**Inhaltliche Prüfungen**\n" + "\n".join(
             f"- {'Bestanden' if ok else 'Nicht bestanden'}: {label}" for label, ok in checks))
@@ -122,4 +127,4 @@ def technical(root: ET.Element, checks: list[tuple[str, bool]], dmd_id: str) -> 
                 "Namespaces:\n" + "\n".join(f"{prefix} = {uri}" for prefix, uri in oai.NS.items()) +
                 f"\n\nSchemaangaben im METS (nicht validiert):\n"
                 f"{oai.mets(root).get('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')}\n\n"
-                f"Datei: {store.OAI_RECORD.name}, SHA-256 {store.sha256(store.OAI_RECORD)}")
+                f"Datei: {src.oai_record.relative_to(store.ROOT)}, SHA-256 {store.sha256(src.oai_record)}")

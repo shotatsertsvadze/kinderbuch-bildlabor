@@ -10,10 +10,11 @@ from pathlib import Path
 from kinderbuch_bildlabor import store
 
 CSV_COLUMNS = [
-    "objekt_id", "objekt_status", "ppn", "physische_seite", "scan_nummer", "gedruckte_seitenzahl",
-    "region_id", "bezeichnung", "regionstyp", "x", "y", "breite", "hoehe", "koordinatenbezug",
-    "regionen_pruefstatus", "suchbegriffe", "suchbegriffe_vokabular", "suchbegriffe_pruefstatus",
-    "transkription", "transkription_pruefstatus", "illustrator",
+    "objekt_id", "objekt_status", "ppn", "titel", "physische_seite", "scan_nummer", "seitenbezeichnung_mets",
+    "gedruckte_seitenzahl", "region_id", "bezeichnung", "regionstyp", "x", "y", "breite", "hoehe",
+    "koordinatenbezug", "regionen_pruefstatus", "regionen_herkunft", "beschreibung", "beschreibung_pruefstatus",
+    "beschreibung_herkunft", "suchbegriffe", "suchbegriffe_vokabular", "suchbegriffe_pruefstatus",
+    "suchbegriffe_herkunft", "transkription", "transkription_pruefstatus", "illustrator",
     "quelle_institution", "quelle_ansicht", "quelle_bildinfo", "rechte_quellwerk",
     "colibri_datei", "colibri_lizenz", "colibri_namensnennung", "exportiert_am",
 ]
@@ -33,7 +34,8 @@ def export_json(working: dict, path: Path) -> dict:
 def csv_rows(record: dict, exported_at: str) -> list[dict]:
     source = record["source"]
     biblio = record["bibliographic_metadata_from_colibri"]
-    transcription = record["transcription"]
+    transcription = record.get("transcription") or {}
+    description = record["image_description"]
     rows = []
     for region in record["region_annotations"]:
         x, y, w, h = region["xywh"]
@@ -42,8 +44,10 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
             "objekt_id": record["id"],
             "objekt_status": record["status"],
             "ppn": source["ppn"],
+            "titel": biblio["title"],
             "physische_seite": source["physical_page_id"],
             "scan_nummer": source["scan_number"],
+            "seitenbezeichnung_mets": source.get("page_label_mets"),
             "gedruckte_seitenzahl": source["printed_page_number"],
             "region_id": region["id"],
             "bezeichnung": region["label_de"],
@@ -51,9 +55,15 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
             "x": x, "y": y, "breite": w, "hoehe": h,
             "koordinatenbezug": f"Pixel im Ausgangsbild {source['image_width']} × {source['image_height']}",
             "regionen_pruefstatus": region["review_status"],
+            "regionen_herkunft": region.get("region_origin_de"),
+            # Die Beschreibung gilt dem ganzen Bild und steht deshalb nur in der Zeile der Illustration
+            "beschreibung": description["working_description_de"] if region["region_type"] == "illustration" else None,
+            "beschreibung_pruefstatus": description["review_status"] if region["region_type"] == "illustration" else None,
+            "beschreibung_herkunft": description.get("description_origin_de") if region["region_type"] == "illustration" else None,
             "suchbegriffe": "; ".join(region.get("keywords_de", [])),
             "suchbegriffe_vokabular": region.get("keyword_vocabulary"),
             "suchbegriffe_pruefstatus": region.get("keyword_review_status"),
+            "suchbegriffe_herkunft": region.get("keyword_origin_de"),
             "transkription": transcription[field] if field else None,
             "transkription_pruefstatus": transcription["review_status_by_field"][field] if field else None,
             "illustrator": record["image_description"]["illustrator"],
@@ -69,13 +79,22 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
     return rows
 
 
-def export_csv(record: dict, exported_at: str, path: Path) -> None:
+def write_csv(rows: list[dict], path: Path) -> None:
     """utf-8-sig, damit Excel Umlaute und typografische Anführungszeichen korrekt öffnet."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
         writer.writeheader()
-        writer.writerows(csv_rows(record, exported_at))
+        writer.writerows(rows)
+
+
+def export_csv(record: dict, exported_at: str, path: Path) -> None:
+    write_csv(csv_rows(record, exported_at), path)
+
+
+def export_collection_csv(records: list[dict], exported_at: str, path: Path) -> None:
+    """Eine Übersicht aller Objekte der Sammlung, eine Zeile je Region."""
+    write_csv([row for record in records for row in csv_rows(record, exported_at)], path)
 
 
 def leaves(data, path=()):

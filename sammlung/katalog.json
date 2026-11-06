@@ -1,0 +1,52 @@
+{
+  "objects": [
+    {
+      "id": "pilot-001",
+      "record": "Kinderbuch_Bildlabor_Start/pilot_001.json",
+      "page_image": "Kinderbuch_Bildlabor_Start/pilot_001_page.jpg",
+      "image_info": "Kinderbuch_Bildlabor_Start/pilot_001_image_info.json",
+      "oai_record": "Kinderbuch_Bildlabor_Start/pilot_001_oai_mets.xml",
+      "manifest": "Kinderbuch_Bildlabor_Start/MANIFEST.json"
+    },
+    {
+      "id": "genovefa-scan-014",
+      "record": "sammlung/genovefa/scan_014.json",
+      "page_image": "sammlung/genovefa/scan_014_page.jpg",
+      "image_info": "sammlung/genovefa/scan_014_image_info.json",
+      "oai_record": "sammlung/genovefa/PPN1772789429_oai_mets.xml",
+      "manifest": "sammlung/genovefa/MANIFEST.json"
+    },
+    {
+      "id": "genovefa-scan-016",
+      "record": "sammlung/genovefa/scan_016.json",
+      "page_image": "sammlung/genovefa/scan_016_page.jpg",
+      "image_info": "sammlung/genovefa/scan_016_image_info.json",
+      "oai_record": "sammlung/genovefa/PPN1772789429_oai_mets.xml",
+      "manifest": "sammlung/genovefa/MANIFEST.json"
+    },
+    {
+      "id": "genovefa-scan-017",
+      "record": "sammlung/genovefa/scan_017.json",
+      "page_image": "sammlung/genovefa/scan_017_page.jpg",
+      "image_info": "sammlung/genovefa/scan_017_image_info.json",
+      "oai_record": "sammlung/genovefa/PPN1772789429_oai_mets.xml",
+      "manifest": "sammlung/genovefa/MANIFEST.json"
+    },
+    {
+      "id": "genovefa-scan-022",
+      "record": "sammlung/genovefa/scan_022.json",
+      "page_image": "sammlung/genovefa/scan_022_page.jpg",
+      "image_info": "sammlung/genovefa/scan_022_image_info.json",
+      "oai_record": "sammlung/genovefa/PPN1772789429_oai_mets.xml",
+      "manifest": "sammlung/genovefa/MANIFEST.json"
+    },
+    {
+      "id": "genovefa-scan-085",
+      "record": "sammlung/genovefa/scan_085.json",
+      "page_image": "sammlung/genovefa/scan_085_page.jpg",
+      "image_info": "sammlung/genovefa/scan_085_image_info.json",
+      "oai_record": "sammlung/genovefa/PPN1772789429_oai_mets.xml",
+      "manifest": "sammlung/genovefa/MANIFEST.json"
+    }
+  ]
+}

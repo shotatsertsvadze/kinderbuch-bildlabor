@@ -1,0 +1,73 @@
+{
+  "id": "genovefa-scan-022",
+  "status": "draft_pending_final_review",
+  "recorded_on": "2026-11-06",
+  "source": {
+    "institution": "Staatsbibliothek zu Berlin – Preußischer Kulturbesitz",
+    "ppn": "PPN1772789429",
+    "physical_page_id": "PHYS_0022",
+    "scan_number": 22,
+    "printed_page_number": null,
+    "page_label_mets": "16",
+    "image_info_url": "https://content.staatsbibliothek-berlin.de/dc/PPN1772789429-00000022/info.json",
+    "image_width": 1209,
+    "image_height": 2071,
+    "viewer_url": "https://digital.staatsbibliothek-berlin.de/werkansicht?PPN=PPN1772789429&PHYSID=PHYS_0022",
+    "colibri_dataset_url": "https://huggingface.co/datasets/SBB/Colibri",
+    "colibri_file_reference": "data/PPN1772789429/00000022_0.jpg",
+    "colibri_groundtruth": "Abbildung",
+    "colibri_classification": "Karte",
+    "colibri_dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+    "colibri_dataset_credit": "Sebastian Schmideler, Sigrun Putjenter, Jörg Lehmann; Staatsbibliothek zu Berlin; Colibri, 2025."
+  },
+  "bibliographic_metadata_from_colibri": {
+    "title": "Genovefa",
+    "author_display": "Schmid, Christoph, von",
+    "publication_place": "Augsburg",
+    "publication_date": "1810",
+    "publisher": null,
+    "rights_statement": "Public Domain Mark 1.0"
+  },
+  "image_description": {
+    "object_type": "Abbildung",
+    "observation_de": "Gewölbter Raum aus Mauerwerk mit Treppe, Bogenfenster und vergittertem Fenster. In der Mitte steht ein Mann mit Puffärmeln, eine Hand in die Hüfte gestützt. Rechts steht eine Frau mit Krone und erhobener Hand.",
+    "working_description_de": "Gewölbter Raum aus Mauerwerk mit Treppe, Bogenfenster und vergittertem Fenster. In der Mitte steht ein Mann mit Puffärmeln, eine Hand in die Hüfte gestützt. Rechts steht eine Frau mit Krone und erhobener Hand.",
+    "description_origin_de": "Entwurf des KI-Assistenten (Claude), 06.11.2026, nach Ansicht des Scans; ungeprüft",
+    "review_status": "unreviewed",
+    "illustrator": null
+  },
+  "review_items": [
+    {
+      "code": "ILLUSTRATOR_ATTRIBUTION",
+      "note_de": "Buchautor und Illustrator sind unterschiedliche Rollen. Der Illustrator ist bislang nicht ermittelt."
+    }
+  ],
+  "region_annotations": [
+    {
+      "id": "genovefa-scan-022-region-01",
+      "label_de": "Illustration",
+      "region_type": "illustration",
+      "keywords_de": [
+        "Mann",
+        "Frau",
+        "Gewölbe",
+        "Treppe",
+        "Gitterfenster"
+      ],
+      "keyword_vocabulary": "project-local",
+      "keyword_origin_de": "Entwurf des KI-Assistenten (Claude), 06.11.2026, nach Ansicht des Scans; ungeprüft",
+      "keyword_review_status": "proposed_unreviewed",
+      "xywh": [
+        229,
+        299,
+        924,
+        617
+      ],
+      "coordinate_unit": "pixel",
+      "region_origin_de": "Entwurf: automatisch am Bildrahmen ermittelt (Dunkelwert-Profil), ungeprüft",
+      "review_status": "draft_pending_visual_review"
+    }
+  ],
+  "ocr_result": null,
+  "evaluation": null
+}

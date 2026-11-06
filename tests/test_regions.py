@@ -10,7 +10,7 @@ def mean_difference(a: Image.Image, b: Image.Image) -> float:
 
 
 def test_pilot_regions_are_inside_image():
-    record = store.read_json(store.SOURCE_RECORD)
+    record = store.read_json(store.object_source("pilot-001").record)
     for region in record["region_annotations"]:
         assert regions.bounds_problems(region["xywh"], WIDTH, HEIGHT) == []
 
@@ -29,7 +29,7 @@ def test_title_crop_matches_iiif_crop_of_same_region():
 
     Gemessen: Abweichung 1,12 ohne Versatz, ab 4,39 bei 1 Pixel Versatz (JPEG-Rauschen).
     """
-    page = Image.open(store.PAGE_IMAGE).convert("RGB")
+    page = Image.open(store.object_source("pilot-001").page_image).convert("RGB")
     reference = Image.open(store.SOURCE_DIR / "pilot_001_title.jpg").convert("RGB")
     title = regions.crop(page, [400, 1640, 550, 80])
     shifted = regions.crop(page, [401, 1640, 550, 80])
@@ -39,7 +39,7 @@ def test_title_crop_matches_iiif_crop_of_same_region():
 
 
 def test_drawing_keeps_original_size():
-    page = Image.open(store.PAGE_IMAGE)
-    record = store.read_json(store.SOURCE_RECORD)
+    page = Image.open(store.object_source("pilot-001").page_image)
+    record = store.read_json(store.object_source("pilot-001").record)
     marked = regions.draw_regions(page, record["region_annotations"])
     assert marked.size == (WIDTH, HEIGHT)

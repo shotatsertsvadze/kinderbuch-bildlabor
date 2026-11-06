@@ -4,7 +4,7 @@ from kinderbuch_bildlabor import export, review, store
 
 
 def test_json_export_roundtrip_keeps_unicode_nulls_regions_and_status(tmp_path):
-    working = store.new_working_copy()
+    working = store.new_working_copy(store.object_source("pilot-001"))
     review.confirm_region(working["record"], "pilot-001-region-02", "Prüfer", [400, 1640, 550, 80])
     path = tmp_path / "pilot-001.json"
     export.export_json(working, path)
@@ -18,8 +18,8 @@ def test_json_export_roundtrip_keeps_unicode_nulls_regions_and_status(tmp_path):
 
 
 def test_roundtrip_report_detects_lost_null_and_changed_status():
-    working = store.new_working_copy()
-    damaged = store.new_working_copy()["record"]
+    working = store.new_working_copy(store.object_source("pilot-001"))
+    damaged = store.new_working_copy(store.object_source("pilot-001"))["record"]
     damaged["image_description"]["illustrator"] = ""
     damaged["transcription"]["review_status_by_field"]["working_title"] = "reviewed"
     report = dict(export.roundtrip_report(working["record"], damaged))
@@ -28,7 +28,7 @@ def test_roundtrip_report_detects_lost_null_and_changed_status():
 
 
 def test_csv_has_one_row_per_region_with_provenance(tmp_path):
-    record = store.new_working_copy()["record"]
+    record = store.new_working_copy(store.object_source("pilot-001"))["record"]
     path = tmp_path / "pilot-001.csv"
     export.export_csv(record, "2026-11-06T00:00:00+00:00", path)
 
@@ -46,7 +46,7 @@ def test_csv_has_one_row_per_region_with_provenance(tmp_path):
 
 def export_then_confirm(tmp_path):
     """Nachgestellter Ablauf: exportieren, danach eine Bestätigung speichern."""
-    working = store.load_working_copy(work_dir=tmp_path / "work")
+    working = store.load_working_copy(store.object_source("pilot-001"), work_dir=tmp_path / "work")
     exported = export.export_json(working, tmp_path / "pilot-001.json")
     review.confirm_region(working["record"], "pilot-001-region-02", "Testperson", [400, 1640, 550, 80])
     store.save_working_copy(working, "Bestätigung Regionsgrenzen pilot-001-region-02", work_dir=tmp_path / "work")
@@ -74,8 +74,8 @@ def test_export_from_other_history_is_not_treated_as_current(tmp_path):
 
 
 def test_added_text_with_umlaut_is_not_reported_as_unicode_problem():
-    original = store.new_working_copy()["record"]
-    reloaded = store.new_working_copy()["record"]
+    original = store.new_working_copy(store.object_source("pilot-001"))["record"]
+    reloaded = store.new_working_copy(store.object_source("pilot-001"))["record"]
     review.confirm_region(original, "pilot-001-region-02", "Testperson", [400, 1640, 550, 80])
     report = dict(export.roundtrip_report(original, reloaded))
     assert report["Unicode-Texte unverändert (z. B. ‘ „ ä ß ×)"] is True
@@ -83,16 +83,16 @@ def test_added_text_with_umlaut_is_not_reported_as_unicode_problem():
 
 
 def test_changed_unicode_text_is_still_detected():
-    original = store.new_working_copy()["record"]
-    damaged = store.new_working_copy()["record"]
+    original = store.new_working_copy(store.object_source("pilot-001"))["record"]
+    damaged = store.new_working_copy(store.object_source("pilot-001"))["record"]
     damaged["ocr_result"]["raw_text"] = '"Die Geimatly "ir Amerika.\n'
     report = dict(export.roundtrip_report(original, damaged))
     assert report["Unicode-Texte unverändert (z. B. ‘ „ ä ß ×)"] is False
 
 
 def test_differing_fields_names_the_changed_field():
-    original = store.new_working_copy()["record"]
-    reloaded = store.new_working_copy()["record"]
+    original = store.new_working_copy(store.object_source("pilot-001"))["record"]
+    reloaded = store.new_working_copy(store.object_source("pilot-001"))["record"]
     assert export.differing_fields(original, reloaded) == []
     reloaded["transcription"]["working_publisher_statement"] = "Verlag der I.P.Setzer'schen Buchhandlung in Rottweil"
     reloaded["image_description"]["illustrator"] = ""

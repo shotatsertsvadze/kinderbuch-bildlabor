@@ -6,11 +6,12 @@ from kinderbuch_bildlabor import review, store, validate
 
 
 KEYWORDS = ["Personengruppe", "Baum", "Landschaft"]
+PILOT = store.object_source("pilot-001")
 PUBLISHER = "Verlag der I.P.Setzer'schen Buchhandlung in Rottweil."
 
 
 def pilot_working() -> dict:
-    return store.new_working_copy()
+    return store.new_working_copy(PILOT)
 
 
 def codes(findings, category):
@@ -18,7 +19,7 @@ def codes(findings, category):
 
 
 def test_pilot_has_no_technical_errors_but_open_reviews():
-    findings = validate.run_all(pilot_working())
+    findings = validate.run_all(pilot_working(), PILOT)
     assert codes(findings, validate.TECHNICAL) == set()
     assert {"IMPRINT_CONTEXT", "ILLUSTRATOR_ATTRIBUTION", "REGION_NOT_REVIEWED",
             "TRANSCRIPTION_PROVISIONAL", "RECORD_FINAL_REVIEW"} <= codes(findings, validate.REVIEW)
@@ -104,7 +105,7 @@ def test_review_areas_list_each_area_separately():
     record = pilot_working()["record"]
     review.confirm_region(record, "pilot-001-region-02", "Prüfer", [400, 1640, 550, 80])
     areas = review.review_areas(record)
-    assert [a["done"] for a in areas] == [False, True, False, True, False, False]
+    assert [a["done"] for a in areas] == [False, True, False, False, True, False, False]
     assert [a["label_de"] for a in areas][-2:] == [
         "Transkription: Bildtitel", "Transkription: Verlagsangabe auf dem Bildblatt"]
     assert review.last_confirmation(record, "pilot-001-region-02")["by"] == "Prüfer"
@@ -136,9 +137,9 @@ def test_open_transcription_findings_are_reported_per_field():
 
 def test_oai_source_has_no_findings_for_pilot_and_reports_differences():
     record = pilot_working()["record"]
-    assert validate.check_oai_source(record) == []
+    assert validate.check_oai_source(record, PILOT.oai_record) == []
     record["bibliographic_metadata_from_colibri"]["publication_date"] = "1851"
-    findings = validate.check_oai_source(record)
+    findings = validate.check_oai_source(record, PILOT.oai_record)
     assert [(f.category, f.code) for f in findings] == [(validate.REVIEW, "MODS_DIFFERENCE")]
     assert "1850" in findings[0].message_de and "1851" in findings[0].message_de
 

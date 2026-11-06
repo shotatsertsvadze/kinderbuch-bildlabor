@@ -11,6 +11,9 @@ REGION_DRAFT = "draft_pending_visual_review"
 REGION_REVIEWED = "visually_reviewed"
 KEYWORDS_ACCEPTED = "accepted_by_user"
 KEYWORDS_EDITED = "edited_pending_review"
+KEYWORDS_PROPOSED = "proposed_unreviewed"
+DESCRIPTION_OPEN = "unreviewed"
+DESCRIPTION_REVIEWED = "description_reviewed"
 TRANSCRIPTION_PROVISIONAL = "provisional"
 TRANSCRIPTION_REVIEWED = "reviewed"
 
@@ -19,6 +22,8 @@ STATUS_LABELS_DE = {
     REGION_REVIEWED: "Grenzen visuell geprüft",
     KEYWORDS_ACCEPTED: "vom Nutzer akzeptiert",
     KEYWORDS_EDITED: "geändert – erneute Prüfung offen",
+    KEYWORDS_PROPOSED: "Vorschlag – Prüfung offen",
+    DESCRIPTION_REVIEWED: "am Bild geprüft",
     TRANSCRIPTION_PROVISIONAL: "vorläufig",
     TRANSCRIPTION_REVIEWED: "geprüft – nicht als Ground Truth freigegeben",
     "unreviewed": "ungeprüft",
@@ -26,7 +31,7 @@ STATUS_LABELS_DE = {
 }
 
 
-DONE_STATUSES = {REGION_REVIEWED, KEYWORDS_ACCEPTED, TRANSCRIPTION_REVIEWED}
+DONE_STATUSES = {REGION_REVIEWED, KEYWORDS_ACCEPTED, TRANSCRIPTION_REVIEWED, DESCRIPTION_REVIEWED}
 
 
 def status_label(status: str) -> str:
@@ -37,6 +42,8 @@ def review_areas(record: dict) -> list[dict]:
     """Alle einzeln bestätigbaren Prüfbereiche in Arbeitsreihenfolge."""
     areas = [{"label_de": f"Regionsgrenzen: {r['label_de']}", "status": r["review_status"], "tab_de": "Regionen"}
              for r in record["region_annotations"]]
+    areas.append({"label_de": "Bildbeschreibung", "status": record["image_description"]["review_status"],
+                  "tab_de": "Beschreibung"})
     areas += [{"label_de": f"Suchbegriffe: {r['label_de']}", "status": r["keyword_review_status"],
                "tab_de": "Beschreibung"}
               for r in record["region_annotations"] if "keywords_de" in r]
@@ -120,7 +127,16 @@ def set_description(record: dict, text: str, seen_text: str) -> bool:
         return False
     require_seen(description["working_description_de"], seen_text, "Die Arbeitsbeschreibung")
     description["working_description_de"] = text
-    log(record, "image_description", "Arbeitsbeschreibung geändert")
+    description["review_status"] = DESCRIPTION_OPEN
+    log(record, "image_description", "Arbeitsbeschreibung geändert; Prüfung zurückgesetzt")
+    return True
+
+
+def confirm_description(record: dict, by: str, seen_text: str) -> bool:
+    description = record["image_description"]
+    require_seen(description["working_description_de"], seen_text, "Die Arbeitsbeschreibung")
+    description["review_status"] = DESCRIPTION_REVIEWED
+    log(record, "image_description", "Bildbeschreibung am Bild bestätigt", by)
     return True
 
 

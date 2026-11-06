@@ -13,6 +13,14 @@ def reviewer() -> str:
     return st.session_state.get("reviewer", "").strip()
 
 
+FIELD_LABELS = {"working_title": "Bildtitel", "working_publisher_statement": "Verlagsangabe auf dem Bildblatt"}
+
+
+def region_label(object_id: str, region_id: str) -> str:
+    record = store.read_json(store.object_source(object_id).record)
+    return f"„{review.find_region(record, region_id)['label_de']}“"
+
+
 def apply(object_id: str, area_de: str, change, *args) -> None:
     src = store.object_source(object_id)
     try:
@@ -35,12 +43,12 @@ def input_xywh(region_id: str) -> list[int]:
 
 
 def save_coordinates(object_id: str, region_id: str) -> None:
-    apply(object_id, f"Koordinaten {region_id}", review.set_region_xywh, region_id, input_xywh(region_id),
+    apply(object_id, f"Koordinaten {region_label(object_id, region_id)}", review.set_region_xywh, region_id, input_xywh(region_id),
           ui.seen_values(xywh_keys(region_id)))
 
 
 def confirm_region(object_id: str, region_id: str, seen_xywh: list[int]) -> None:
-    apply(object_id, f"Bestätigung Regionsgrenzen {region_id}", review.confirm_region, region_id, reviewer(),
+    apply(object_id, f"Bestätigung Regionsgrenzen {region_label(object_id, region_id)}", review.confirm_region, region_id, reviewer(),
           seen_xywh)
 
 
@@ -54,12 +62,12 @@ def keyword_key(region_id: str) -> str:
 
 def save_keywords(object_id: str, region_id: str) -> None:
     key = keyword_key(region_id)
-    apply(object_id, f"Suchbegriffe {region_id}", review.set_keywords, region_id,
+    apply(object_id, "Suchbegriffe", review.set_keywords, region_id,
           keyword_list(st.session_state[key]), keyword_list(ui.seen_values([key])[0]))
 
 
 def confirm_keywords(object_id: str, region_id: str, seen: list[str]) -> None:
-    apply(object_id, f"Bestätigung Suchbegriffe {region_id}", review.confirm_keywords, region_id, reviewer(), seen)
+    apply(object_id, "Bestätigung Suchbegriffe", review.confirm_keywords, region_id, reviewer(), seen)
 
 
 def description_key(object_id: str) -> str:
@@ -82,12 +90,12 @@ def transcription_key(object_id: str, field: str) -> str:
 
 def save_transcription(object_id: str, field: str) -> None:
     key = transcription_key(object_id, field)
-    apply(object_id, f"Transkription {field}", review.set_transcription, field, st.session_state[key],
+    apply(object_id, f"Transkription {FIELD_LABELS[field]}", review.set_transcription, field, st.session_state[key],
           ui.seen_values([key])[0])
 
 
 def confirm_transcription(object_id: str, field: str, seen_text: str) -> None:
-    apply(object_id, f"Bestätigung Transkription {field}", review.confirm_transcription, field, reviewer(),
+    apply(object_id, f"Bestätigung Transkription {FIELD_LABELS[field]}", review.confirm_transcription, field, reviewer(),
           seen_text)
 
 

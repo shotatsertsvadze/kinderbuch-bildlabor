@@ -64,6 +64,11 @@ def object_page(cur: ui.Current) -> None:
 
 
 view = sidebar()
+if st.session_state.get("shown_view") != view:
+    # Neue Ansicht beginnt oben; sonst bliebe die Scrollposition der vorigen Seite stehen
+    st.session_state.shown_view = view
+    st.html(f"<script>/* {view} */ setTimeout(() => document.querySelector('[data-testid=\"stMain\"]')"
+            "?.scrollTo(0, 0), 100);</script>", unsafe_allow_javascript=True)
 if notice := st.session_state.pop("notice", None):
     st.error(notice, icon=":material/error:")
 if view == COLLECTION:

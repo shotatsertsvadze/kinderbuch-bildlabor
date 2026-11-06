@@ -36,9 +36,8 @@ def reviewer() -> str:
 # --- Aktionen: jede liest den gespeicherten Stand, ändert ihn und speichert nur echte Änderungen
 
 def apply(area_de: str, change, *args) -> None:
-    current = store.load_working_copy()
     try:
-        changed = change(current["record"], *args)
+        changed = store.update_working_copy(lambda record: change(record, *args), area_de)
     except review.ContentChanged as error:
         st.session_state.notice = str(error)
         return
@@ -46,34 +45,41 @@ def apply(area_de: str, change, *args) -> None:
         st.toast(f"Nichts gespeichert: {area_de} entspricht bereits dem gespeicherten Stand.",
                  icon=":material/info:")
         return
-    store.save_working_copy(current, area_de)
     st.toast(f"Gespeichert: {area_de}", icon=":material/check:")
 
 
+def xywh_keys(region_id: str) -> list[str]:
+    return [f"{region_id}-{k}" for k in "xywh"]
+
+
 def input_xywh(region_id: str) -> list[int]:
-    return [int(st.session_state[f"{region_id}-{k}"]) for k in "xywh"]
+    return [int(st.session_state[key]) for key in xywh_keys(region_id)]
 
 
 def save_coordinates(region_id: str) -> None:
-    apply(f"Koordinaten {region_id}", review.set_region_xywh, region_id, input_xywh(region_id))
+    apply(f"Koordinaten {region_id}", review.set_region_xywh, region_id, input_xywh(region_id),
+          ui.seen_values(xywh_keys(region_id)))
 
 
 def discard_coordinates(region_id: str, saved_xywh: list[int]) -> None:
-    for key, value in zip("xywh", saved_xywh):
-        st.session_state[f"{region_id}-{key}"] = value
+    ui.load_fields(xywh_keys(region_id), saved_xywh)
 
 
 def confirm_region(region_id: str, seen_xywh: list[int]) -> None:
     apply(f"Bestätigung Regionsgrenzen {region_id}", review.confirm_region, region_id, reviewer(), seen_xywh)
 
 
+def keyword_list(text: str) -> list[str]:
+    return [line.strip() for line in text.splitlines() if line.strip()]
+
+
 def keyword_input(region_id: str) -> list[str]:
-    lines = st.session_state[f"{region_id}-keywords"].splitlines()
-    return [line.strip() for line in lines if line.strip()]
+    return keyword_list(st.session_state[f"{region_id}-keywords"])
 
 
 def save_keywords(region_id: str) -> None:
-    apply(f"Suchbegriffe {region_id}", review.set_keywords, region_id, keyword_input(region_id))
+    seen = keyword_list(ui.seen_values([f"{region_id}-keywords"])[0])
+    apply(f"Suchbegriffe {region_id}", review.set_keywords, region_id, keyword_input(region_id), seen)
 
 
 def confirm_keywords(region_id: str, seen: list[str]) -> None:
@@ -81,11 +87,13 @@ def confirm_keywords(region_id: str, seen: list[str]) -> None:
 
 
 def save_description() -> None:
-    apply("Arbeitsbeschreibung", review.set_description, st.session_state["description"].strip())
+    apply("Arbeitsbeschreibung", review.set_description, st.session_state["description"].strip(),
+          ui.seen_values(["description"])[0])
 
 
 def save_transcription(field: str) -> None:
-    apply(f"Transkription {field}", review.set_transcription, field, st.session_state[field])
+    apply(f"Transkription {field}", review.set_transcription, field, st.session_state[field],
+          ui.seen_values([field])[0])
 
 
 def confirm_transcription(field: str, seen_text: str) -> None:
@@ -221,14 +229,17 @@ def region_editor(region: dict) -> list[int]:
     region_id = region["id"]
     st.markdown(f"**{region['label_de']}** · `{region_id}`")
     ui.status_badge(region["review_status"])
+    keys = xywh_keys(region_id)
+    sync = ui.sync_fields(keys, region["xywh"])
     cols = st.columns(4)
-    for col, key, label, limit, saved in zip(cols, "xywh", ["x", "y", "Breite", "Höhe"],
-                                             [WIDTH, HEIGHT, WIDTH, HEIGHT], region["xywh"]):
-        col.number_input(label, min_value=0, max_value=limit, value=saved, step=1, key=f"{region_id}-{key}")
+    for col, key, label, limit in zip(cols, keys, ["x", "y", "Breite", "Höhe"], [WIDTH, HEIGHT, WIDTH, HEIGHT]):
+        col.number_input(label, min_value=0, max_value=limit, step=1, key=key)
     xywh = input_xywh(region_id)
     problems = regions.bounds_problems(xywh, WIDTH, HEIGHT)
     for problem in problems:
         st.error(problem)
+    if sync == ui.CONFLICT:
+        ui.conflict_note(keys, region["xywh"], str(region["xywh"]))
     unsaved = xywh != region["xywh"]
     ui.unsaved_note(unsaved, f"Gespeichert ist {region['xywh']}. "
                              "Speichern setzt den Prüfstand dieser Region auf „Entwurf“ zurück.")
@@ -237,7 +248,7 @@ def region_editor(region: dict) -> list[int]:
              caption="Ausschnitt mit den eingegebenen Werten" if unsaved else "Ausschnitt (gespeicherter Stand)")
     buttons = st.columns(2)
     buttons[0].button("Koordinaten speichern", key=f"{region_id}-save", on_click=save_coordinates,
-                      args=(region_id,), disabled=not unsaved or bool(problems))
+                      args=(region_id,), disabled=not unsaved or bool(problems) or sync == ui.CONFLICT)
     buttons[1].button("Eingaben verwerfen", key=f"{region_id}-discard", on_click=discard_coordinates,
                       args=(region_id, region["xywh"]), disabled=not unsaved)
 
@@ -259,9 +270,14 @@ def description_tab() -> None:
     description = record["image_description"]
     st.markdown("**Erste Beobachtung** (unverändert)")
     ui.source_text(description["observation_de"])
-    st.text_area("Arbeitsbeschreibung", value=description["working_description_de"], key="description")
-    ui.unsaved_note(st.session_state["description"].strip() != description["working_description_de"])
-    st.button("Beschreibung speichern", key="description-save", on_click=save_description)
+    stored = description["working_description_de"]
+    sync = ui.sync_fields(["description"], [stored], lambda values: [values[0].strip()])
+    st.text_area("Arbeitsbeschreibung", key="description")
+    if sync == ui.CONFLICT:
+        ui.conflict_note(["description"], [stored], f"„{stored}“")
+    ui.unsaved_note(sync == ui.EDITED)
+    st.button("Beschreibung speichern", key="description-save", on_click=save_description,
+              disabled=sync == ui.CONFLICT)
 
     for region in record["region_annotations"]:
         if "keywords_de" in region:
@@ -274,11 +290,15 @@ def keyword_editor(region: dict) -> None:
     st.markdown(f"**Suchbegriffe für „{region['label_de']}“** · `{region_id}`")
     st.caption("Projektlokale Begriffe, keine geprüften GND-Verknüpfungen.")
     ui.status_badge(region["keyword_review_status"])
-    st.text_area("Ein Begriff pro Zeile", value="\n".join(region["keywords_de"]), key=f"{region_id}-keywords")
-    unsaved = keyword_input(region_id) != region["keywords_de"]
-    ui.unsaved_note(unsaved, "Speichern setzt die Bestätigung der Suchbegriffe zurück.")
+    keys, stored = [f"{region_id}-keywords"], ["\n".join(region["keywords_de"])]
+    sync = ui.sync_fields(keys, stored, lambda values: [keyword_list(values[0])])
+    st.text_area("Ein Begriff pro Zeile", key=keys[0])
+    if sync == ui.CONFLICT:
+        ui.conflict_note(keys, stored, "; ".join(region["keywords_de"]))
+    unsaved = sync != ui.CLEAN
+    ui.unsaved_note(sync == ui.EDITED, "Speichern setzt die Bestätigung der Suchbegriffe zurück.")
     st.button("Suchbegriffe speichern", key=f"{region_id}-keywords-save", on_click=save_keywords,
-              args=(region_id,))
+              args=(region_id,), disabled=sync == ui.CONFLICT)
     if region["keyword_review_status"] == review.KEYWORDS_ACCEPTED:
         ui.confirmed_note(record, f"{region_id}/keywords_de")
     else:
@@ -314,10 +334,14 @@ def transcription_editor(region: dict, ocr: dict | None) -> None:
     st.image(regions.crop(page_image(), region["xywh"]), width=min(region["xywh"][2], 730))
     if ocr:
         ocr_block(ocr)
-    st.text_input(f"Transkription: {region['label_de']}", value=transcription[field], key=field)
-    unsaved = st.session_state[field] != transcription[field]
-    ui.unsaved_note(unsaved, "Speichern setzt nur den Prüfstand dieses Textes auf „vorläufig“.")
-    st.button("Speichern", key=f"{field}-save", on_click=save_transcription, args=(field,))
+    sync = ui.sync_fields([field], [transcription[field]])
+    st.text_input(f"Transkription: {region['label_de']}", key=field)
+    if sync == ui.CONFLICT:
+        ui.conflict_note([field], [transcription[field]], f"„{transcription[field]}“")
+    unsaved = sync != ui.CLEAN
+    ui.unsaved_note(sync == ui.EDITED, "Speichern setzt nur den Prüfstand dieses Textes auf „vorläufig“.")
+    st.button("Speichern", key=f"{field}-save", on_click=save_transcription, args=(field,),
+              disabled=sync == ui.CONFLICT)
     if status == review.TRANSCRIPTION_REVIEWED:
         ui.confirmed_note(record, f"transcription/{field}")
     else:

@@ -48,3 +48,52 @@ def confirmed_note(record: dict, area: str) -> None:
     entry = review.last_confirmation(record, area)
     if entry:
         st.caption(f"Bestätigt von {entry['by']} am {local_time(entry['at'])}.")
+
+
+CLEAN, EDITED, CONFLICT = "clean", "edited", "conflict"
+
+
+def base_key(keys: list[str]) -> str:
+    return f"{keys[0]}--base"
+
+
+def load_fields(keys: list[str], stored: list) -> None:
+    """Setzt Eingabefelder und ihren Ausgangsstand auf den gespeicherten Wert."""
+    for key, value in zip(keys, stored):
+        st.session_state[key] = value
+    st.session_state[base_key(keys)] = list(stored)
+
+
+def sync_fields(keys: list[str], stored: list, normalize=lambda values: values) -> str:
+    """Hält Eingabefelder am gespeicherten Stand, solange in dieser Sitzung nichts eingegeben wurde.
+
+    Speichert ein anderes Fenster, übernehmen unveränderte Felder den neuen Stand. Wurde hier schon
+    etwas eingegeben, ist das ein Konflikt: Die Eingabe bleibt sichtbar, darf aber nicht speichern.
+    """
+    state = st.session_state
+    if any(key not in state for key in keys) or base_key(keys) not in state:
+        load_fields(keys, stored)
+        return CLEAN
+    current = [state[key] for key in keys]
+    if normalize(current) == normalize(stored):
+        state[base_key(keys)] = list(stored)
+        return CLEAN
+    if normalize(state[base_key(keys)]) != normalize(stored):
+        if normalize(current) == normalize(state[base_key(keys)]):
+            load_fields(keys, stored)
+            return CLEAN
+        return CONFLICT
+    return EDITED
+
+
+def seen_values(keys: list[str]) -> list:
+    """Gespeicherter Stand, von dem die Eingabe in dieser Sitzung ausging."""
+    return st.session_state[base_key(keys)]
+
+
+def conflict_note(keys: list[str], stored: list, shown_de: str) -> None:
+    st.error("Inzwischen wurde in einem anderen Fenster ein neuer Stand gespeichert. Ihre Eingabe hier "
+             f"ist nicht gespeichert und kann den neuen Stand nicht überschreiben. Gespeichert ist jetzt: {shown_de}",
+             icon=":material/sync_problem:")
+    st.button("Gespeicherten Stand laden (eigene Eingabe verwerfen)", key=f"{keys[0]}-reload",
+              on_click=load_fields, args=(keys, stored))

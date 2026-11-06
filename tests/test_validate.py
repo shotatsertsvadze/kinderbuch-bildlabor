@@ -5,6 +5,10 @@ import pytest
 from kinderbuch_bildlabor import review, store, validate
 
 
+KEYWORDS = ["Personengruppe", "Baum", "Landschaft"]
+PUBLISHER = "Verlag der I.P.Setzer'schen Buchhandlung in Rottweil."
+
+
 def pilot_working() -> dict:
     return store.new_working_copy()
 
@@ -61,17 +65,17 @@ def test_confirmation_closes_only_its_own_area():
 def test_editing_resets_status_of_that_area():
     record = pilot_working()["record"]
     review.confirm_region(record, "pilot-001-region-01", "Prüfer", [210, 260, 930, 1365])
-    review.set_region_xywh(record, "pilot-001-region-01", [210, 260, 920, 1365])
+    review.set_region_xywh(record, "pilot-001-region-01", [210, 260, 920, 1365], [210, 260, 930, 1365])
     assert record["region_annotations"][0]["review_status"] == review.REGION_DRAFT
 
-    review.set_keywords(record, "pilot-001-region-01", ["Personengruppe", "Baum"])
+    review.set_keywords(record, "pilot-001-region-01", ["Personengruppe", "Baum"], KEYWORDS)
     assert record["region_annotations"][0]["keyword_review_status"] == review.KEYWORDS_EDITED
     assert "KEYWORDS_NOT_REVIEWED" in codes(validate.check_open_reviews(record), validate.REVIEW)
 
 
 def test_unchanged_values_do_not_reset_status():
     record = pilot_working()["record"]
-    review.set_keywords(record, "pilot-001-region-01", ["Personengruppe", "Baum", "Landschaft"])
+    review.set_keywords(record, "pilot-001-region-01", KEYWORDS, ["veraltet"])
     assert record["region_annotations"][0]["keyword_review_status"] == review.KEYWORDS_ACCEPTED
     assert "review_log" not in record
 
@@ -79,9 +83,9 @@ def test_unchanged_values_do_not_reset_status():
 def test_setters_report_whether_content_changed():
     record = pilot_working()["record"]
     text = record["image_description"]["working_description_de"]
-    assert review.set_description(record, text) is False
-    assert review.set_description(record, "Zeile eins\nZeile *zwei*") is True
-    assert review.set_transcription(record, "working_title", "Die Heimath in Amerika.") is False
+    assert review.set_description(record, text, "veraltet") is False
+    assert review.set_description(record, "Zeile eins\nZeile *zwei*", text) is True
+    assert review.set_transcription(record, "working_title", "Die Heimath in Amerika.", "veraltet") is False
     assert "review_log" in record and len(record["review_log"]) == 1
 
 
@@ -114,10 +118,11 @@ def test_title_and_publisher_have_independent_review_status():
     assert status == {"working_title": review.TRANSCRIPTION_REVIEWED,
                       "working_publisher_statement": review.TRANSCRIPTION_PROVISIONAL}
 
-    review.set_transcription(record, "working_publisher_statement", "Verlag der L.P.Setzer'schen Buchhandlung in Rottweil.")
+    review.set_transcription(record, "working_publisher_statement", "Verlag der L.P.Setzer'schen Buchhandlung in Rottweil.",
+                             PUBLISHER)
     assert status["working_title"] == review.TRANSCRIPTION_REVIEWED
 
-    review.set_transcription(record, "working_title", "Die Heimath in Amerika")
+    review.set_transcription(record, "working_title", "Die Heimath in Amerika", "Die Heimath in Amerika.")
     assert status["working_title"] == review.TRANSCRIPTION_PROVISIONAL
     assert review.last_confirmation(record, "transcription/working_title")["by"] == "Prüfer"
 
@@ -136,3 +141,20 @@ def test_oai_source_has_no_findings_for_pilot_and_reports_differences():
     findings = validate.check_oai_source(record)
     assert [(f.category, f.code) for f in findings] == [(validate.REVIEW, "MODS_DIFFERENCE")]
     assert "1850" in findings[0].message_de and "1851" in findings[0].message_de
+
+
+def test_edit_based_on_outdated_value_is_refused():
+    """Nachweis vorher: ein veraltetes Fenster überschrieb eine neuere Beschreibung ohne Hinweis."""
+    record = pilot_working()["record"]
+    original = record["image_description"]["working_description_de"]
+    review.set_description(record, "Stand aus Fenster B", original)
+    with pytest.raises(review.ContentChanged):
+        review.set_description(record, "Stand aus Fenster A", original)
+    with pytest.raises(review.ContentChanged):
+        review.set_keywords(record, "pilot-001-region-01", ["Baum"], ["Personengruppe"])
+    with pytest.raises(review.ContentChanged):
+        review.set_region_xywh(record, "pilot-001-region-01", [1, 1, 10, 10], [210, 260, 900, 1365])
+    with pytest.raises(review.ContentChanged):
+        review.set_transcription(record, "working_title", "X", "Die Heimat in Amerika.")
+    assert record["image_description"]["working_description_de"] == "Stand aus Fenster B"
+    assert len(record["review_log"]) == 1

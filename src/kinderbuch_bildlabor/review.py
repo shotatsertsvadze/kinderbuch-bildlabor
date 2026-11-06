@@ -76,10 +76,11 @@ def require_seen(saved, seen, what_de: str) -> None:
                              "Bitte den aktuellen Stand ansehen und erneut bestätigen.")
 
 
-def set_region_xywh(record: dict, region_id: str, xywh: list[int]) -> bool:
+def set_region_xywh(record: dict, region_id: str, xywh: list[int], seen_xywh: list[int]) -> bool:
     region = find_region(record, region_id)
     if region["xywh"] == xywh:
         return False
+    require_seen(region["xywh"], seen_xywh, f"Die Region {region_id}")
     region["xywh"] = xywh
     region["review_status"] = REGION_DRAFT
     log(record, region_id, "Koordinaten geändert; Status auf Entwurf zurückgesetzt")
@@ -94,10 +95,11 @@ def confirm_region(record: dict, region_id: str, by: str, seen_xywh: list[int]) 
     return True
 
 
-def set_keywords(record: dict, region_id: str, keywords: list[str]) -> bool:
+def set_keywords(record: dict, region_id: str, keywords: list[str], seen_keywords: list[str]) -> bool:
     region = find_region(record, region_id)
     if region["keywords_de"] == keywords:
         return False
+    require_seen(region["keywords_de"], seen_keywords, "Die Suchbegriffe")
     region["keywords_de"] = keywords
     region["keyword_review_status"] = KEYWORDS_EDITED
     log(record, f"{region_id}/keywords_de", "Suchbegriffe geändert; Prüfung zurückgesetzt")
@@ -112,19 +114,21 @@ def confirm_keywords(record: dict, region_id: str, by: str, seen_keywords: list[
     return True
 
 
-def set_description(record: dict, text: str) -> bool:
+def set_description(record: dict, text: str, seen_text: str) -> bool:
     description = record["image_description"]
     if description["working_description_de"] == text:
         return False
+    require_seen(description["working_description_de"], seen_text, "Die Arbeitsbeschreibung")
     description["working_description_de"] = text
     log(record, "image_description", "Arbeitsbeschreibung geändert")
     return True
 
 
-def set_transcription(record: dict, field: str, text: str) -> bool:
+def set_transcription(record: dict, field: str, text: str, seen_text: str) -> bool:
     transcription = record["transcription"]
     if transcription[field] == text:
         return False
+    require_seen(transcription[field], seen_text, "Die Transkription")
     transcription[field] = text
     transcription["review_status_by_field"][field] = TRANSCRIPTION_PROVISIONAL
     log(record, f"transcription/{field}", "Transkription geändert; Status auf vorläufig gesetzt")

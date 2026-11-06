@@ -7,6 +7,8 @@ einer Arbeitskopie, die auf Datei und Prüfsumme der Quelle verweist.
 import hashlib
 import json
 import os
+import tempfile
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -39,10 +41,15 @@ def read_json(path: Path):
 def write_json(path: Path, data) -> None:
     """Schreibt über eine temporäre Datei, damit kein halb geschriebener Stand entsteht."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(path)
+    # Eigener Name je Schreibvorgang: gleichzeitige Speicherungen dürfen sich nicht die Datei teilen
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False) as tmp:
+        tmp.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+    Path(tmp.name).replace(path)
 
+
+# Alle Browser-Sitzungen laufen als Threads in einem Streamlit-Prozess; die Sperre macht
+# Laden, Ändern und Speichern zu einem Schritt. Mehrere Server-Prozesse schützt sie nicht.
+LOCK = threading.RLock()
 
 MIGRATION_SPLIT_TRANSCRIPTION = "Modellumstellung: Prüfstand der Transkription je Feld"
 
@@ -79,17 +86,30 @@ def load_working_copy(source_path: Path = SOURCE_RECORD, work_dir: Path | None =
     """Lädt die gespeicherte Arbeitskopie oder legt eine neue aus der Quelle an (ungespeichert)."""
     record_id = read_json(source_path)["id"]
     path = work_path(record_id, work_dir)
-    if not path.exists():
-        return new_working_copy(source_path)
-    working = read_json(path)
-    # Einmalige, protokollierte Umstellung gespeicherter Stände im älteren Format
-    if migrate_record(working["record"]):
-        save_working_copy(working, MIGRATION_SPLIT_TRANSCRIPTION, work_dir)
-    return working
+    with LOCK:
+        if not path.exists():
+            return new_working_copy(source_path)
+        working = read_json(path)
+        # Einmalige, protokollierte Umstellung gespeicherter Stände im älteren Format
+        if migrate_record(working["record"]):
+            save_working_copy(working, MIGRATION_SPLIT_TRANSCRIPTION, work_dir)
+        return working
 
 
 def save_working_copy(working: dict, area_de: str, work_dir: Path | None = None) -> Path:
     working["change_log"].append({"saved_at": now_utc(), "area_de": area_de})
     path = work_path(working["record"]["id"], work_dir)
-    write_json(path, working)
+    with LOCK:
+        write_json(path, working)
     return path
+
+
+def update_working_copy(change, area_de: str, source_path: Path = SOURCE_RECORD,
+                        work_dir: Path | None = None) -> bool:
+    """Lädt den gespeicherten Stand, wendet change(record) an und speichert nur echte Änderungen."""
+    with LOCK:
+        working = load_working_copy(source_path, work_dir)
+        if not change(working["record"]):
+            return False
+        save_working_copy(working, area_de, work_dir)
+        return True

@@ -65,3 +65,26 @@ def test_existing_work_file_is_migrated_once_and_keeps_history(tmp_path):
 
     again = store.load_working_copy(work_dir=tmp_path)
     assert len(again["change_log"]) == 2
+
+
+def test_simultaneous_saves_lose_no_update(tmp_path):
+    """Nachweis vorher: 30 gleichzeitige Speicherungen ergaben 5 Einträge und 20 FileNotFoundError."""
+    import threading
+    from kinderbuch_bildlabor import review
+
+    def change(i):
+        def apply(record):
+            review.log(record, f"bereich-{i}", "Test")
+            return True
+        return apply
+
+    threads = [threading.Thread(target=store.update_working_copy, args=(change(i), f"Test {i}"),
+                                kwargs={"work_dir": tmp_path}) for i in range(30)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    saved = store.load_working_copy(work_dir=tmp_path)
+    assert len(saved["record"]["review_log"]) == 30
+    assert len(saved["change_log"]) == 30
+    assert list(tmp_path.glob("*.tmp")) == []

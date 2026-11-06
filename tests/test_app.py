@@ -172,3 +172,44 @@ def test_library_tab_shows_parsing_checks_xsd_and_comparison():
     comparison = app.dataframe[0].value
     assert list(comparison["Ergebnis"]) == ["übereinstimmend"] * 7
     assert not store.work_path("pilot-001").exists()
+
+
+def save_description(app: AppTest, text: str) -> None:
+    app.text_area(key="description").input(text).run()
+    app.button(key="description-save").click().run()
+
+
+def test_stale_tab_cannot_overwrite_newer_description():
+    """Nachweis vorher: Fenster A überschrieb die neuere Beschreibung aus Fenster B ohne Hinweis."""
+    tab_a, tab_b = open_app(), open_app()
+    save_description(tab_b, "Beschreibung aus Fenster B")
+    tab_a.text_area(key="description").input("Beschreibung aus Fenster A").run()
+
+    assert tab_a.button(key="description-save").disabled
+    assert any("anderen Fenster" in e.value for e in tab_a.error)
+    assert saved()["record"]["image_description"]["working_description_de"] == "Beschreibung aus Fenster B"
+
+    tab_a.button(key="description-reload").click().run()
+    assert tab_a.text_area(key="description").value == "Beschreibung aus Fenster B"
+    assert not tab_a.button(key="description-save").disabled
+
+
+def test_click_from_outdated_page_is_refused_by_the_store():
+    tab_a, tab_b = open_app(), open_app()
+    tab_a.text_area(key="description").input("Beschreibung aus Fenster A").run()
+    save_description(tab_b, "Beschreibung aus Fenster B")
+    tab_a.button(key="description-save").click().run()
+
+    assert saved()["record"]["image_description"]["working_description_de"] == "Beschreibung aus Fenster B"
+    assert any("inzwischen an anderer Stelle geändert" in e.value for e in tab_a.error)
+
+
+def test_untouched_tab_follows_saved_keywords_without_false_unsaved_warning():
+    """Nachweis vorher: das andere Fenster zeigte alte Begriffe als „Ungespeicherte Eingabe“."""
+    tab_c, tab_d = open_app(), open_app()
+    tab_d.text_area(key=f"{REGION_1}-keywords").input("Baum\nLandschaft").run()
+    tab_d.button(key=f"{REGION_1}-keywords-save").click().run()
+    tab_c.run()
+
+    assert tab_c.text_area(key=f"{REGION_1}-keywords").value == "Baum\nLandschaft"
+    assert not any(w.value.startswith("Ungespeicherte Eingabe") for w in tab_c.warning)

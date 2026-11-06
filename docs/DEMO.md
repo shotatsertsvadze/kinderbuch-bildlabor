@@ -57,6 +57,10 @@ Vorführung ohne Änderung der eigenen Arbeitsstände:
 
 - Prüfung: keine technischen Fehler. Offene fachliche Hinweise und bewusst nicht ausgeführte Prüfungen
   (XSD, Live-Abgleich, GND, OCR-Bewertung) stehen getrennt.
+- Endprüfung: „Offen“, „Bereit zur Endprüfung“ oder „Abschließend bestätigt“ zeigen.
+  Erst ohne Blocker und nach allen Einzelbestätigungen mit Name und Zustimmung bestätigen.
+  Die vorhandenen fachlichen Hinweise dürfen dafür nicht übergangen werden. Inhaltsänderungen
+  heben die Endbestätigung auf, nicht aber ihre Historie. Keine Ground-Truth-Freigabe.
 - Export: „JSON und CSV exportieren“ und danach „Export erneut laden und prüfen“. Alle Prüfpunkte
   sind erhalten.
 

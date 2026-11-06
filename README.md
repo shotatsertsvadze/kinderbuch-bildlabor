@@ -38,16 +38,29 @@ Ein Rundgang in drei Minuten: [docs/DEMO.md](docs/DEMO.md).
 - Quelldateien (werden nie verändert): `Kinderbuch_Bildlabor_Start/`, `sammlung/`
 - Arbeitsstände: `data/work/<objekt-id>.json`
 - Exporte: `exports/`
-- Zurück zum Stand der Quelldatei: die Datei in `data/work/` löschen
+- Vor jedem Überschreiben (auch bei Migrationen) wird der bisherige Dateistand unter
+  `data/work/.history/<objekt-id>/<sha256>.json` aufbewahrt; diese lokalen Kopien ersetzen
+  keine Sicherung auf einem anderen Gerät. Den gesamten Arbeitsordner regelmäßig extern sichern.
+- Zurück zum Quellstand: Server stoppen und die betreffende Arbeitsdatei zuerst in einen
+  getrennten Archivordner verschieben, nicht löschen. Ohne Archiv gehen eigene Bearbeitungen
+  und Bestätigungen verloren. Nach dem Neustart wird wieder der Quellstand angezeigt.
+- Wiederherstellen: Server stoppen, die aktuelle Arbeitsdatei zuerst archivieren und die gewünschte
+  Archiv- oder `.history`-Datei nach `data/work/<objekt-id>.json` kopieren. Dann neu starten;
+  ältere Formate werden dabei erneut migriert. Bei `BILDLABOR_DATA_DIR` liegen diese Ordner dort.
 - Probelauf mit getrenntem Datenordner, ohne die eigenen Arbeitsstände zu berühren:
   `BILDLABOR_DATA_DIR=/tmp/probe uv run streamlit run app.py`
 
 Beschreibung der Stichprobe, Rechte und Annotationsregeln: [docs/DATENSATZ.md](docs/DATENSATZ.md).
 
-## Tests
+## Qualitätsprüfungen
 
 ```bash
-uv run pytest
+uv run --locked ruff check --no-cache .
+uv run --locked ruff format --check --no-cache .
+uv run --locked mypy --cache-dir=/dev/null
+uv run --locked python -B -m pytest -p no:cacheprovider -q
 ```
+
+Formatierung anwenden: `uv run --locked ruff format app.py src tests`.
 
 Die Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` nicht.

@@ -4,23 +4,34 @@ import csv
 
 import streamlit as st
 
-from kinderbuch_bildlabor import actions, export, store, ui, validate
+from kinderbuch_bildlabor import actions, export, review, store, ui, validate
 from kinderbuch_bildlabor.ui import Current
 
 CATEGORY_STYLE = {
-    validate.TECHNICAL: (st.error, ":material/error:",
-                         "Formale Fehler in Daten oder Quelldateien. Sie verhindern eine verlässliche Nutzung."),
-    validate.REVIEW: (st.warning, ":material/rule:",
-                      "Offene fachliche Entscheidungen. Sie sind erwartbar und kein Datenfehler."),
-    validate.NOT_RUN: (st.info, ":material/pending:",
-                       "Bewusst nicht ausgeführt; über das Ergebnis ist nichts bekannt."),
+    validate.TECHNICAL: (
+        st.error,
+        ":material/error:",
+        "Formale Fehler in Daten oder Quelldateien. Sie verhindern eine verlässliche Nutzung.",
+    ),
+    validate.REVIEW: (
+        st.warning,
+        ":material/rule:",
+        "Offene fachliche Entscheidungen. Sie sind erwartbar und kein Datenfehler.",
+    ),
+    validate.NOT_RUN: (
+        st.info,
+        ":material/pending:",
+        "Bewusst nicht ausgeführt; über das Ergebnis ist nichts bekannt.",
+    ),
 }
 
 
 def validation_tab(cur: Current, collection: list[dict]) -> None:
     findings = validate.run_all(cur.working, cur.src, collection)
-    st.caption("Alle Prüfungen laufen gegen die gespeicherten Quelldateien, ohne Netzabruf. "
-               "Doppelte Kennungen werden über die ganze Sammlung geprüft.")
+    st.caption(
+        "Alle Prüfungen laufen gegen die gespeicherten Quelldateien, ohne Netzabruf. "
+        "Doppelte Kennungen werden über die ganze Sammlung geprüft."
+    )
     for category, label in validate.CATEGORY_LABELS_DE.items():
         show, icon, meaning = CATEGORY_STYLE[category]
         selected = [f for f in findings if f.category == category]
@@ -30,11 +41,50 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
             show("\n".join(f"- {f.message_de}" for f in selected), icon=icon)
         else:
             st.success("Keine.", icon=":material/check:")
+    st.markdown("#### Abschließende Objektprüfung")
+    state = review.readiness(cur.record, findings)
+    st.write(state)
+    blockers = validate.approval_blockers(findings)
+    if blockers:
+        st.warning(
+            "Endbestätigung gesperrt:\n"
+            + "\n".join(f"- {f.message_de}" for f in blockers)
+        )
+    approval = cur.record.get("final_approval")
+    if approval:
+        st.success(
+            f"Abschließend bestätigt von {approval['by']} · {ui.local_time(approval['at'])}"
+        )
+    ack = st.checkbox(
+        "Ich bestätige den gesamten gespeicherten Arbeitsstand; keine Ground-Truth-Freigabe.",
+        key=f"{cur.id}-final-ack",
+    )
+    enabled = state == "Bereit zur Endprüfung" and bool(actions.reviewer()) and ack
+    st.button(
+        "Objekt abschließend bestätigen",
+        key=f"{cur.id}-final-confirm",
+        disabled=not enabled,
+        on_click=actions.approve_object,
+        args=(cur.id, cur.record, ack),
+    )
+    if not enabled:
+        st.caption(
+            "Erforderlich: alle Bereiche bestätigt, keine Blocker, Name und ausdrückliche Zustimmung. "
+            "Bereits bestätigte Objekte benötigen keine erneute Bestätigung."
+        )
     st.markdown("#### Bewusst leere optionale Angaben")
-    st.write((", ".join(validate.unknown_optional_fields(cur.record)) or "Keine.") + " (kein Fehler)")
+    st.write(
+        (", ".join(validate.unknown_optional_fields(cur.record)) or "Keine.")
+        + " (kein Fehler)"
+    )
     with st.expander("Technische Codes der Befunde"):
-        st.dataframe([{"Kategorie": f.category, "Code": f.code, "Meldung": f.message_de} for f in findings],
-                     hide_index=True)
+        st.dataframe(
+            [
+                {"Kategorie": f.category, "Code": f.code, "Meldung": f.message_de}
+                for f in findings
+            ],
+            hide_index=True,
+        )
 
 
 def export_state(cur: Current) -> tuple[str, list[dict] | None, dict | None]:
@@ -50,43 +100,71 @@ def export_state(cur: Current) -> tuple[str, list[dict] | None, dict | None]:
 
 def export_tab(cur: Current) -> None:
     json_path, csv_path = actions.export_paths(cur.id)
-    st.write("Der JSON-Export enthält den vollständigen Arbeitsstand samt Herkunft, Rechten und Prüfprotokoll. "
-             "Die CSV-Datei enthält eine Zeile je Region mit Herkunfts-, Rechte- und Prüfangaben.")
+    st.write(
+        "Der JSON-Export enthält den vollständigen Arbeitsstand samt Herkunft, Rechten und Prüfprotokoll. "
+        "Die CSV-Datei enthält eine Zeile je Region mit Herkunfts-, Rechte- und Prüfangaben."
+    )
     state, later, exported = export_state(cur)
-    st.button("JSON und CSV exportieren", key=f"{cur.id}-export", on_click=actions.run_export, args=(cur.id,),
-              type="primary")
+    st.button(
+        "JSON und CSV exportieren",
+        key=f"{cur.id}-export",
+        on_click=actions.run_export,
+        args=(cur.id,),
+        type="primary",
+    )
     if state == "none":
         st.info("Noch kein Export für dieses Objekt vorhanden.", icon=":material/info:")
     elif state == "foreign":
-        st.error("Der vorhandene Export passt nicht zur Änderungsgeschichte dieses Arbeitsstands "
-                 "(zum Beispiel nach einem Zurücksetzen der Arbeitskopie). Bitte neu exportieren.",
-                 icon=":material/error:")
+        st.error(
+            "Der vorhandene Export passt nicht zur Änderungsgeschichte dieses Arbeitsstands "
+            "(zum Beispiel nach einem Zurücksetzen der Arbeitskopie). Bitte neu exportieren.",
+            icon=":material/error:",
+        )
     elif state == "stale":
-        changes = "\n".join(f"- {c['area_de']} ({ui.local_time(c['saved_at'])})" for c in later)
-        st.warning(f"Export veraltet: erstellt {ui.local_time(exported['exported_at'])}. Danach gespeichert:\n"
-                   f"{changes}\n\nDas sind spätere Bearbeitungen, keine Exportfehler. "
-                   "Für die Rückladeprüfung bitte neu exportieren.", icon=":material/update:")
+        assert later is not None and exported is not None
+        changes = "\n".join(
+            f"- {c['area_de']} ({ui.local_time(c['saved_at'])})" for c in later
+        )
+        st.warning(
+            f"Export veraltet: erstellt {ui.local_time(exported['exported_at'])}. Danach gespeichert:\n"
+            f"{changes}\n\nDas sind spätere Bearbeitungen, keine Exportfehler. "
+            "Für die Rückladeprüfung bitte neu exportieren.",
+            icon=":material/update:",
+        )
     else:
-        st.success(f"Export aktuell: erstellt {ui.local_time(exported['exported_at'])}, seitdem nichts gespeichert.",
-                   icon=":material/check:")
+        assert exported is not None
+        st.success(
+            f"Export aktuell: erstellt {ui.local_time(exported['exported_at'])}, seitdem nichts gespeichert.",
+            icon=":material/check:",
+        )
 
     if state != "none":
+        assert exported is not None
         roundtrip(cur, state, exported)
     if csv_path.exists():
-        with st.expander(f"Inhalt der CSV-Datei (Stand des Exports)"):
+        with st.expander("Inhalt der CSV-Datei (Stand des Exports)"):
             with csv_path.open(encoding="utf-8-sig", newline="") as handle:
                 st.dataframe(list(csv.DictReader(handle)), hide_index=True)
-        st.caption(f"Dateien: {json_path.relative_to(store.DATA_DIR)}, {csv_path.relative_to(store.DATA_DIR)}")
+        st.caption(
+            f"Dateien: {json_path.relative_to(store.DATA_DIR)}, {csv_path.relative_to(store.DATA_DIR)}"
+        )
     review_log(cur.record)
 
 
 def roundtrip(cur: Current, state: str, exported: dict) -> None:
     st.markdown("#### Rückladeprüfung")
-    st.button("Export erneut laden und prüfen", key=f"{cur.id}-roundtrip", on_click=actions.run_roundtrip,
-              args=(cur.id,), disabled=state != "current")
+    st.button(
+        "Export erneut laden und prüfen",
+        key=f"{cur.id}-roundtrip",
+        on_click=actions.run_roundtrip,
+        args=(cur.id,),
+        disabled=state != "current",
+    )
     if state != "current":
-        st.caption(":material/lock: Noch nicht möglich: Die Rückladeprüfung ist nur für einen aktuellen Export "
-                   "aussagekräftig.")
+        st.caption(
+            ":material/lock: Noch nicht möglich: Die Rückladeprüfung ist nur für einen aktuellen Export "
+            "aussagekräftig."
+        )
         return
     result = st.session_state.get(f"{cur.id}-roundtrip-result")
     if not result or result[0] != exported["exported_at"]:
@@ -97,15 +175,32 @@ def roundtrip(cur: Current, state: str, exported: dict) -> None:
         else:
             st.error(f"Abweichung: {label}", icon=":material/error:")
     if result[2]:
-        st.markdown("Abweichende Felder im Export:\n" + "\n".join(f"- `{p}`" for p in result[2]))
+        st.markdown(
+            "Abweichende Felder im Export:\n" + "\n".join(f"- `{p}`" for p in result[2])
+        )
 
 
 def review_log(record: dict) -> None:
     st.markdown("#### Prüfprotokoll")
     log = record.get("review_log", [])
     if not log:
-        st.info("Noch keine Änderungen oder Bestätigungen protokolliert.", icon=":material/info:")
+        st.info(
+            "Noch keine Änderungen oder Bestätigungen protokolliert.",
+            icon=":material/info:",
+        )
         return
-    st.dataframe([{"Zeitpunkt": ui.local_time(e["at"]), "Vorgang": e["action"], "Person": e.get("by", "–"),
-                   "Bereich": e["area"]} for e in reversed(log)], hide_index=True)
-    st.caption("Neueste Einträge zuerst. Einträge mit Person sind ausdrückliche Bestätigungen.")
+    st.dataframe(
+        [
+            {
+                "Zeitpunkt": ui.local_time(e["at"]),
+                "Vorgang": e["action"],
+                "Person": e.get("by", "–"),
+                "Bereich": e["area"],
+            }
+            for e in reversed(log)
+        ],
+        hide_index=True,
+    )
+    st.caption(
+        "Neueste Einträge zuerst. Einträge mit Person sind ausdrückliche Bestätigungen."
+    )

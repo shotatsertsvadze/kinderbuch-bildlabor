@@ -31,7 +31,12 @@ STATUS_LABELS_DE = {
 }
 
 
-DONE_STATUSES = {REGION_REVIEWED, KEYWORDS_ACCEPTED, TRANSCRIPTION_REVIEWED, DESCRIPTION_REVIEWED}
+DONE_STATUSES = {
+    REGION_REVIEWED,
+    KEYWORDS_ACCEPTED,
+    TRANSCRIPTION_REVIEWED,
+    DESCRIPTION_REVIEWED,
+}
 
 
 def status_label(status: str) -> str:
@@ -40,17 +45,41 @@ def status_label(status: str) -> str:
 
 def review_areas(record: dict) -> list[dict]:
     """Alle einzeln bestätigbaren Prüfbereiche in Arbeitsreihenfolge."""
-    areas = [{"label_de": f"Regionsgrenzen: {r['label_de']}", "status": r["review_status"], "tab_de": "Regionen"}
-             for r in record["region_annotations"]]
-    areas.append({"label_de": "Bildbeschreibung", "status": record["image_description"]["review_status"],
-                  "tab_de": "Beschreibung"})
-    areas += [{"label_de": f"Suchbegriffe: {r['label_de']}", "status": r["keyword_review_status"],
-               "tab_de": "Beschreibung"}
-              for r in record["region_annotations"] if "keywords_de" in r]
-    areas += [{"label_de": f"Transkription: {r['label_de']}",
-               "status": record["transcription"]["review_status_by_field"][r["transcription_field"]],
-               "tab_de": "Transkription"}
-              for r in record["region_annotations"] if r.get("transcription_field")]
+    areas = [
+        {
+            "label_de": f"Regionsgrenzen: {r['label_de']}",
+            "status": r["review_status"],
+            "tab_de": "Regionen",
+        }
+        for r in record["region_annotations"]
+    ]
+    areas.append(
+        {
+            "label_de": "Bildbeschreibung",
+            "status": record["image_description"]["review_status"],
+            "tab_de": "Beschreibung",
+        }
+    )
+    areas += [
+        {
+            "label_de": f"Suchbegriffe: {r['label_de']}",
+            "status": r["keyword_review_status"],
+            "tab_de": "Beschreibung",
+        }
+        for r in record["region_annotations"]
+        if "keywords_de" in r
+    ]
+    areas += [
+        {
+            "label_de": f"Transkription: {r['label_de']}",
+            "status": record["transcription"]["review_status_by_field"][
+                r["transcription_field"]
+            ],
+            "tab_de": "Transkription",
+        }
+        for r in record["region_annotations"]
+        if r.get("transcription_field")
+    ]
     for area in areas:
         area["done"] = area["status"] in DONE_STATUSES
     return areas
@@ -58,7 +87,9 @@ def review_areas(record: dict) -> list[dict]:
 
 def last_confirmation(record: dict, area: str) -> dict | None:
     """Letzter Protokolleintrag mit Person für diesen Bereich."""
-    entries = [e for e in record.get("review_log", []) if e["area"] == area and "by" in e]
+    entries = [
+        e for e in record.get("review_log", []) if e["area"] == area and "by" in e
+    ]
     return entries[-1] if entries else None
 
 
@@ -79,15 +110,20 @@ class ContentChanged(Exception):
 
 def require_seen(saved, seen, what_de: str) -> None:
     if saved != seen:
-        raise ContentChanged(f"{what_de} wurde inzwischen an anderer Stelle geändert. "
-                             "Bitte den aktuellen Stand ansehen und erneut bestätigen.")
+        raise ContentChanged(
+            f"{what_de} wurde inzwischen an anderer Stelle geändert. "
+            "Bitte den aktuellen Stand ansehen und erneut bestätigen."
+        )
 
 
-def set_region_xywh(record: dict, region_id: str, xywh: list[int], seen_xywh: list[int]) -> bool:
+def set_region_xywh(
+    record: dict, region_id: str, xywh: list[int], seen_xywh: list[int]
+) -> bool:
     region = find_region(record, region_id)
     if region["xywh"] == xywh:
         return False
     require_seen(region["xywh"], seen_xywh, f"Die Region {region_id}")
+    invalidate_final(record)
     region["xywh"] = xywh
     region["review_status"] = REGION_DRAFT
     log(record, region_id, "Koordinaten geändert; Status auf Entwurf zurückgesetzt")
@@ -102,18 +138,27 @@ def confirm_region(record: dict, region_id: str, by: str, seen_xywh: list[int]) 
     return True
 
 
-def set_keywords(record: dict, region_id: str, keywords: list[str], seen_keywords: list[str]) -> bool:
+def set_keywords(
+    record: dict, region_id: str, keywords: list[str], seen_keywords: list[str]
+) -> bool:
     region = find_region(record, region_id)
     if region["keywords_de"] == keywords:
         return False
     require_seen(region["keywords_de"], seen_keywords, "Die Suchbegriffe")
+    invalidate_final(record)
     region["keywords_de"] = keywords
     region["keyword_review_status"] = KEYWORDS_EDITED
-    log(record, f"{region_id}/keywords_de", "Suchbegriffe geändert; Prüfung zurückgesetzt")
+    log(
+        record,
+        f"{region_id}/keywords_de",
+        "Suchbegriffe geändert; Prüfung zurückgesetzt",
+    )
     return True
 
 
-def confirm_keywords(record: dict, region_id: str, by: str, seen_keywords: list[str]) -> bool:
+def confirm_keywords(
+    record: dict, region_id: str, by: str, seen_keywords: list[str]
+) -> bool:
     region = find_region(record, region_id)
     require_seen(region["keywords_de"], seen_keywords, "Die Suchbegriffe")
     region["keyword_review_status"] = KEYWORDS_ACCEPTED
@@ -125,16 +170,25 @@ def set_description(record: dict, text: str, seen_text: str) -> bool:
     description = record["image_description"]
     if description["working_description_de"] == text:
         return False
-    require_seen(description["working_description_de"], seen_text, "Die Arbeitsbeschreibung")
+    require_seen(
+        description["working_description_de"], seen_text, "Die Arbeitsbeschreibung"
+    )
+    invalidate_final(record)
     description["working_description_de"] = text
     description["review_status"] = DESCRIPTION_OPEN
-    log(record, "image_description", "Arbeitsbeschreibung geändert; Prüfung zurückgesetzt")
+    log(
+        record,
+        "image_description",
+        "Arbeitsbeschreibung geändert; Prüfung zurückgesetzt",
+    )
     return True
 
 
 def confirm_description(record: dict, by: str, seen_text: str) -> bool:
     description = record["image_description"]
-    require_seen(description["working_description_de"], seen_text, "Die Arbeitsbeschreibung")
+    require_seen(
+        description["working_description_de"], seen_text, "Die Arbeitsbeschreibung"
+    )
     description["review_status"] = DESCRIPTION_REVIEWED
     log(record, "image_description", "Bildbeschreibung am Bild bestätigt", by)
     return True
@@ -145,9 +199,14 @@ def set_transcription(record: dict, field: str, text: str, seen_text: str) -> bo
     if transcription[field] == text:
         return False
     require_seen(transcription[field], seen_text, "Die Transkription")
+    invalidate_final(record)
     transcription[field] = text
     transcription["review_status_by_field"][field] = TRANSCRIPTION_PROVISIONAL
-    log(record, f"transcription/{field}", "Transkription geändert; Status auf vorläufig gesetzt")
+    log(
+        record,
+        f"transcription/{field}",
+        "Transkription geändert; Status auf vorläufig gesetzt",
+    )
     return True
 
 
@@ -155,5 +214,59 @@ def confirm_transcription(record: dict, field: str, by: str, seen_text: str) -> 
     transcription = record["transcription"]
     require_seen(transcription[field], seen_text, "Die Transkription")
     transcription["review_status_by_field"][field] = TRANSCRIPTION_REVIEWED
-    log(record, f"transcription/{field}", "Transkription geprüft (keine Ground-Truth-Freigabe)", by)
+    log(
+        record,
+        f"transcription/{field}",
+        "Transkription geprüft (keine Ground-Truth-Freigabe)",
+        by,
+    )
+    return True
+
+
+FINAL_APPROVED = "final_review_approved"
+
+
+class ApprovalBlocked(ValueError):
+    pass
+
+
+def invalidate_final(record: dict) -> None:
+    if (
+        record.pop("final_approval", None) is not None
+        or record.get("status") == FINAL_APPROVED
+    ):
+        record["status"] = "draft_pending_final_review"
+        log(record, "final_review", "Endbestätigung durch Inhaltsänderung aufgehoben")
+
+
+def readiness(record: dict, findings: list) -> str:
+    from kinderbuch_bildlabor.validate import approval_blockers
+
+    if approval_blockers(findings) or not all(a["done"] for a in review_areas(record)):
+        return "Offen"
+    if record.get("final_approval") and record.get("status") == FINAL_APPROVED:
+        return "Abschließend bestätigt"
+    return "Bereit zur Endprüfung"
+
+
+def approve_final(
+    record: dict, seen: dict, by: str, acknowledged: bool, findings: list
+) -> bool:
+    require_seen(record, seen, "Das Objekt")
+    if not by.strip() or not acknowledged:
+        raise ApprovalBlocked("Name und ausdrückliche Bestätigung sind erforderlich.")
+    if readiness(record, findings) == "Offen":
+        raise ApprovalBlocked(
+            "Offene Prüfbereiche oder blockierende Befunde verhindern die Endbestätigung."
+        )
+    if record.get("final_approval"):
+        return False
+    record["status"] = FINAL_APPROVED
+    record["final_approval"] = {"by": by.strip(), "at": now_utc()}
+    log(
+        record,
+        "final_review",
+        "Objekt abschließend bestätigt (keine Ground-Truth-Freigabe)",
+        by.strip(),
+    )
     return True

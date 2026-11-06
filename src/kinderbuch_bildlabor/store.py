@@ -39,6 +39,7 @@ def read_json(path: Path):
 @dataclass(frozen=True)
 class ObjectSource:
     """Unveränderliche Quelldateien eines Objekts (Pfade relativ zum Projekt im Katalog)."""
+
     id: str
     record: Path
     page_image: Path
@@ -48,9 +49,22 @@ class ObjectSource:
 
 
 def catalog() -> list[ObjectSource]:
-    return [ObjectSource(entry["id"], *(ROOT / entry[key] for key in
-                                        ("record", "page_image", "image_info", "oai_record", "manifest")))
-            for entry in read_json(CATALOG)["objects"]]
+    return [
+        ObjectSource(
+            entry["id"],
+            *(
+                ROOT / entry[key]
+                for key in (
+                    "record",
+                    "page_image",
+                    "image_info",
+                    "oai_record",
+                    "manifest",
+                )
+            ),
+        )
+        for entry in read_json(CATALOG)["objects"]
+    ]
 
 
 def object_source(object_id: str) -> ObjectSource:
@@ -61,7 +75,9 @@ def write_json(path: Path, data) -> None:
     """Schreibt über eine temporäre Datei, damit kein halb geschriebener Stand entsteht."""
     path.parent.mkdir(parents=True, exist_ok=True)
     # Eigener Name je Schreibvorgang: gleichzeitige Speicherungen dürfen sich nicht die Datei teilen
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+    ) as tmp:
         tmp.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     Path(tmp.name).replace(path)
 
@@ -80,7 +96,11 @@ def split_transcription_status(record: dict) -> bool:
     if not transcription or "review_status" not in transcription:
         return False
     status = transcription.pop("review_status")
-    fields = [r["transcription_field"] for r in record["region_annotations"] if r.get("transcription_field")]
+    fields = [
+        r["transcription_field"]
+        for r in record["region_annotations"]
+        if r.get("transcription_field")
+    ]
     transcription["review_status_by_field"] = {field: status for field in fields}
     return True
 
@@ -94,8 +114,10 @@ def add_description_status(record: dict) -> bool:
     return True
 
 
-MIGRATIONS = [(split_transcription_status, MIGRATION_SPLIT_TRANSCRIPTION),
-              (add_description_status, MIGRATION_DESCRIPTION_STATUS)]
+MIGRATIONS = [
+    (split_transcription_status, MIGRATION_SPLIT_TRANSCRIPTION),
+    (add_description_status, MIGRATION_DESCRIPTION_STATUS),
+]
 
 
 def migrate_record(record: dict) -> list[str]:
@@ -133,15 +155,38 @@ def load_working_copy(src: ObjectSource, work_dir: Path | None = None) -> dict:
         return working
 
 
-def save_working_copy(working: dict, area_de: str, work_dir: Path | None = None) -> Path:
-    working["change_log"].append({"saved_at": now_utc(), "area_de": area_de})
+def snapshot_working_copy(path: Path) -> Path:
+    content = path.read_bytes()
+    digest = hashlib.sha256(content).hexdigest()
+    snapshot = path.parent / ".history" / path.stem / f"{digest}.json"
+    snapshot.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with snapshot.open("xb") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except FileExistsError:
+        if snapshot.read_bytes() != content:
+            raise ValueError(f"Unvollständige Sicherung: {snapshot}")
+    return snapshot
+
+
+def save_working_copy(
+    working: dict, area_de: str, work_dir: Path | None = None
+) -> Path:
     path = work_path(working["record"]["id"], work_dir)
     with LOCK:
+        # Auch automatische Migrationen müssen den vorherigen Dateistand erhalten.
+        if path.exists():
+            snapshot_working_copy(path)
+        working["change_log"].append({"saved_at": now_utc(), "area_de": area_de})
         write_json(path, working)
     return path
 
 
-def update_working_copy(src: ObjectSource, change, area_de: str, work_dir: Path | None = None) -> bool:
+def update_working_copy(
+    src: ObjectSource, change, area_de: str, work_dir: Path | None = None
+) -> bool:
     """Lädt den gespeicherten Stand, wendet change(record) an und speichert nur echte Änderungen."""
     with LOCK:
         working = load_working_copy(src, work_dir)

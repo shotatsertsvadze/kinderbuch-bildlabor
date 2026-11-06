@@ -25,8 +25,13 @@ METS-Seitenbezeichnungen (8, 10, 11, 16, 79) aussehen. Das ist nicht bestätigt;
 - Mehrere Browserfenster an einem gestarteten Server sind abgesichert: Speichern ist eine gesperrte
   Lese-Änderungs-Schreib-Einheit, und veraltete Eingaben können neuere Stände nicht überschreiben.
   Zwei gleichzeitig gestartete Server auf demselben Datenordner sind nicht abgesichert.
-- Gedruckte Seitenzahl, Illustrator und Objektstatus lassen sich in der Oberfläche nicht bearbeiten.
-- Es gibt keine abschließende Freigabe eines ganzen Objekts; der Objektstatus bleibt „Endprüfung offen“.
+- Gedruckte Seitenzahl und Illustrator lassen sich in der Oberfläche nicht bearbeiten.
+- Im Reiter „Prüfung“ ist eine ausdrückliche Endbestätigung mit Name und Zustimmung möglich.
+  Alle Einzelbereiche müssen bestätigt und alle technischen und fachlichen Blocker gelöst sein.
+  Bestehende review_items und MODS-Abweichungen bleiben Blocker; ihre Auflösung ist nicht automatisiert.
+  Nicht ausgeführte optionale Prüfungen bleiben sichtbar, blockieren aber nicht.
+  Inhaltsänderungen heben die Endbestätigung auf; das Protokoll bleibt erhalten.
+  Endbestätigung ist keine Ground-Truth-Freigabe. Ältere Datensätze bleiben ohne Migration offen.
 - Die Koordinaten werden über Zahlenfelder bearbeitet, nicht durch Ziehen im Bild.
 - Bei schmalen Fenstern (unter etwa 1000 Pixel) stehen Bild und Bearbeitung untereinander;
   bedienbar, aber weniger übersichtlich.

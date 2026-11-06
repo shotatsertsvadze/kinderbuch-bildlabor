@@ -13,6 +13,7 @@ from kinderbuch_bildlabor import review, store
 @dataclass
 class Current:
     """Das angezeigte Objekt: Quelldateien und gespeicherter Arbeitsstand dieses Laufs."""
+
     src: store.ObjectSource
     working: dict
 
@@ -26,7 +27,9 @@ class Current:
 
     @cached_property
     def size(self) -> tuple[int, int]:
-        return self.record["source"]["image_width"], self.record["source"]["image_height"]
+        return self.record["source"]["image_width"], self.record["source"][
+            "image_height"
+        ]
 
 
 @st.cache_resource
@@ -47,9 +50,17 @@ def object_label(record: dict) -> str:
 def status_badge(status: str) -> None:
     """Status als Text und Symbol, nicht nur als Farbe."""
     if status in review.DONE_STATUSES:
-        st.badge(f"Bestätigt: {review.status_label(status)}", icon=":material/check_circle:", color="green")
+        st.badge(
+            f"Bestätigt: {review.status_label(status)}",
+            icon=":material/check_circle:",
+            color="green",
+        )
     else:
-        st.badge(f"Offen: {review.status_label(status)}", icon=":material/pending:", color="orange")
+        st.badge(
+            f"Offen: {review.status_label(status)}",
+            icon=":material/pending:",
+            color="orange",
+        )
 
 
 def origin_note(text: str | None) -> None:
@@ -65,23 +76,43 @@ def source_text(text: str) -> None:
 def edit_state(sync: str, consequence_de: str = "") -> None:
     """Zeigt, ob die Eingabe dem gespeicherten Stand entspricht."""
     if sync == EDITED:
-        st.warning(f"Ungespeicherte Änderung. {consequence_de}".strip(), icon=":material/edit:")
+        st.warning(
+            f"Ungespeicherte Änderung. {consequence_de}".strip(), icon=":material/edit:"
+        )
     elif sync == CLEAN:
         st.caption(":material/save: Entspricht dem gespeicherten Stand.")
 
 
-def confirm_controls(key: str, meaning_de: str, statement_de: str, on_click, args=(),
-                     blocked_de: str | None = None) -> None:
+def confirm_controls(
+    key: str,
+    meaning_de: str,
+    statement_de: str,
+    on_click,
+    args=(),
+    blocked_de: str | None = None,
+) -> None:
     """Bestätigung mit erklärter Bedeutung und sichtbarem Grund, falls gesperrt."""
     st.markdown("**Prüfung bestätigen**")
     st.caption(f"Bedeutung: {meaning_de}")
-    checked = st.checkbox(statement_de, key=f"{key}-check", disabled=blocked_de is not None)
+    checked = st.checkbox(
+        statement_de, key=f"{key}-check", disabled=blocked_de is not None
+    )
     reviewer = st.session_state.get("reviewer", "").strip()
     reason = blocked_de or (
-        "Bitte zuerst das Häkchen setzen." if not checked else
-        "Bitte links unter „Prüfende Person“ Ihren Namen eintragen." if not reviewer else None)
-    st.button("Bestätigen und speichern", key=f"{key}-confirm", on_click=on_click, args=args,
-              disabled=reason is not None, type="primary")
+        "Bitte zuerst das Häkchen setzen."
+        if not checked
+        else "Bitte links unter „Prüfende Person“ Ihren Namen eintragen."
+        if not reviewer
+        else None
+    )
+    st.button(
+        "Bestätigen und speichern",
+        key=f"{key}-confirm",
+        on_click=on_click,
+        args=args,
+        disabled=reason is not None,
+        type="primary",
+    )
     if reason:
         st.caption(f":material/lock: Noch nicht möglich: {reason}")
 
@@ -89,8 +120,11 @@ def confirm_controls(key: str, meaning_de: str, statement_de: str, on_click, arg
 def confirmed_note(record: dict, area: str) -> None:
     entry = review.last_confirmation(record, area)
     if entry:
-        st.success(f"Bestätigt von {entry['by']} am {local_time(entry['at'])}. "
-                   "Eine spätere Änderung setzt diese Bestätigung zurück.", icon=":material/verified:")
+        st.success(
+            f"Bestätigt von {entry['by']} am {local_time(entry['at'])}. "
+            "Eine spätere Änderung setzt diese Bestätigung zurück.",
+            icon=":material/verified:",
+        )
 
 
 CLEAN, EDITED, CONFLICT = "clean", "edited", "conflict"
@@ -135,18 +169,28 @@ def seen_values(keys: list[str]) -> list:
 
 
 def conflict_note(keys: list[str], stored: list, shown_de: str) -> None:
-    st.error("Inzwischen wurde in einem anderen Fenster ein neuer Stand gespeichert. Ihre Eingabe hier "
-             f"ist nicht gespeichert und kann den neuen Stand nicht überschreiben. Gespeichert ist jetzt: {shown_de}",
-             icon=":material/sync_problem:")
-    st.button("Gespeicherten Stand laden (eigene Eingabe verwerfen)", key=f"{keys[0]}-reload",
-              on_click=load_fields, args=(keys, stored))
+    st.error(
+        "Inzwischen wurde in einem anderen Fenster ein neuer Stand gespeichert. Ihre Eingabe hier "
+        f"ist nicht gespeichert und kann den neuen Stand nicht überschreiben. Gespeichert ist jetzt: {shown_de}",
+        icon=":material/sync_problem:",
+    )
+    st.button(
+        "Gespeicherten Stand laden (eigene Eingabe verwerfen)",
+        key=f"{keys[0]}-reload",
+        on_click=load_fields,
+        args=(keys, stored),
+    )
 
 
 def next_step(record: dict, export_current: bool) -> str:
     open_areas = [a for a in review.review_areas(record) if not a["done"]]
     if open_areas:
-        return f"{open_areas[0]['label_de']} prüfen (Reiter „{open_areas[0]['tab_de']}“)."
+        return (
+            f"{open_areas[0]['label_de']} prüfen (Reiter „{open_areas[0]['tab_de']}“)."
+        )
     if not export_current:
         return "Export erstellen (Reiter „Export“)."
-    return ("Alle Prüfbereiche sind bestätigt und exportiert. Die fachlichen Hinweise bleiben bestehen; "
-            "eine abschließende Freigabe des Objekts ist in dieser Version nicht vorgesehen.")
+    return (
+        "Alle Prüfbereiche sind bestätigt und exportiert. Die fachlichen Hinweise bleiben bestehen; "
+        "eine abschließende Freigabe des Objekts ist in dieser Version nicht vorgesehen."
+    )

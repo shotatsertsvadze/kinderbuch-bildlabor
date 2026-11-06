@@ -66,14 +66,18 @@ def test_second_session_keeps_confirmation_of_first_session():
     save_description(tab_b, "Neue Beschreibung")
 
     record = saved()["record"]
-    assert review.find_region(record, REGION_1)["review_status"] == review.REGION_REVIEWED
+    assert (
+        review.find_region(record, REGION_1)["review_status"] == review.REGION_REVIEWED
+    )
     assert record["image_description"]["working_description_de"] == "Neue Beschreibung"
     assert [e.get("by") for e in record["review_log"]] == ["Testperson", None]
 
 
 def test_unchanged_text_cannot_be_saved_and_writes_nothing():
     app = open_app()
-    app.text_area(key=DESCRIPTION).input(app.text_area(key=DESCRIPTION).value + "  ").run()
+    app.text_area(key=DESCRIPTION).input(
+        app.text_area(key=DESCRIPTION).value + "  "
+    ).run()
     assert app.button(key=f"{DESCRIPTION}-save").disabled
     assert not store.work_path(PILOT).exists()
 
@@ -100,23 +104,40 @@ def test_edit_after_confirmation_resets_only_that_region():
     app.button(key=f"{REGION_1}-save").click().run()
 
     record = saved()["record"]
-    assert [r["review_status"] for r in record["region_annotations"]] == [review.REGION_DRAFT] * 3
-    assert review.find_region(record, REGION_1)["keyword_review_status"] == review.KEYWORDS_ACCEPTED
-    assert set(record["transcription"]["review_status_by_field"].values()) == {review.TRANSCRIPTION_PROVISIONAL}
+    assert [r["review_status"] for r in record["region_annotations"]] == [
+        review.REGION_DRAFT
+    ] * 3
+    assert (
+        review.find_region(record, REGION_1)["keyword_review_status"]
+        == review.KEYWORDS_ACCEPTED
+    )
+    assert set(record["transcription"]["review_status_by_field"].values()) == {
+        review.TRANSCRIPTION_PROVISIONAL
+    }
 
 
 def test_description_confirmation_is_reset_by_edit_and_keeps_other_areas():
     app = open_app()
     confirm(app, DESCRIPTION)
-    assert saved()["record"]["image_description"]["review_status"] == review.DESCRIPTION_REVIEWED
+    assert (
+        saved()["record"]["image_description"]["review_status"]
+        == review.DESCRIPTION_REVIEWED
+    )
     save_description(app, "Geänderte Beschreibung")
     record = saved()["record"]
     assert record["image_description"]["review_status"] == review.DESCRIPTION_OPEN
-    assert review.find_region(record, REGION_1)["keyword_review_status"] == review.KEYWORDS_ACCEPTED
+    assert (
+        review.find_region(record, REGION_1)["keyword_review_status"]
+        == review.KEYWORDS_ACCEPTED
+    )
 
 
 def roundtrip_messages(app: AppTest) -> list[str]:
-    return [m for m in texts(app, "success") + texts(app, "error") if m.startswith(("Erhalten:", "Abweichung:"))]
+    return [
+        m
+        for m in texts(app, "success") + texts(app, "error")
+        if m.startswith(("Erhalten:", "Abweichung:"))
+    ]
 
 
 def test_export_becomes_stale_after_confirmation_and_current_after_new_export():
@@ -137,13 +158,17 @@ def test_real_content_difference_in_current_export_is_reported():
     app.button(key=f"{PILOT}-export").click().run()
     path = store.EXPORT_DIR / "pilot-001.json"
     data = store.read_json(path)
-    data["record"]["ocr_result"]["raw_text"] = data["record"]["ocr_result"]["raw_text"].replace("„", '"')
+    data["record"]["ocr_result"]["raw_text"] = data["record"]["ocr_result"][
+        "raw_text"
+    ].replace("„", '"')
     store.write_json(path, data)
 
     app.button(key=f"{PILOT}-roundtrip").click().run()
     failed = [m for m in roundtrip_messages(app) if m.startswith("Abweichung:")]
-    assert failed == ["Abweichung: Unicode-Texte unverändert (z. B. ‘ „ ä ß ×)",
-                      "Abweichung: Gesamter Datensatz identisch"]
+    assert failed == [
+        "Abweichung: Unicode-Texte unverändert (z. B. ‘ „ ä ß ×)",
+        "Abweichung: Gesamter Datensatz identisch",
+    ]
     assert any("`ocr_result › raw_text`" in m for m in texts(app, "markdown"))
 
 
@@ -171,20 +196,30 @@ def test_title_can_be_confirmed_without_publisher_statement():
     app = open_app()
     confirm(app, TITLE)
     status = saved()["record"]["transcription"]["review_status_by_field"]
-    assert status == {"working_title": review.TRANSCRIPTION_REVIEWED,
-                      "working_publisher_statement": review.TRANSCRIPTION_PROVISIONAL}
+    assert status == {
+        "working_title": review.TRANSCRIPTION_REVIEWED,
+        "working_publisher_statement": review.TRANSCRIPTION_PROVISIONAL,
+    }
     assert app.checkbox(key=f"{PUBLISHER}-review-check") is not None
 
 
 def test_saving_publisher_statement_keeps_title_confirmation():
     app = open_app()
     confirm(app, TITLE)
-    app.text_input(key=PUBLISHER).input("Verlag der L.P.Setzer'schen Buchhandlung in Rottweil.").run()
+    app.text_input(key=PUBLISHER).input(
+        "Verlag der L.P.Setzer'schen Buchhandlung in Rottweil."
+    ).run()
     app.button(key=f"{PUBLISHER}-save").click().run()
 
     transcription = saved()["record"]["transcription"]
-    assert transcription["working_publisher_statement"] == "Verlag der L.P.Setzer'schen Buchhandlung in Rottweil."
-    assert transcription["review_status_by_field"]["working_title"] == review.TRANSCRIPTION_REVIEWED
+    assert (
+        transcription["working_publisher_statement"]
+        == "Verlag der L.P.Setzer'schen Buchhandlung in Rottweil."
+    )
+    assert (
+        transcription["review_status_by_field"]["working_title"]
+        == review.TRANSCRIPTION_REVIEWED
+    )
 
 
 def comparison_table(app: AppTest):
@@ -202,11 +237,19 @@ def test_library_tab_shows_parsing_checks_xsd_and_comparison():
 
 def test_genovefa_object_has_no_transcription_tab_and_shows_draft_origin():
     app = open_app("genovefa-scan-014")
-    assert [t.label for t in app.tabs] == ["Übersicht", "Regionen", "Beschreibung", "Bibliotheksdaten",
-                                           "Prüfung", "Export"]
+    assert [t.label for t in app.tabs] == [
+        "Übersicht",
+        "Regionen",
+        "Beschreibung",
+        "Bibliotheksdaten",
+        "Prüfung",
+        "Export",
+    ]
     assert any("Entwurf des KI-Assistenten" in c for c in texts(app, "caption"))
     assert "in beiden nicht angegeben" in list(comparison_table(app)["Ergebnis"])
-    assert not any("Technische Fehler" in m and ": 0" not in m for m in texts(app, "markdown"))
+    assert not any(
+        "Technische Fehler" in m and ": 0" not in m for m in texts(app, "markdown")
+    )
 
 
 def test_confirming_ai_keywords_records_person_and_changes_only_that_object():
@@ -215,7 +258,9 @@ def test_confirming_ai_keywords_records_person_and_changes_only_that_object():
     region = saved("genovefa-scan-016")["record"]["region_annotations"][0]
     assert region["keyword_review_status"] == review.KEYWORDS_ACCEPTED
     assert saved("genovefa-scan-016")["record"]["review_log"][-1]["by"] == "Testperson"
-    assert sorted(p.name for p in store.WORK_DIR.iterdir()) == ["genovefa-scan-016.json"]
+    assert sorted(p.name for p in store.WORK_DIR.iterdir()) == [
+        "genovefa-scan-016.json"
+    ]
 
 
 def test_stale_tab_cannot_overwrite_newer_description():
@@ -226,7 +271,10 @@ def test_stale_tab_cannot_overwrite_newer_description():
 
     assert tab_a.button(key=f"{DESCRIPTION}-save").disabled
     assert any("anderen Fenster" in e for e in texts(tab_a, "error"))
-    assert saved()["record"]["image_description"]["working_description_de"] == "Beschreibung aus Fenster B"
+    assert (
+        saved()["record"]["image_description"]["working_description_de"]
+        == "Beschreibung aus Fenster B"
+    )
 
     tab_a.button(key=f"{DESCRIPTION}-reload").click().run()
     assert tab_a.text_area(key=DESCRIPTION).value == "Beschreibung aus Fenster B"
@@ -238,8 +286,13 @@ def test_click_from_outdated_page_is_refused_by_the_store():
     save_description(tab_b, "Beschreibung aus Fenster B")
     tab_a.button(key=f"{DESCRIPTION}-save").click().run()
 
-    assert saved()["record"]["image_description"]["working_description_de"] == "Beschreibung aus Fenster B"
-    assert any("inzwischen an anderer Stelle geändert" in e for e in texts(tab_a, "error"))
+    assert (
+        saved()["record"]["image_description"]["working_description_de"]
+        == "Beschreibung aus Fenster B"
+    )
+    assert any(
+        "inzwischen an anderer Stelle geändert" in e for e in texts(tab_a, "error")
+    )
 
 
 def test_untouched_tab_follows_saved_keywords_without_false_unsaved_warning():
@@ -255,11 +308,51 @@ def test_untouched_tab_follows_saved_keywords_without_false_unsaved_warning():
 
 def test_collection_export_has_one_row_per_region_of_all_objects():
     import csv
+
     app = open_app("sammlung")
     app.button(key="collection-export").click().run()
-    with (store.EXPORT_DIR / "sammlung.csv").open(encoding="utf-8-sig", newline="") as handle:
+    with (store.EXPORT_DIR / "sammlung.csv").open(
+        encoding="utf-8-sig", newline=""
+    ) as handle:
         rows = list(csv.DictReader(handle))
     assert len(rows) == 3 + 5
     assert {r["ppn"] for r in rows} == {"PPN1814684999", "PPN1772789429"}
-    assert all(r["colibri_lizenz"] == "https://creativecommons.org/licenses/by/4.0/" for r in rows)
+    assert all(
+        r["colibri_lizenz"] == "https://creativecommons.org/licenses/by/4.0/"
+        for r in rows
+    )
     assert not store.WORK_DIR.exists()
+
+
+def test_final_approval_workflow(monkeypatch):
+    from kinderbuch_bildlabor import validate
+    from test_review import ready_record
+
+    working = store.new_working_copy(store.object_source(PILOT))
+    working["record"] = ready_record()
+    store.save_working_copy(working, "Testvorbereitung")
+    app = open_app()
+    assert app.button(key=f"{PILOT}-final-confirm").disabled
+    # Only substantive fixture findings are resolved in this isolated test scenario.
+    original = validate.run_all
+    monkeypatch.setattr(
+        validate,
+        "run_all",
+        lambda *args: [f for f in original(*args) if f.code != "MODS_DIFFERENCE"],
+    )
+    app.run()
+    assert "Bereit zur Endprüfung" in texts(app, "markdown")
+    app.text_input(key="reviewer").input("Endprüfer").run()
+    app.checkbox(key=f"{PILOT}-final-ack").check().run()
+    app.button(key=f"{PILOT}-final-confirm").click().run()
+    assert not app.exception
+    assert saved()["record"]["final_approval"]["by"] == "Endprüfer"
+    app.button(key=f"{PILOT}-export").click().run()
+    app.button(key=f"{PILOT}-roundtrip").click().run()
+    assert all(m.startswith("Erhalten:") for m in roundtrip_messages(app))
+    restarted = open_app()
+    assert any(
+        "Abschließend bestätigt von Endprüfer" in s for s in texts(restarted, "success")
+    )
+    save_description(restarted, "Neue Beschreibung nach Endprüfung")
+    assert "final_approval" not in saved()["record"]

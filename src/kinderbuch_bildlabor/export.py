@@ -10,13 +10,44 @@ from pathlib import Path
 from kinderbuch_bildlabor import store
 
 CSV_COLUMNS = [
-    "objekt_id", "objekt_status", "ppn", "titel", "physische_seite", "scan_nummer", "seitenbezeichnung_mets",
-    "gedruckte_seitenzahl", "region_id", "bezeichnung", "regionstyp", "x", "y", "breite", "hoehe",
-    "koordinatenbezug", "regionen_pruefstatus", "regionen_herkunft", "beschreibung", "beschreibung_pruefstatus",
-    "beschreibung_herkunft", "suchbegriffe", "suchbegriffe_vokabular", "suchbegriffe_pruefstatus",
-    "suchbegriffe_herkunft", "transkription", "transkription_pruefstatus", "illustrator",
-    "quelle_institution", "quelle_ansicht", "quelle_bildinfo", "rechte_quellwerk",
-    "colibri_datei", "colibri_lizenz", "colibri_namensnennung", "exportiert_am",
+    "objekt_id",
+    "objekt_status",
+    "endpruefung_person",
+    "endpruefung_am",
+    "ppn",
+    "titel",
+    "physische_seite",
+    "scan_nummer",
+    "seitenbezeichnung_mets",
+    "gedruckte_seitenzahl",
+    "region_id",
+    "bezeichnung",
+    "regionstyp",
+    "x",
+    "y",
+    "breite",
+    "hoehe",
+    "koordinatenbezug",
+    "regionen_pruefstatus",
+    "regionen_herkunft",
+    "beschreibung",
+    "beschreibung_pruefstatus",
+    "beschreibung_herkunft",
+    "suchbegriffe",
+    "suchbegriffe_vokabular",
+    "suchbegriffe_pruefstatus",
+    "suchbegriffe_herkunft",
+    "transkription",
+    "transkription_pruefstatus",
+    "illustrator",
+    "quelle_institution",
+    "quelle_ansicht",
+    "quelle_bildinfo",
+    "rechte_quellwerk",
+    "colibri_datei",
+    "colibri_lizenz",
+    "colibri_namensnennung",
+    "exportiert_am",
 ]
 
 
@@ -40,42 +71,59 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
     for region in record["region_annotations"]:
         x, y, w, h = region["xywh"]
         field = region.get("transcription_field")
-        rows.append({
-            "objekt_id": record["id"],
-            "objekt_status": record["status"],
-            "ppn": source["ppn"],
-            "titel": biblio["title"],
-            "physische_seite": source["physical_page_id"],
-            "scan_nummer": source["scan_number"],
-            "seitenbezeichnung_mets": source.get("page_label_mets"),
-            "gedruckte_seitenzahl": source["printed_page_number"],
-            "region_id": region["id"],
-            "bezeichnung": region["label_de"],
-            "regionstyp": region["region_type"],
-            "x": x, "y": y, "breite": w, "hoehe": h,
-            "koordinatenbezug": f"Pixel im Ausgangsbild {source['image_width']} × {source['image_height']}",
-            "regionen_pruefstatus": region["review_status"],
-            "regionen_herkunft": region.get("region_origin_de"),
-            # Die Beschreibung gilt dem ganzen Bild und steht deshalb nur in der Zeile der Illustration
-            "beschreibung": description["working_description_de"] if region["region_type"] == "illustration" else None,
-            "beschreibung_pruefstatus": description["review_status"] if region["region_type"] == "illustration" else None,
-            "beschreibung_herkunft": description.get("description_origin_de") if region["region_type"] == "illustration" else None,
-            "suchbegriffe": "; ".join(region.get("keywords_de", [])),
-            "suchbegriffe_vokabular": region.get("keyword_vocabulary"),
-            "suchbegriffe_pruefstatus": region.get("keyword_review_status"),
-            "suchbegriffe_herkunft": region.get("keyword_origin_de"),
-            "transkription": transcription[field] if field else None,
-            "transkription_pruefstatus": transcription["review_status_by_field"][field] if field else None,
-            "illustrator": record["image_description"]["illustrator"],
-            "quelle_institution": source["institution"],
-            "quelle_ansicht": source["viewer_url"],
-            "quelle_bildinfo": source["image_info_url"],
-            "rechte_quellwerk": biblio["rights_statement"],
-            "colibri_datei": source["colibri_file_reference"],
-            "colibri_lizenz": source["colibri_dataset_license"],
-            "colibri_namensnennung": source["colibri_dataset_credit"],
-            "exportiert_am": exported_at,
-        })
+        rows.append(
+            {
+                "objekt_id": record["id"],
+                "objekt_status": record["status"],
+                "endpruefung_person": record.get("final_approval", {}).get("by"),
+                "endpruefung_am": record.get("final_approval", {}).get("at"),
+                "ppn": source["ppn"],
+                "titel": biblio["title"],
+                "physische_seite": source["physical_page_id"],
+                "scan_nummer": source["scan_number"],
+                "seitenbezeichnung_mets": source.get("page_label_mets"),
+                "gedruckte_seitenzahl": source["printed_page_number"],
+                "region_id": region["id"],
+                "bezeichnung": region["label_de"],
+                "regionstyp": region["region_type"],
+                "x": x,
+                "y": y,
+                "breite": w,
+                "hoehe": h,
+                "koordinatenbezug": f"Pixel im Ausgangsbild {source['image_width']} × {source['image_height']}",
+                "regionen_pruefstatus": region["review_status"],
+                "regionen_herkunft": region.get("region_origin_de"),
+                # Die Beschreibung gilt dem ganzen Bild und steht deshalb nur in der Zeile der Illustration
+                "beschreibung": description["working_description_de"]
+                if region["region_type"] == "illustration"
+                else None,
+                "beschreibung_pruefstatus": description["review_status"]
+                if region["region_type"] == "illustration"
+                else None,
+                "beschreibung_herkunft": description.get("description_origin_de")
+                if region["region_type"] == "illustration"
+                else None,
+                "suchbegriffe": "; ".join(region.get("keywords_de", [])),
+                "suchbegriffe_vokabular": region.get("keyword_vocabulary"),
+                "suchbegriffe_pruefstatus": region.get("keyword_review_status"),
+                "suchbegriffe_herkunft": region.get("keyword_origin_de"),
+                "transkription": transcription[field] if field else None,
+                "transkription_pruefstatus": transcription["review_status_by_field"][
+                    field
+                ]
+                if field
+                else None,
+                "illustrator": record["image_description"]["illustrator"],
+                "quelle_institution": source["institution"],
+                "quelle_ansicht": source["viewer_url"],
+                "quelle_bildinfo": source["image_info_url"],
+                "rechte_quellwerk": biblio["rights_statement"],
+                "colibri_datei": source["colibri_file_reference"],
+                "colibri_lizenz": source["colibri_dataset_license"],
+                "colibri_namensnennung": source["colibri_dataset_credit"],
+                "exportiert_am": exported_at,
+            }
+        )
     return rows
 
 
@@ -85,7 +133,20 @@ def write_csv(rows: list[dict], path: Path) -> None:
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
         writer.writeheader()
-        writer.writerows(rows)
+        # Nur die CSV-Darstellung entschärfen; Originaltexte bleiben unverändert.
+        writer.writerows(
+            {
+                key: "'" + value
+                if isinstance(value, str)
+                and (
+                    value.startswith(("\t", "\r", "\n"))
+                    or value.lstrip().startswith(("=", "+", "-", "@"))
+                )
+                else value
+                for key, value in row.items()
+            }
+            for row in rows
+        )
 
 
 def export_csv(record: dict, exported_at: str, path: Path) -> None:
@@ -94,7 +155,9 @@ def export_csv(record: dict, exported_at: str, path: Path) -> None:
 
 def export_collection_csv(records: list[dict], exported_at: str, path: Path) -> None:
     """Eine Übersicht aller Objekte der Sammlung, eine Zeile je Region."""
-    write_csv([row for record in records for row in csv_rows(record, exported_at)], path)
+    write_csv(
+        [row for record in records for row in csv_rows(record, exported_at)], path
+    )
 
 
 def leaves(data, path=()):
@@ -112,7 +175,14 @@ def leaves(data, path=()):
 def differing_fields(original: dict, reloaded: dict) -> list[str]:
     """Pfade aller Endwerte, die fehlen, hinzukommen oder sich unterscheiden."""
     before, after = dict(leaves(original)), dict(leaves(reloaded))
-    paths = sorted((p for p in before.keys() | after.keys() if before.get(p, ...) != after.get(p, ...)), key=str)
+    paths = sorted(
+        (
+            p
+            for p in before.keys() | after.keys()
+            if before.get(p, ...) != after.get(p, ...)
+        ),
+        key=str,
+    )
     return [" › ".join(str(part) for part in path) for path in paths]
 
 
@@ -136,18 +206,32 @@ def roundtrip_report(original: dict, reloaded: dict) -> list[tuple[str, bool]]:
 
     def same(selector) -> bool:
         return {p: v for p, v in before.items() if selector(p, v)} == {
-            p: v for p, v in after.items() if selector(p, v)}
+            p: v for p, v in after.items() if selector(p, v)
+        }
 
     # Nur Texte an Pfaden, die in beiden Ständen existieren; fehlende oder
     # hinzugekommene Felder sind keine Unicode-Frage und fallen im Gesamtvergleich auf
-    unicode_kept = all(after[p] == v for p, v in before.items()
-                       if p in after and isinstance(v, str) and not v.isascii())
+    unicode_kept = all(
+        after[p] == v
+        for p, v in before.items()
+        if p in after and isinstance(v, str) and not v.isascii()
+    )
     return [
         ("Unicode-Texte unverändert (z. B. ‘ „ ä ß ×)", unicode_kept),
-        ("Nullwerte bleiben null (nicht leer, nicht entfernt)", same(lambda p, v: v is None)),
-        ("Regionen und Koordinaten unverändert", original["region_annotations"] == reloaded["region_annotations"]),
+        (
+            "Nullwerte bleiben null (nicht leer, nicht entfernt)",
+            same(lambda p, v: v is None),
+        ),
+        (
+            "Regionen und Koordinaten unverändert",
+            original["region_annotations"] == reloaded["region_annotations"],
+        ),
         # Auch verschachtelte Prüfstände wie review_status_by_field › working_title
-        ("Alle Prüfstände unverändert",
-         same(lambda p, v: any(isinstance(key, str) and "status" in key for key in p))),
+        (
+            "Alle Prüfstände unverändert",
+            same(
+                lambda p, v: any(isinstance(key, str) and "status" in key for key in p)
+            ),
+        ),
         ("Gesamter Datensatz identisch", original == reloaded),
     ]

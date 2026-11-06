@@ -2,11 +2,11 @@
 
 ## Ausgangsfrage
 
-Digitalisierte Kinder- und Jugendbücher enthalten viele Illustrationen, die in Katalog und Viewer
-kaum erschlossen sind. Der Colibri-Datensatz der Staatsbibliothek zu Berlin stellt 53.533 solcher
-Abbildungen mit Metadaten bereit. Für die Nutzung in Recherche und Forschung fehlen auf Bildebene
-oft gerade die Angaben, die sorgfältige Arbeit erfordern: Wo genau liegt die Abbildung, was zeigt sie,
-was steht auf dem Bildblatt, und wer hat das geprüft?
+Das Projekt untersucht, wie sich einzelne Illustrationen aus digitalisierten Kinder- und Jugendbüchern
+beschreiben, am Bild prüfen und mit ihrer Herkunft weitergeben lassen. Grundlage ist der öffentlich
+zugängliche Colibri-Datensatz der Staatsbibliothek zu Berlin mit 53.533 Abbildungen und Metadaten.
+An sechs Beispielen werden Bildregion, sichtbarer Inhalt, Aufdrucke und die zugehörigen Prüfentscheidungen
+in einem nachvollziehbaren Arbeitsablauf zusammengeführt.
 
 Das Bildlabor zeigt an einer kleinen, echten Stichprobe, wie sich diese Angaben nachvollziehbar
 erfassen, einzeln prüfen und verlustfrei weitergeben lassen. Es ist ein Prototyp, kein Produktionssystem.
@@ -58,7 +58,7 @@ erfassen, einzeln prüfen und verlustfrei weitergeben lassen. Es ist ein Prototy
 | METS/MODS | Struktur, Seitenbezug, Personen und Rollen, vollständiges Mapping, Abgleich |
 | Validierung | technische Fehler, fachliche Hinweise und nicht ausgeführte Prüfungen getrennt |
 | Export | JSON und CSV je Objekt, Sammlungs-CSV, Rückladeprüfung, Prüfprotokoll |
-| Datensicherheit | Quelldateien schreibgeschützt; kein Überschreiben neuerer Stände aus veralteten Fenstern |
+| Datensicherheit | Quelldateien werden nur gelesen und über Prüfsummen kontrolliert; kein Überschreiben neuerer Stände aus veralteten Fenstern |
 
 ## Grenzen
 
@@ -75,7 +75,8 @@ erfassen, einzeln prüfen und verlustfrei weitergeben lassen. Es ist ein Prototy
 
 - **Shota Tsertsvadze:** Fragestellung und fachliche Anforderungen, Auswahl der Quellen, erste Lesung
   der Bildunterschriften des Pilotobjekts, Annahme der Pilot-Suchbegriffe, Bestätigung der
-  Regionsgrenzen des Bildtitels (siehe Prüfprotokoll) sowie die fachliche Prüfung der Stichprobe.
+  Regionsgrenzen des Bildtitels (siehe Prüfprotokoll). Weitere fachliche Prüfungen der Stichprobe
+  stehen noch aus und sind in [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md) aufgeführt.
 - **KI-Programmierassistent (Claude):** Umsetzung der Anwendung und der Tests nach diesen Vorgaben
   sowie die als „Entwurf des KI-Assistenten“ gekennzeichneten Beschreibungs- und Suchbegriffsvorschläge.
 - **Quellen:** Digitalisate und Metadaten der Staatsbibliothek zu Berlin; Colibri-Datensatz von

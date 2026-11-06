@@ -27,7 +27,8 @@ Vorführung ohne Änderung der eigenen Arbeitsstände:
 
 ![Regionen](screenshots/03-regionen.png)
 
-- Region „Bildtitel“ wählen. Sie wurde bereits mit Name und Zeitpunkt bestätigt.
+- Region „Bildtitel“ wählen und den Prüfstand zeigen. Eine eigene Arbeitskopie kann bereits eine
+  Bestätigung mit Name und Zeitpunkt enthalten; im unveränderten Quellpaket ist die Region noch offen.
 - Bei „Illustration“ die Breite um ein paar Pixel ändern. Es erscheinen der Hinweis „Ungespeicherte
   Änderung“ und eine Vorschau. Mit „Eingaben verwerfen“ zurücknehmen.
 - Hinweis: Die Koordinaten beziehen sich auf das Originalbild, nicht auf die Anzeige.

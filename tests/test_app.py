@@ -356,3 +356,41 @@ def test_final_approval_workflow(monkeypatch):
     )
     save_description(restarted, "Neue Beschreibung nach Endprüfung")
     assert "final_approval" not in saved()["record"]
+
+
+def test_real_validator_blocks_final_approval_on_open_review_items():
+    from kinderbuch_bildlabor import validate
+
+    src = store.object_source(PILOT)
+    working = store.new_working_copy(src)
+    record = working["record"]
+    record["image_description"]["review_status"] = review.DESCRIPTION_REVIEWED
+    for region in record["region_annotations"]:
+        region["review_status"] = review.REGION_REVIEWED
+        if "keywords_de" in region:
+            region["keyword_review_status"] = review.KEYWORDS_ACCEPTED
+    status = record["transcription"]["review_status_by_field"]
+    for field in status:
+        status[field] = review.TRANSCRIPTION_REVIEWED
+    store.save_working_copy(working, "Testvorbereitung")
+    assert all(area["done"] for area in review.review_areas(record))
+    items = {item["code"] for item in record["review_items"]}
+    assert items == {"IMPRINT_CONTEXT", "ILLUSTRATOR_ATTRIBUTION"}
+    findings = validate.run_all(working, src)
+    assert {f.code for f in validate.approval_blockers(findings)} == items
+
+    app = open_app()
+    app.text_input(key="reviewer").input("Endprüfer").run()
+    app.checkbox(key=f"{PILOT}-final-ack").check().run()
+    assert not app.exception
+    assert "Offen" in texts(app, "markdown")
+    assert any(w.startswith("Endbestätigung gesperrt") for w in texts(app, "warning"))
+    assert app.button(key=f"{PILOT}-final-confirm").disabled
+
+    before = saved()
+    with pytest.raises(review.ApprovalBlocked):
+        review.approve_final(
+            before["record"], before["record"], "Endprüfer", True, findings
+        )
+    assert saved() == before
+    assert "final_approval" not in saved()["record"]

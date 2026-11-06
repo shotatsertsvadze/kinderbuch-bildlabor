@@ -146,10 +146,10 @@ def check_open_reviews(record: dict) -> list[Finding]:
     for region in record["region_annotations"]:
         if region["review_status"] != review.REGION_REVIEWED:
             findings.append(Finding(REVIEW, "REGION_NOT_REVIEWED",
-                                    f"Region {region['id']} ({region['label_de']}): Grenzen noch nicht visuell bestätigt."))
+                                    f"Region „{region['label_de']}“: Grenzen noch nicht visuell bestätigt."))
         if "keywords_de" in region and region.get("keyword_review_status") != review.KEYWORDS_ACCEPTED:
             findings.append(Finding(REVIEW, "KEYWORDS_NOT_REVIEWED",
-                                    f"Region {region['id']}: Suchbegriffe noch nicht bestätigt "
+                                    f"Suchbegriffe der Region „{region['label_de']}“ noch nicht bestätigt "
                                     f"({review.status_label(region.get('keyword_review_status'))})."))
     for region in record["region_annotations"]:
         field = region.get("transcription_field")

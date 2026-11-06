@@ -313,3 +313,13 @@ def test_library_reports_missing_book_metadata(missing_book_metadata):
     ).run()
     assert not app.exception
     assert message in [error.value for error in app.error]
+
+
+def test_shared_parse_reuses_tree_until_file_changes(tmp_path):
+    path = tmp_path / "shared.xml"
+    path.write_text("<a/>", encoding="utf-8")
+    first = oai.parse_shared(path)
+    assert oai.parse_shared(path) is first
+    path.write_text("<a><b/></a>", encoding="utf-8")
+    assert oai.parse_shared(path) is not first
+    assert oai.parse_shared(path).find("b") is not None

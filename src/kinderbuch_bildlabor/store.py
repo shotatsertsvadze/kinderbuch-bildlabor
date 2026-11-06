@@ -78,7 +78,11 @@ def write_json(path: Path, data) -> None:
     with tempfile.NamedTemporaryFile(
         "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
     ) as tmp:
-        tmp.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+        try:
+            tmp.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+        except BaseException:
+            Path(tmp.name).unlink()
+            raise
     Path(tmp.name).replace(path)
 
 

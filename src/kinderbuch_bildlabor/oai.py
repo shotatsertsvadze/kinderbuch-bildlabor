@@ -7,6 +7,8 @@ erhalten ein lokales Zielfeld. So geht keine wiederholte oder unzugeordnete Anga
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 
 NS = {
     "oai": "http://www.openarchives.org/OAI/2.0/",
@@ -118,6 +120,17 @@ class SourceValue:
 
 def parse(path) -> ET.Element:
     return ET.parse(path).getroot()
+
+
+@lru_cache(maxsize=16)
+def _parse_stamped(path: str, mtime_ns: int, size: int) -> ET.Element:
+    return parse(path)
+
+
+def parse_shared(path) -> ET.Element:
+    """Geparster Baum nur zum Lesen, wiederverwendet bis sich Datei (Änderungszeit, Größe) ändert."""
+    stat = Path(path).stat()
+    return _parse_stamped(str(path), stat.st_mtime_ns, stat.st_size)
 
 
 class MissingMetadata(ValueError):

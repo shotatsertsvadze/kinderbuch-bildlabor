@@ -27,7 +27,7 @@ STEPS = [
 ]
 
 
-@st.cache_resource
+@st.cache_resource(max_entries=64)
 def thumbnail(path, xywh: tuple[int, ...]) -> Image.Image:
     image = regions.crop(ui.page_image(path), list(xywh))
     image.thumbnail((420, 300))
@@ -60,13 +60,14 @@ def render(collection: list[ui.Current]) -> None:
         f"#### Stichprobe: {len(collection)} Illustrationen aus {len(books)} Büchern"
     )
     columns = st.columns(3)
+    records = [cur.record for cur in collection]
     for index, cur in enumerate(collection):
         with columns[index % 3], st.container(border=True):
-            card(cur)
+            card(cur, records)
     collection_export(collection)
 
 
-def card(cur: ui.Current) -> None:
+def card(cur: ui.Current, records: list[dict]) -> None:
     record, source = cur.record, cur.record["source"]
     biblio = record["bibliographic_metadata_from_colibri"]
     illustration = record["region_annotations"][0]
@@ -87,7 +88,6 @@ def card(cur: ui.Current) -> None:
     st.progress(
         done / len(areas), text=f"{done} von {len(areas)} Prüfbereichen bestätigt"
     )
-    records = [store.load_working_copy(src)["record"] for src in store.catalog()]
     st.caption(
         review.readiness(record, validate.run_all(cur.working, cur.src, records))
     )

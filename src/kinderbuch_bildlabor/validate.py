@@ -277,7 +277,7 @@ def not_run_checks(record: dict) -> list[Finding]:
 def check_oai_source(record: dict, oai_path) -> list[Finding]:
     """Gespeicherte OAI-Antwort: Parsing und Bezug als technische, MODS-Abweichungen als fachliche Befunde."""
     try:
-        root = oai.parse(oai_path)
+        root = oai.parse_shared(oai_path)
     except ET.ParseError as error:
         return [
             Finding(

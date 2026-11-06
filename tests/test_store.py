@@ -1,3 +1,5 @@
+import pytest
+
 from kinderbuch_bildlabor import store
 
 PILOT = store.object_source("pilot-001")
@@ -222,3 +224,12 @@ def test_snapshots_are_deduplicated_and_incomplete_copy_blocks_overwrite(tmp_pat
             store.new_working_copy(PILOT), "Nicht speichern", tmp_path
         )
     assert path.read_bytes() == before
+
+
+def test_failed_write_leaves_no_temp_file_and_keeps_old_file(tmp_path):
+    path = tmp_path / "x.json"
+    store.write_json(path, {"ok": 1})
+    with pytest.raises(TypeError):
+        store.write_json(path, {"bad": object()})
+    assert [p.name for p in tmp_path.iterdir()] == ["x.json"]
+    assert store.read_json(path) == {"ok": 1}

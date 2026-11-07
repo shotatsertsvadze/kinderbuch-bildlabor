@@ -31,7 +31,7 @@ weicht ab:
 Die Werte wurden am 07.11.2026 gegen die öffentliche Colibri-CSV geprüft (SHA-256 wie im Manifest).
 Alle Aussagen gelten nur für diese fünf Beispiele; sie sagen nichts über die Fehlerquote von Colibri.
 
-**Leitbeispiel Scan 22:** Ein gerahmter Holzschnitt mitten im Fließtext zeigt zwei Figuren in einem
+**Leitbeispiel Scan 22:** Eine gerahmte Illustration mitten im Fließtext zeigt zwei Figuren in einem
 Gewölbe. Die automatische Klasse lautet „Karte“. Der Unterschied ist am Bild leicht nachvollziehbar.
 Die Entscheidung trifft trotzdem die prüfende Person, nicht die Anwendung.
 

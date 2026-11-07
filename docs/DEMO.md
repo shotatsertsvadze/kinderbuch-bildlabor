@@ -18,7 +18,7 @@ Bildschirmfotos zeigen den Stand vor der menschlichen Prüfung: Entscheidungen s
 
 ![Klassifikation](screenshots/02-klassifikation.png)
 
-- Links der Ausschnitt der markierten Region und die ganze Seite: ein gerahmter Holzschnitt im
+- Links der Ausschnitt der markierten Region und die ganze Seite: eine gerahmte Illustration im
   Fließtext, zwei Figuren im Gewölbe. Automatisch „Karte“.
 - Rechts beide Colibri-Angaben mit Herkunft. Hinweis: Die Spalte heißt in Colibri „groundtruth“, wird
   hier aber ebenfalls am Bild geprüft.

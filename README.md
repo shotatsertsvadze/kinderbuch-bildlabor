@@ -51,6 +51,7 @@ Ein Rundgang in drei Minuten: [docs/DEMO.md](docs/DEMO.md).
   `BILDLABOR_DATA_DIR=/tmp/probe uv run streamlit run app.py`
 
 Beschreibung der Stichprobe, Rechte und Annotationsregeln: [docs/DATENSATZ.md](docs/DATENSATZ.md).
+Begriffe: [docs/BEGRIFFE.md](docs/BEGRIFFE.md). Wichtige Entscheidungen: [docs/adr/](docs/adr/).
 
 ## Qualitätsprüfungen
 

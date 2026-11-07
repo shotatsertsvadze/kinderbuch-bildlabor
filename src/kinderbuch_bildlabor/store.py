@@ -71,19 +71,33 @@ def object_source(object_id: str) -> ObjectSource:
     return next(src for src in catalog() if src.id == object_id)
 
 
-def write_json(path: Path, data) -> None:
+def write_text(
+    path: Path, text: str, encoding: str = "utf-8", newline: str | None = None
+) -> None:
     """Schreibt über eine temporäre Datei, damit kein halb geschriebener Stand entsteht."""
     path.parent.mkdir(parents=True, exist_ok=True)
     # Eigener Name je Schreibvorgang: gleichzeitige Speicherungen dürfen sich nicht die Datei teilen
     with tempfile.NamedTemporaryFile(
-        "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+        "w",
+        encoding=encoding,
+        newline=newline,
+        dir=path.parent,
+        suffix=".tmp",
+        delete=False,
     ) as tmp:
         try:
-            tmp.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+            tmp.write(text)
+            tmp.flush()
+            # Ohne fsync kann ein Stromausfall nach dem Ersetzen eine leere Datei hinterlassen
+            os.fsync(tmp.fileno())
         except BaseException:
             Path(tmp.name).unlink()
             raise
     Path(tmp.name).replace(path)
+
+
+def write_json(path: Path, data) -> None:
+    write_text(path, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
 # Alle Browser-Sitzungen laufen als Threads in einem Streamlit-Prozess; die Sperre macht

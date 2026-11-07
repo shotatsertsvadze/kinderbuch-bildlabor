@@ -233,3 +233,18 @@ def test_failed_write_leaves_no_temp_file_and_keeps_old_file(tmp_path):
         store.write_json(path, {"bad": object()})
     assert [p.name for p in tmp_path.iterdir()] == ["x.json"]
     assert store.read_json(path) == {"ok": 1}
+
+
+def test_write_syncs_temp_file_before_replacing(tmp_path, monkeypatch):
+    path = tmp_path / "x.json"
+    order = []
+    monkeypatch.setattr(store.os, "fsync", lambda fd: order.append("fsync"))
+    real_replace = store.Path.replace
+
+    def replace(self, target):
+        order.append("replace")
+        return real_replace(self, target)
+
+    monkeypatch.setattr(store.Path, "replace", replace)
+    store.write_json(path, {"ok": 1})
+    assert order == ["fsync", "replace"]

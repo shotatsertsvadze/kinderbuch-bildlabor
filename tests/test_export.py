@@ -1,5 +1,7 @@
 import csv
 
+import pytest
+
 from kinderbuch_bildlabor import export, review, store
 
 
@@ -214,3 +216,16 @@ def test_both_csv_exports_neutralize_text_and_json_keeps_originals(tmp_path):
     export.export_json(working, tmp_path / "original.json")
     assert store.read_json(tmp_path / "original.json")["record"] == before["record"]
     assert working == before
+
+
+def test_failed_csv_write_keeps_previous_file_and_leaves_no_temp(tmp_path, monkeypatch):
+    path = tmp_path / "x.csv"
+    export.write_csv([{"beschreibung": "alt"}], path)
+    before = path.read_bytes()
+    monkeypatch.setattr(
+        store.os, "fsync", lambda fd: (_ for _ in ()).throw(OSError("voll"))
+    )
+    with pytest.raises(OSError):
+        export.write_csv([{"beschreibung": "neu"}], path)
+    assert path.read_bytes() == before
+    assert [p.name for p in tmp_path.iterdir()] == ["x.csv"]

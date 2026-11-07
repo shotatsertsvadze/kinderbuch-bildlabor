@@ -5,6 +5,7 @@ Weitergeben einzelner Zeilen nicht verloren gehen. Leere CSV-Zellen bedeuten "un
 """
 
 import csv
+import io
 from pathlib import Path
 
 from kinderbuch_bildlabor import store
@@ -129,24 +130,24 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
 
 def write_csv(rows: list[dict], path: Path) -> None:
     """utf-8-sig, damit Excel Umlaute und typografische Anführungszeichen korrekt öffnet."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
-        writer.writeheader()
-        # Nur die CSV-Darstellung entschärfen; Originaltexte bleiben unverändert.
-        writer.writerows(
-            {
-                key: "'" + value
-                if isinstance(value, str)
-                and (
-                    value.startswith(("\t", "\r", "\n"))
-                    or value.lstrip().startswith(("=", "+", "-", "@"))
-                )
-                else value
-                for key, value in row.items()
-            }
-            for row in rows
-        )
+    buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=CSV_COLUMNS)
+    writer.writeheader()
+    # Nur die CSV-Darstellung entschärfen; Originaltexte bleiben unverändert.
+    writer.writerows(
+        {
+            key: "'" + value
+            if isinstance(value, str)
+            and (
+                value.startswith(("\t", "\r", "\n"))
+                or value.lstrip().startswith(("=", "+", "-", "@"))
+            )
+            else value
+            for key, value in row.items()
+        }
+        for row in rows
+    )
+    store.write_text(path, buffer.getvalue(), encoding="utf-8-sig", newline="")
 
 
 def export_csv(record: dict, exported_at: str, path: Path) -> None:

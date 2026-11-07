@@ -3,7 +3,7 @@ name = "kinderbuch-bildlabor"
 version = "0.1.0"
 description = "Erschließung und Qualitätsprüfung historischer Kinderbuch-Illustrationen (Prototyp)"
 authors = [
-    { name = "Shota Tsertsvadze", email = "shottsertsvadze@gmail.com" }
+    { name = "Shota Tsertsvadze" }
 ]
 requires-python = ">=3.13"
 dependencies = [

@@ -150,7 +150,7 @@ def test_export_becomes_stale_after_confirmation_and_current_after_new_export():
     app.button(key=f"{PILOT}-export").click().run()
     app.button(key=f"{PILOT}-roundtrip").click().run()
     messages = roundtrip_messages(app)
-    assert len(messages) == 5 and all(m.startswith("Erhalten:") for m in messages)
+    assert len(messages) == 6 and all(m.startswith("Erhalten:") for m in messages)
 
 
 def test_real_content_difference_in_current_export_is_reported():
@@ -239,6 +239,7 @@ def test_genovefa_object_has_no_transcription_tab_and_shows_draft_origin():
     app = open_app("genovefa-scan-014")
     assert [t.label for t in app.tabs] == [
         "Übersicht",
+        "Klassifikation",
         "Regionen",
         "Beschreibung",
         "Bibliotheksdaten",
@@ -436,3 +437,93 @@ def test_failed_save_shows_notice_and_keeps_saved_state(monkeypatch):
     assert not app.exception
     assert any("Permission denied" in e for e in texts(app, "error"))
     assert not store.work_path(PILOT).exists()
+
+
+LEAD = "genovefa-scan-022"
+LEAD_REGION = f"{LEAD}-region-01"
+
+
+def submit_decision(app, code, message, option, rationale):
+    from kinderbuch_bildlabor import actions
+
+    key = actions.decision_key(LEAD, code, message)
+    app.radio(key=f"{key}-outcome").set_value(option)
+    app.text_area(key=f"{key}-rationale").input(rationale)
+    app.button(key=f"{key}-submit").click().run()
+    assert not app.exception
+    return key
+
+
+def test_lead_case_reaches_final_approval_with_reasoned_decisions_and_export():
+    app = open_app(LEAD)
+    assert "Klassifikation" in [t.label for t in app.tabs]
+    app.text_input(key="reviewer").input("Prüferin").run()
+    message = review.classification_message(
+        store.new_working_copy(store.object_source(LEAD))["record"]
+    )
+    # Without a rationale the decision is refused and nothing is written
+    from kinderbuch_bildlabor import actions
+
+    key = actions.decision_key(LEAD, review.CLASSIFICATION, message)
+    app.radio(key=f"{key}-outcome").set_value("Manuelle Klasse trifft zu: Abbildung")
+    app.button(key=f"{key}-submit").click().run()
+    assert any("begründen" in e for e in texts(app, "error"))
+    assert not store.work_path(LEAD).exists()
+
+    submit_decision(
+        app,
+        review.CLASSIFICATION,
+        message,
+        "Manuelle Klasse trifft zu: Abbildung",
+        "Gerahmter Holzschnitt mit zwei Figuren im Gewölbe; keine Kartenelemente.",
+    )
+    confirm(app, LEAD_REGION, "Prüferin")
+    app.checkbox(key=f"{LEAD}-description-review-check").check().run()
+    app.button(key=f"{LEAD}-description-review-confirm").click().run()
+    app.checkbox(key=f"{LEAD_REGION}-keywords-review-check").check().run()
+    app.button(key=f"{LEAD_REGION}-keywords-review-confirm").click().run()
+    assert "Offen" in texts(app, "markdown")
+    illustrator = next(
+        item["note_de"]
+        for item in saved(LEAD)["record"]["review_items"]
+        if item["code"] == "ILLUSTRATOR_ATTRIBUTION"
+    )
+    submit_decision(
+        app,
+        "ILLUSTRATOR_ATTRIBUTION",
+        illustrator,
+        "Illustrator bleibt unbekannt; Feld bewusst leer",
+        "Weder Colibri noch MODS nennen eine Person mit Rolle ill.",
+    )
+    assert "Bereit zur Endbestätigung" in texts(app, "markdown")
+    app.checkbox(key=f"{LEAD}-final-ack").check().run()
+    app.button(key=f"{LEAD}-final-confirm").click().run()
+    assert saved(LEAD)["record"]["final_approval"]["by"] == "Prüferin"
+
+    app.button(key=f"{LEAD}-export").click().run()
+    app.button(key=f"{LEAD}-roundtrip").click().run()
+    messages = roundtrip_messages(app)
+    assert len(messages) == 6 and all(m.startswith("Erhalten:") for m in messages)
+    exported = store.read_json(store.EXPORT_DIR / f"{LEAD}.json")["record"]
+    assert len(exported["decisions"]) == 2
+
+    restarted = open_app(LEAD)
+    assert any("Gerahmter Holzschnitt" in s for s in texts(restarted, "success"))
+    restarted.number_input(key=f"{LEAD_REGION}-x").set_value(231).run()
+    restarted.button(key=f"{LEAD_REGION}-save").click().run()
+    record = saved(LEAD)["record"]
+    assert "final_approval" not in record
+    assert [d["code"] for d in record["decisions"].values()] == [
+        "ILLUSTRATOR_ATTRIBUTION"
+    ]
+
+
+def test_start_page_states_question_selection_and_opens_lead_case():
+    app = open_app("sammlung")
+    assert any("abweichende Bildklassifikationen" in m for m in texts(app, "markdown"))
+    assert any(
+        "nur für diese fünf geprüften Beispiele" in c for c in texts(app, "caption")
+    )
+    app.button(key="lead-open").click().run()
+    assert app.radio(key="view").value == LEAD
+    assert not store.WORK_DIR.exists()

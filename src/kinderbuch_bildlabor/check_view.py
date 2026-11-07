@@ -5,7 +5,15 @@ import json
 
 import streamlit as st
 
-from kinderbuch_bildlabor import actions, export, review, store, ui, validate
+from kinderbuch_bildlabor import (
+    actions,
+    decision_view,
+    export,
+    review,
+    store,
+    ui,
+    validate,
+)
 from kinderbuch_bildlabor.ui import Current
 
 CATEGORY_STYLE = {
@@ -23,6 +31,12 @@ CATEGORY_STYLE = {
         st.info,
         ui.PENDING,
         "Bewusst nicht ausgeführt; über das Ergebnis ist nichts bekannt.",
+    ),
+    validate.DOCUMENTED: (
+        st.success,
+        ui.CONFIRMED,
+        "Belegte Unterschiede, zu denen eine benannte Person eine Entscheidung mit Begründung "
+        "festgehalten hat. Sie bleiben sichtbar und sperren die Endbestätigung nicht.",
     ),
 }
 
@@ -42,7 +56,14 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
             show("\n".join(f"- {f.message_de}" for f in selected), icon=icon)
         else:
             st.success("Keine.", icon=ui.OK)
+    decisions(cur, findings)
     ui.section("Endbestätigung des Objekts")
+    st.caption(
+        "Endbestätigung heißt: Eine benannte Person hat den gesamten gespeicherten Arbeitsstand "
+        "durchgesehen. Sie ist keine Ground-Truth-Freigabe, also keine geprüfte Referenz zur "
+        "Bewertung von Verfahren; dafür fehlt eine unabhängige Zweitprüfung. Jede spätere "
+        "Inhaltsänderung hebt sie auf."
+    )
     state = review.readiness(cur.record, findings)
     st.write(state)
     blockers = validate.approval_blockers(findings)
@@ -86,6 +107,29 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
             ],
             hide_index=True,
         )
+
+
+def decisions(cur: Current, findings: list) -> None:
+    decidable = [f for f in findings if validate.decidable(cur.record, f)]
+    if not decidable:
+        return
+    ui.section("Entscheidungen zu fachlichen Hinweisen")
+    st.caption(
+        "Belegte Unterschiede lassen sich nicht wegklicken. Eine benannte Person hält fest, wie mit "
+        "ihnen umgegangen wird, und begründet das. Nicht entscheidbare Hinweise bleiben offen. "
+        "Fehlende Bestätigungen und technische Fehler lassen sich so nicht übergehen."
+    )
+    for finding in decidable:
+        with st.container(border=True):
+            ui.source_text(finding.message_de)
+            if finding.code == review.CLASSIFICATION:
+                entry = review.decision(cur.record, finding.code, finding.message_de)
+                st.caption(
+                    (f"{entry['outcome_de']} ({entry['by']}). " if entry else "Offen. ")
+                    + "Entschieden wird im Reiter „Klassifikation“ am Bild."
+                )
+            else:
+                decision_view.decision_form(cur, finding.code, finding.message_de)
 
 
 def export_state(cur: Current) -> tuple[str, list[dict] | None, dict | None]:

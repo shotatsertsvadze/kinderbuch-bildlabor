@@ -16,6 +16,9 @@ DESCRIPTION_OPEN = "unreviewed"
 DESCRIPTION_REVIEWED = "description_reviewed"
 TRANSCRIPTION_PROVISIONAL = "provisional"
 TRANSCRIPTION_REVIEWED = "reviewed"
+CLASSIFICATION_OPEN = "classification_open"
+CLASSIFICATION_UNDECIDABLE = "classification_undecidable"
+CLASSIFICATION_DECIDED = "classification_decided"
 
 STATUS_LABELS_DE = {
     REGION_DRAFT: "Entwurf – visuelle Prüfung offen",
@@ -26,6 +29,9 @@ STATUS_LABELS_DE = {
     DESCRIPTION_REVIEWED: "am Bild geprüft",
     TRANSCRIPTION_PROVISIONAL: "vorläufig",
     TRANSCRIPTION_REVIEWED: "geprüft – nicht als Ground Truth freigegeben",
+    CLASSIFICATION_OPEN: "Entscheidung am Bild offen",
+    CLASSIFICATION_UNDECIDABLE: "begründet als nicht entscheidbar festgehalten",
+    CLASSIFICATION_DECIDED: "begründet entschieden",
     "unreviewed": "ungeprüft",
     "draft_pending_final_review": "Entwurf – Endbestätigung offen",
 }
@@ -36,6 +42,7 @@ DONE_STATUSES = {
     KEYWORDS_ACCEPTED,
     TRANSCRIPTION_REVIEWED,
     DESCRIPTION_REVIEWED,
+    CLASSIFICATION_DECIDED,
 }
 
 
@@ -53,6 +60,14 @@ def review_areas(record: dict) -> list[dict]:
         }
         for r in record["region_annotations"]
     ]
+    if message := classification_message(record):
+        areas.append(
+            {
+                "label_de": "Bildklassifikation (Colibri manuell gegen automatisch)",
+                "status": classification_status(record, message),
+                "tab_de": "Klassifikation",
+            }
+        )
     areas.append(
         {
             "label_de": "Bildbeschreibung",
@@ -127,6 +142,7 @@ def set_region_xywh(
     region["xywh"] = xywh
     region["review_status"] = REGION_DRAFT
     log(record, region_id, "Koordinaten geändert; Status auf Entwurf zurückgesetzt")
+    drop_stale_decisions(record)
     return True
 
 
@@ -207,6 +223,7 @@ def set_transcription(record: dict, field: str, text: str, seen_text: str) -> bo
         f"transcription/{field}",
         "Transkription geändert; Status auf vorläufig gesetzt",
     )
+    drop_stale_decisions(record)
     return True
 
 
@@ -270,3 +287,143 @@ def approve_final(
         by.strip(),
     )
     return True
+
+
+# Begründete Entscheidungen zu fachlichen Hinweisen. Der Hinweis bleibt sichtbar; eine
+# Entscheidung gilt nur für genau diesen Hinweistext und den Inhalt, auf dem sie beruht.
+CLASSIFICATION = "CLASSIFICATION_DIFFERENCE"
+UNDECIDABLE = "Nicht entscheidbar; bleibt offen"
+
+
+class DecisionInvalid(ValueError):
+    pass
+
+
+def classification_labels(record: dict) -> tuple[str, str] | None:
+    source = record["source"]
+    manual = source.get("colibri_groundtruth")
+    automatic = source.get("colibri_classification")
+    if manual and automatic and manual != automatic:
+        return manual, automatic
+    return None
+
+
+def classification_message(record: dict) -> str | None:
+    labels = classification_labels(record)
+    if not labels:
+        return None
+    return (
+        f"Bildklassifikation in Colibri abweichend: manuell „{labels[0]}“, "
+        f"automatisch „{labels[1]}“."
+    )
+
+
+def decision_options(code: str, record: dict) -> list[str]:
+    if code == CLASSIFICATION:
+        labels = classification_labels(record)
+        assert labels
+        return [
+            f"Manuelle Klasse trifft zu: {labels[0]}",
+            f"Automatische Klasse trifft zu: {labels[1]}",
+            "Keine der beiden Klassen trifft zu",
+            UNDECIDABLE,
+        ]
+    if code == "ILLUSTRATOR_ATTRIBUTION":
+        return ["Illustrator bleibt unbekannt; Feld bewusst leer", UNDECIDABLE]
+    return [
+        "Unterschied geprüft; beide Angaben bleiben mit ihrem Bezug erhalten",
+        UNDECIDABLE,
+    ]
+
+
+def decision_basis(record: dict, code: str):
+    """Inhalt, auf dem eine Entscheidung beruht; ändert er sich, verfällt sie."""
+    if code == CLASSIFICATION:
+        return [
+            r["xywh"]
+            for r in record["region_annotations"]
+            if r["region_type"] == "illustration"
+        ]
+    if code == "IMPRINT_CONTEXT":
+        return (record.get("transcription") or {}).get("working_publisher_statement")
+    if code == "ILLUSTRATOR_ATTRIBUTION":
+        return record["image_description"]["illustrator"]
+    return None
+
+
+def decision_key(code: str, message: str) -> str:
+    return f"{code}: {message}"
+
+
+def decision(record: dict, code: str, message: str) -> dict | None:
+    return record.get("decisions", {}).get(decision_key(code, message))
+
+
+def resolves(entry: dict | None) -> bool:
+    return entry is not None and entry["outcome_de"] != UNDECIDABLE
+
+
+def classification_status(record: dict, message: str) -> str:
+    entry = decision(record, CLASSIFICATION, message)
+    if entry is None:
+        return CLASSIFICATION_OPEN
+    return CLASSIFICATION_DECIDED if resolves(entry) else CLASSIFICATION_UNDECIDABLE
+
+
+def record_decision(
+    record: dict,
+    code: str,
+    message: str,
+    outcome: str | None,
+    rationale: str,
+    by: str,
+    seen_basis,
+) -> bool:
+    if not by.strip():
+        raise DecisionInvalid(
+            "Bitte links unter „Prüfende Person“ Ihren Namen eintragen."
+        )
+    if outcome not in decision_options(code, record):
+        raise DecisionInvalid("Bitte eine Entscheidung auswählen.")
+    if not rationale.strip():
+        raise DecisionInvalid("Bitte die Entscheidung begründen.")
+    basis = decision_basis(record, code)
+    require_seen(basis, seen_basis, "Der zugrunde liegende Inhalt")
+    old = decision(record, code, message)
+    if (
+        old
+        and old["outcome_de"] == outcome
+        and old["rationale_de"] == rationale.strip()
+    ):
+        return False
+    invalidate_final(record)
+    record.setdefault("decisions", {})[decision_key(code, message)] = {
+        "code": code,
+        "finding_de": message,
+        "outcome_de": outcome,
+        "rationale_de": rationale.strip(),
+        "basis": basis,
+        "by": by.strip(),
+        "at": now_utc(),
+    }
+    log(
+        record,
+        f"decision/{code}",
+        f"Entscheidung: {outcome}. Begründung: {rationale.strip()}",
+        by.strip(),
+    )
+    return True
+
+
+def drop_stale_decisions(record: dict) -> None:
+    """Nach einer Inhaltsänderung: Entscheidungen auf altem Inhalt aufheben, Protokoll behalten."""
+    decisions = record.get("decisions", {})
+    for key, entry in list(decisions.items()):
+        if entry["basis"] != decision_basis(record, entry["code"]):
+            del decisions[key]
+            log(
+                record,
+                f"decision/{entry['code']}",
+                "Entscheidung durch Inhaltsänderung aufgehoben "
+                f"(war: {entry['outcome_de']}; von {entry['by']})",
+            )

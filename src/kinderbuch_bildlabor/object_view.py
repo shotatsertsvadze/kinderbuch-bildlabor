@@ -334,6 +334,12 @@ def transcription_tab(cur: Current) -> None:
     transcription = cur.record["transcription"]
     ui.neutral_badge("Keine Ground Truth")
     st.caption(
+        "Ground Truth wäre eine freigegebene Referenztranskription, an der OCR gemessen wird "
+        "(CER/WER). Die gibt es hier nicht; die OCR-Ausgabe wird deshalb gezeigt, nicht bewertet. "
+        "Prüfweg: Bildausschnitt ansehen, Arbeitstranskription Zeichen für Zeichen vergleichen, "
+        "historische Schreibweise beibehalten, dann bestätigen oder vorläufig lassen."
+    )
+    st.caption(
         f"{transcription['review_note_de']} Bildtitel und Verlagsangabe werden einzeln geprüft."
     )
     ocr = cur.record.get("ocr_result")

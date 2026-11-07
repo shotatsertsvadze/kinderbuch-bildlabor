@@ -230,3 +230,45 @@ def test_edit_based_on_outdated_value_is_refused():
         record["image_description"]["working_description_de"] == "Stand aus Fenster B"
     )
     assert len(record["review_log"]) == 1
+
+
+def test_decided_review_item_stays_visible_but_stops_blocking():
+    src = store.object_source("pilot-001")
+    working = store.new_working_copy(src)
+    record = working["record"]
+    findings = validate.run_all(working, src)
+    imprint = next(f for f in findings if f.code == "IMPRINT_CONTEXT")
+    assert imprint in validate.approval_blockers(findings)
+    review.record_decision(
+        record,
+        imprint.code,
+        imprint.message_de,
+        review.decision_options(imprint.code, record)[0],
+        "Aufdruck und Katalog betreffen verschiedene Kontexte.",
+        "Person",
+        review.decision_basis(record, imprint.code),
+    )
+    findings = validate.run_all(working, src)
+    documented = [f for f in findings if f.category == validate.DOCUMENTED]
+    assert [f.code for f in documented] == ["IMPRINT_CONTEXT"]
+    assert "IMPRINT_CONTEXT" not in {
+        f.code for f in validate.approval_blockers(findings)
+    }
+    review.set_transcription(
+        record,
+        "working_publisher_statement",
+        "Verlag der L.P.Setzer'schen Buchhandlung in Rottweil.",
+        record["transcription"]["working_publisher_statement"],
+    )
+    findings = validate.run_all(working, src)
+    assert "IMPRINT_CONTEXT" in {f.code for f in validate.approval_blockers(findings)}
+
+
+def test_required_checks_and_technical_errors_are_not_decidable():
+    record = store.new_working_copy(store.object_source("pilot-001"))["record"]
+    for finding in [
+        validate.Finding(validate.REVIEW, "DESCRIPTION_NOT_REVIEWED", "x"),
+        validate.Finding(validate.TECHNICAL, "IMPRINT_CONTEXT", "x"),
+        validate.Finding(validate.NOT_RUN, "XSD_VALIDATION", "x"),
+    ]:
+        assert not validate.decidable(record, finding)

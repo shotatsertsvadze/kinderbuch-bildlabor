@@ -12,11 +12,13 @@ import streamlit as st
 from kinderbuch_bildlabor import (
     check_view,
     collection_view,
+    decision_view,
     library_view,
     object_view,
     review,
     store,
     ui,
+    validate,
 )
 
 st.set_page_config(
@@ -94,17 +96,20 @@ def object_page(cur: ui.Current) -> None:
     areas = review.review_areas(record)
     done = sum(a["done"] for a in areas)
     export_current = check_view.export_state(cur)[0] == "current"
+    findings = validate.run_all(cur.working, cur.src, [x.record for x in collection])
+    blockers = len(validate.approval_blockers(findings))
     st.info(
-        f"**Nächster Schritt:** {ui.next_step(record, export_current)}  \n"
+        f"**Nächster Schritt:** {ui.next_step(record, export_current, blockers)}  \n"
         f"{done} von {len(areas)} Prüfbereichen bestätigt.",
         icon=":material/arrow_forward:",
     )
-    names = ["Übersicht", "Regionen", "Beschreibung"]
-    views: list[Callable[[ui.Current], None]] = [
-        object_view.overview_tab,
-        object_view.region_tab,
-        object_view.description_tab,
-    ]
+    names = ["Übersicht"]
+    views: list[Callable[[ui.Current], None]] = [object_view.overview_tab]
+    if review.classification_labels(record):
+        names.append("Klassifikation")
+        views.append(decision_view.classification_tab)
+    names += ["Regionen", "Beschreibung"]
+    views += [object_view.region_tab, object_view.description_tab]
     if record.get("transcription"):
         names.append("Transkription")
         views.append(object_view.transcription_tab)

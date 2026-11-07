@@ -4,6 +4,7 @@ Jede Aktion nennt ihr Objekt ausdrücklich, liest den gespeicherten Stand, ände
 speichert nur echte Änderungen. Eingaben in dieser Sitzung liegen in st.session_state.
 """
 
+import hashlib
 from pathlib import Path
 
 import streamlit as st
@@ -215,19 +216,22 @@ def open_object(object_id: str) -> None:
     st.session_state.view = object_id
 
 
+def current_findings(src: store.ObjectSource, record: dict) -> list:
+    """Validierung des gerade geladenen Stands; nur unter der Speichersperre aufrufen."""
+    working = store.load_working_copy(src)
+    working["record"] = record
+    collection = [
+        record if other.id == src.id else store.load_working_copy(other)["record"]
+        for other in store.catalog()
+    ]
+    return validate.run_all(working, src, collection)
+
+
 def approve_object(object_id: str, seen: dict, acknowledged: bool) -> None:
     src = store.object_source(object_id)
 
     def approve(record):
-        working = store.load_working_copy(src)
-        working["record"] = record
-        collection = [
-            record
-            if other.id == object_id
-            else store.load_working_copy(other)["record"]
-            for other in store.catalog()
-        ]
-        findings = validate.run_all(working, src, collection)
+        findings = current_findings(src, record)
         return review.approve_final(record, seen, reviewer(), acknowledged, findings)
 
     try:
@@ -236,3 +240,49 @@ def approve_object(object_id: str, seen: dict, acknowledged: bool) -> None:
         st.session_state.notice = str(error)
     except OSError as error:
         write_failed(error)
+
+
+def decision_key(object_id: str, code: str, message: str) -> str:
+    digest = hashlib.sha256(message.encode()).hexdigest()[:8]
+    return f"{object_id}-decision-{code}-{digest}"
+
+
+def record_decision(object_id: str, code: str, message: str, seen_basis) -> None:
+    key = decision_key(object_id, code, message)
+    src = store.object_source(object_id)
+
+    def decide(record):
+        findings = current_findings(src, record)
+        if not any(
+            f.code == code and f.message_de == message and validate.decidable(record, f)
+            for f in findings
+        ):
+            raise review.ContentChanged(
+                "Der Hinweis hat sich inzwischen geändert. Bitte den aktuellen Stand ansehen."
+            )
+        return review.record_decision(
+            record,
+            code,
+            message,
+            st.session_state.get(f"{key}-outcome"),
+            st.session_state.get(f"{key}-rationale", ""),
+            reviewer(),
+            seen_basis,
+        )
+
+    try:
+        changed = store.update_working_copy(src, decide, "Begründete Entscheidung")
+    except (review.ContentChanged, review.DecisionInvalid) as error:
+        st.session_state[f"{key}-error"] = str(error)
+        return
+    except OSError as error:
+        write_failed(error)
+        return
+    for suffix in ("outcome", "rationale"):
+        st.session_state.pop(f"{key}-{suffix}", None)
+    st.toast(
+        "Gespeichert: Entscheidung"
+        if changed
+        else "Nichts gespeichert: Entscheidung und Begründung sind unverändert.",
+        icon=ui.OK if changed else ui.INFO,
+    )

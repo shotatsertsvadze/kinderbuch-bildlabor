@@ -8,7 +8,7 @@ import csv
 import io
 from pathlib import Path
 
-from kinderbuch_bildlabor import store
+from kinderbuch_bildlabor import review, store
 
 CSV_COLUMNS = [
     "objekt_id",
@@ -40,6 +40,14 @@ CSV_COLUMNS = [
     "suchbegriffe_herkunft",
     "transkription",
     "transkription_pruefstatus",
+    "colibri_klasse_manuell",
+    "colibri_klasse_automatisch",
+    "klassifikation_stand",
+    "klassifikation_entscheidung",
+    "klassifikation_begruendung",
+    "klassifikation_person",
+    "klassifikation_am",
+    "weitere_entscheidungen",
     "illustrator",
     "quelle_institution",
     "quelle_ansicht",
@@ -63,15 +71,56 @@ def export_json(working: dict, path: Path) -> dict:
     return data
 
 
+def classification_columns(record: dict) -> dict:
+    """Beide Colibri-Klassen und die Entscheidung dazu; gilt der Illustration."""
+    source = record["source"]
+    message = review.classification_message(record)
+    entry = review.decision(record, review.CLASSIFICATION, message) if message else None
+    if not source.get("colibri_groundtruth"):
+        stand = None
+    elif not message:
+        stand = "keine Abweichung"
+    else:
+        stand = review.status_label(review.classification_status(record, message))
+    return {
+        "colibri_klasse_manuell": source.get("colibri_groundtruth"),
+        "colibri_klasse_automatisch": source.get("colibri_classification"),
+        "klassifikation_stand": stand,
+        "klassifikation_entscheidung": entry and entry["outcome_de"],
+        "klassifikation_begruendung": entry and entry["rationale_de"],
+        "klassifikation_person": entry and entry["by"],
+        "klassifikation_am": entry and entry["at"],
+    }
+
+
+def other_decisions(record: dict) -> str | None:
+    entries = [
+        e
+        for e in record.get("decisions", {}).values()
+        if e["code"] != review.CLASSIFICATION
+    ]
+    return (
+        " | ".join(
+            f"{e['code']}: {e['outcome_de']}. Begründung: {e['rationale_de']} "
+            f"({e['by']}, {e['at']})"
+            for e in entries
+        )
+        or None
+    )
+
+
 def csv_rows(record: dict, exported_at: str) -> list[dict]:
     source = record["source"]
     biblio = record["bibliographic_metadata_from_colibri"]
     transcription = record.get("transcription") or {}
     description = record["image_description"]
+    classification = classification_columns(record)
+    decisions = other_decisions(record)
     rows = []
     for region in record["region_annotations"]:
         x, y, w, h = region["xywh"]
         field = region.get("transcription_field")
+        illustration = region["region_type"] == "illustration"
         rows.append(
             {
                 "objekt_id": record["id"],
@@ -114,6 +163,11 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
                 ]
                 if field
                 else None,
+                **{
+                    key: value if illustration else None
+                    for key, value in classification.items()
+                },
+                "weitere_entscheidungen": decisions,
                 "illustrator": record["image_description"]["illustrator"],
                 "quelle_institution": source["institution"],
                 "quelle_ansicht": source["viewer_url"],
@@ -233,6 +287,10 @@ def roundtrip_report(original: dict, reloaded: dict) -> list[tuple[str, bool]]:
             same(
                 lambda p, v: any(isinstance(key, str) and "status" in key for key in p)
             ),
+        ),
+        (
+            "Entscheidungen mit Begründung unverändert",
+            original.get("decisions") == reloaded.get("decisions"),
         ),
         ("Gesamter Datensatz identisch", original == reloaded),
     ]

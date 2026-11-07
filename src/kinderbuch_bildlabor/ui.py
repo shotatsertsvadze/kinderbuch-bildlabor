@@ -220,17 +220,22 @@ def conflict_note(keys: list[str], stored: list, shown_de: str) -> None:
     )
 
 
-def next_step(record: dict, export_current: bool) -> str:
+def next_step(record: dict, export_current: bool, blockers: int = 0) -> str:
     open_areas = [a for a in review.review_areas(record) if not a["done"]]
     if open_areas:
         return (
             f"{open_areas[0]['label_de']} prüfen (Reiter „{open_areas[0]['tab_de']}“)."
         )
+    if blockers:
+        return (
+            f"Offene fachliche Hinweise ({blockers}) im Reiter „Prüfung“ begründet entscheiden "
+            "oder bewusst offen lassen; bis dahin ist keine Endbestätigung möglich."
+        )
+    approved = record.get("final_approval") and record.get("status") == (
+        review.FINAL_APPROVED
+    )
+    if not approved:
+        return "Endbestätigung im Reiter „Prüfung“ erteilen, danach exportieren."
     if not export_current:
         return "Export erstellen (Reiter „Export“)."
-    if record.get("final_approval") and record.get("status") == review.FINAL_APPROVED:
-        return "Das Objekt ist endbestätigt und exportiert. Das ist keine Ground-Truth-Freigabe."
-    return (
-        "Alle Prüfbereiche sind bestätigt und exportiert. Die Endbestätigung erfolgt im "
-        "Reiter „Prüfung“, sofern keine blockierenden Befunde offen sind."
-    )
+    return "Das Objekt ist endbestätigt und exportiert. Das ist keine Ground-Truth-Freigabe."

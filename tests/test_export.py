@@ -229,3 +229,36 @@ def test_failed_csv_write_keeps_previous_file_and_leaves_no_temp(tmp_path, monke
         export.write_csv([{"beschreibung": "neu"}], path)
     assert path.read_bytes() == before
     assert [p.name for p in tmp_path.iterdir()] == ["x.csv"]
+
+
+def test_csv_carries_both_colibri_labels_and_the_classification_decision(tmp_path):
+    record = store.new_working_copy(store.object_source("genovefa-scan-022"))["record"]
+    row = export.csv_rows(record, "t")[0]
+    assert (row["colibri_klasse_manuell"], row["colibri_klasse_automatisch"]) == (
+        "Abbildung",
+        "Karte",
+    )
+    assert row["klassifikation_stand"] == "Entscheidung am Bild offen"
+    assert row["klassifikation_entscheidung"] is None
+    message = review.classification_message(record)
+    review.record_decision(
+        record,
+        review.CLASSIFICATION,
+        message,
+        "Manuelle Klasse trifft zu: Abbildung",
+        "Figurenszene „im Gewölbe“",
+        "Person",
+        review.decision_basis(record, review.CLASSIFICATION),
+    )
+    path = tmp_path / "x.csv"
+    export.export_csv(record, "t", path)
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["klassifikation_entscheidung"] == "Manuelle Klasse trifft zu: Abbildung"
+    assert row["klassifikation_begruendung"] == "Figurenszene „im Gewölbe“"
+    assert row["klassifikation_person"] == "Person"
+    pilot = store.new_working_copy(store.object_source("pilot-001"))["record"]
+    rows = export.csv_rows(pilot, "t")
+    # Das Pilot-Arbeitsmodell führt keine Colibri-Klassen; die Spalten bleiben leer statt geraten
+    assert rows[0]["klassifikation_stand"] is None
+    assert rows[1]["colibri_klasse_manuell"] is None

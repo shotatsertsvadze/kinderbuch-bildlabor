@@ -3,6 +3,7 @@
 - technischer Fehler: Daten sind formal unbrauchbar oder widersprüchlich
 - fachlicher Prüfhinweis: eine fachliche Entscheidung steht noch aus
 - nicht ausgeführte Prüfung: wurde bewusst noch nicht gemacht, Ergebnis unbekannt
+- begründet entschieden: fachlicher Hinweis mit Entscheidung einer benannten Person; bleibt sichtbar
 
 Unbekannte optionale Angaben (z. B. Illustrator) erzeugen keinen Fehler.
 """
@@ -17,11 +18,13 @@ from kinderbuch_bildlabor import oai, regions, review, store
 TECHNICAL = "technischer_fehler"
 REVIEW = "fachlicher_hinweis"
 NOT_RUN = "nicht_ausgefuehrt"
+DOCUMENTED = "begruendet_entschieden"
 
 CATEGORY_LABELS_DE = {
     TECHNICAL: "Technische Fehler",
     REVIEW: "Fachliche Prüfhinweise",
     NOT_RUN: "Noch nicht ausgeführte Prüfungen",
+    DOCUMENTED: "Begründet entschiedene Hinweise",
 }
 
 REQUIRED_FIELDS = [
@@ -199,6 +202,8 @@ def check_open_reviews(record: dict) -> list[Finding]:
         )
     for item in record.get("review_items", []):
         findings.append(Finding(REVIEW, item["code"], item["note_de"]))
+    if message := review.classification_message(record):
+        findings.append(Finding(REVIEW, review.CLASSIFICATION, message))
     if record["image_description"]["review_status"] != review.DESCRIPTION_REVIEWED:
         findings.append(
             Finding(
@@ -335,7 +340,8 @@ def run_all(
             src.record.parent / record["ocr_result"]["result_file"]
         )
         ocr_findings = check_ocr_file(record, ocr_data)
-    return (
+    return apply_decisions(
+        record,
         check_source_integrity(manifest, file_hashes)
         + check_working_basis(working, store.sha256(src.record))
         + check_required(record)
@@ -345,8 +351,26 @@ def run_all(
         + ocr_findings
         + check_oai_source(record, src.oai_record)
         + check_open_reviews(record)
-        + not_run_checks(record)
+        + not_run_checks(record),
     )
+
+
+def decidable(record: dict, finding: Finding) -> bool:
+    """Belegte Unterschiede, die eine Person begründet entscheiden darf; keine Pflichtprüfungen."""
+    codes = {review.CLASSIFICATION, "MODS_DIFFERENCE"} | {
+        item["code"] for item in record.get("review_items", [])
+    }
+    return finding.category in {REVIEW, DOCUMENTED} and finding.code in codes
+
+
+def apply_decisions(record: dict, findings: list[Finding]) -> list[Finding]:
+    return [
+        Finding(DOCUMENTED, f.code, f.message_de)
+        if decidable(record, f)
+        and review.resolves(review.decision(record, f.code, f.message_de))
+        else f
+        for f in findings
+    ]
 
 
 def approval_blockers(findings: list[Finding]) -> list[Finding]:

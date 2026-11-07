@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 import streamlit as st
 
-from kinderbuch_bildlabor import actions, export, oai, regions, review, ui
+from kinderbuch_bildlabor import actions, export, oai, regions, review, ui, workflow
 from kinderbuch_bildlabor.library_view import parsed_source
 from kinderbuch_bildlabor.ui import Current
 
@@ -32,11 +32,6 @@ def classification_tab(cur: Current) -> None:
     illustration = next(
         r for r in record["region_annotations"] if r["region_type"] == "illustration"
     )
-    st.markdown(
-        "**Frage:** Welche Klasse beschreibt diese Abbildung zutreffend? Zwei Angaben aus "
-        "demselben Datensatz widersprechen sich. Entschieden wird am Originalbild, mit Begründung "
-        "und Namen; beide Ausgangswerte bleiben unverändert erhalten."
-    )
     left, right = ui.image_and_controls()
     with left:
         st.image(
@@ -45,6 +40,8 @@ def classification_tab(cur: Current) -> None:
             caption=f"Markierte Region {illustration['xywh']} (Pixel im Scan {source['scan_number']})",
             alt="Ausschnitt der markierten Illustration aus der gescannten Seite.",
         )
+        ui.subsection("Belege am Original")
+        evidence(cur, illustration)
         st.image(
             regions.draw_regions(
                 ui.page_image(cur.src.page_image), record["region_annotations"]
@@ -54,47 +51,46 @@ def classification_tab(cur: Current) -> None:
             alt="Gescannte Buchseite; die Region der Illustration ist als Rahmen markiert.",
         )
     with right:
-        ui.section("Zwei Angaben in Colibri")
-        st.dataframe(
-            [
-                {
-                    "Herkunft": "Manuelle Annotation (Colibri-Spalte „groundtruth“)",
-                    "Klasse": manual,
-                },
-                {
-                    "Herkunft": "Automatische Klassifikation (Spalte „classification“)",
-                    "Klasse": automatic,
-                },
-            ],
-            hide_index=True,
+        ui.section("Welche Klasse trifft zu?")
+        st.markdown(
+            "Colibri nennt zwei Klassen. Wählen Sie am Bild die zutreffende und nennen Sie Ihre "
+            "Belege. Beide Ausgangswerte bleiben erhalten."
         )
-        st.caption(
-            "Die Spalte heißt in Colibri „groundtruth“. Hier wird sie trotzdem am Bild geprüft: "
-            "Ground Truth bedeutet eine geprüfte Referenz, und ob sie zutrifft, ist genau die Frage. "
+        groundtruth = (
+            "Steht in Colibri in der Spalte „groundtruth“; wird hier trotzdem am Bild geprüft. "
             f"Quelle: {source['colibri_file_reference']}."
         )
-        ui.section("Belege am Original")
-        evidence(cur, illustration)
-        ui.section("Entscheidung")
-        decision_form(cur, review.CLASSIFICATION, message)
-        ui.section("Was im Export erhalten bleibt")
-        row = next(
-            r
-            for r in export.csv_rows(record, "")
-            if r["region_id"] == illustration["id"]
+        manual_box, automatic_box = st.columns(2)
+        manual_box.metric("Colibri manuell", manual, help=groundtruth, border=True)
+        automatic_box.metric(
+            "Colibri automatisch",
+            automatic,
+            help="Automatische Klassifikation (Colibri-Spalte „classification“).",
+            border=True,
         )
-        st.dataframe(
-            [
-                {"CSV-Spalte": k, "Wert": "leer" if row[k] is None else str(row[k])}
-                for k in EXPORT_FIELDS
-            ],
-            hide_index=True,
-        )
-        st.caption(
-            "Der JSON-Export enthält zusätzlich die vollständige Entscheidung mit Grundlage und das "
-            "Prüfprotokoll. Ändert sich die Region später, wird die Entscheidung aufgehoben und muss "
-            "neu getroffen werden; die alte Begründung bleibt im Protokoll."
-        )
+        entry = decision_form(cur, review.CLASSIFICATION, message)
+        if review.resolves(entry):
+            workflow.continue_button(
+                cur.id, record, f"{cur.id}-classification-continue"
+            )
+        with st.expander("Was im Export erhalten bleibt"):
+            row = next(
+                r
+                for r in export.csv_rows(record, "")
+                if r["region_id"] == illustration["id"]
+            )
+            st.dataframe(
+                [
+                    {"CSV-Spalte": k, "Wert": "leer" if row[k] is None else str(row[k])}
+                    for k in EXPORT_FIELDS
+                ],
+                hide_index=True,
+            )
+            st.caption(
+                "Der JSON-Export enthält zusätzlich die vollständige Entscheidung mit Grundlage und "
+                "das Prüfprotokoll. Ändert sich die Region später, wird die Entscheidung aufgehoben "
+                "und muss neu getroffen werden; die alte Begründung bleibt im Protokoll."
+            )
 
 
 def evidence(cur: Current, illustration: dict) -> None:
@@ -125,11 +121,13 @@ def evidence(cur: Current, illustration: dict) -> None:
     )
 
 
-def decision_form(cur: Current, code: str, message: str) -> None:
+def decision_form(cur: Current, code: str, message: str) -> dict | None:
     record = cur.record
     entry = review.decision(record, code, message)
     if entry is None:
-        st.warning("Offen: noch keine Entscheidung festgehalten.", icon=ui.PENDING)
+        st.warning(
+            "Offen: Antwort wählen, begründen, mit Namen speichern.", icon=ui.PENDING
+        )
     else:
         show = st.success if review.resolves(entry) else st.info
         show(
@@ -151,9 +149,15 @@ def decision_form(cur: Current, code: str, message: str) -> None:
             key=f"{key}-rationale",
             height=ui.TEXT_AREA_HEIGHT,
         )
+        if not actions.reviewer():
+            st.caption(
+                f"{ui.LOCK} Zum Speichern wird Ihr Name benötigt: oben im Prüfpfad unter "
+                "„Prüfende Person“."
+            )
         st.form_submit_button(
             "Entscheidung mit Namen speichern",
             key=f"{key}-submit",
+            type="primary",
             on_click=actions.record_decision,
             args=(cur.id, code, message, review.decision_basis(record, code)),
         )
@@ -163,3 +167,4 @@ def decision_form(cur: Current, code: str, message: str) -> None:
         "„Nicht entscheidbar“ hält die Begründung fest, lässt den Hinweis aber offen und "
         "blockierend. Eine Entscheidung ist keine Ground-Truth-Freigabe."
     )
+    return entry

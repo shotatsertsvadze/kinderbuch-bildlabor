@@ -153,3 +153,14 @@ def test_pilot_labels_agree_and_need_no_classification_area():
     record = store.new_working_copy(store.object_source("pilot-001"))["record"]
     assert review.classification_labels(record) is None
     assert all(a["tab_de"] != "Klassifikation" for a in review.review_areas(record))
+
+
+def test_export_step_counts_as_done_only_after_final_approval():
+    from kinderbuch_bildlabor import workflow
+
+    draft = ready_record()
+    assert dict(workflow.steps(draft, export_current=True))["Export"] is False
+    draft["status"] = review.FINAL_APPROVED
+    draft["final_approval"] = {"by": "Prüferin", "at": "2026-11-07T10:00:00+00:00"}
+    assert dict(workflow.steps(draft, export_current=True))["Export"] is True
+    assert workflow.next_tab(draft, export_current=True) is None

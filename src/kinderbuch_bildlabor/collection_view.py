@@ -67,9 +67,11 @@ def hero(cur: ui.Current) -> None:
             st.caption("BILDARCHIV · FALLSTUDIE")
             st.title("Kinderbuch-Bildlabor")
             st.markdown(f"**{QUESTION}**")
+            manual, automatic = review.classification_labels(cur.record) or ("", "")
             st.write(
-                "Öffnen Sie eine historische Illustration, vergleichen Sie die Angaben im "
-                "Colibri-Datensatz und halten Sie Ihre Entscheidung mit Quelle fest."
+                f"Für diesen Holzschnitt nennt Colibri zwei Klassen: manuell „{manual}“, "
+                f"automatisch „{automatic}“. Sie prüfen am Bild, welche zutrifft, begründen Ihre "
+                "Entscheidung und exportieren sie mit Herkunft."
             )
             st.button(
                 "Leitbeispiel öffnen: Genovefa, Scan 22",
@@ -80,7 +82,10 @@ def hero(cur: ui.Current) -> None:
                 type="primary",
                 icon=":material/arrow_forward:",
             )
-            st.caption("Bild ansehen → Klassen vergleichen → Ergebnis exportieren")
+            st.caption(
+                "Fünf Schritte: Rahmen prüfen → Klassen vergleichen → "
+                "Beschreibung prüfen → Prüfung abschließen → exportieren"
+            )
         with picture:
             st.image(
                 regions.crop(ui.page_image(cur.src.page_image), illustration["xywh"]),

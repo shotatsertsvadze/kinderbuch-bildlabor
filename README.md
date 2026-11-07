@@ -35,10 +35,10 @@ ist nur auf diesem Rechner erreichbar. Beenden mit `Strg+C` im Terminal.
 
 ## Wo anfangen
 
-1. Links unter „Prüfende Person“ einen Namen eintragen.
-2. Auf der Startseite **„Leitbeispiel öffnen: Genovefa, Scan 22“** wählen. Der Prüfpfad hebt
-   den nächsten offenen Schritt hervor. Mit **„Bild prüfen“** öffnen Sie die Regionen, mit
-   **„Klassen vergleichen“** die Colibri-Angaben und die Entscheidung mit Begründung.
+1. Auf der Startseite **„Leitbeispiel öffnen: Genovefa, Scan 22“** wählen.
+2. Im Prüfpfad unter „Prüfende Person“ einen Namen eintragen. Der Prüfpfad hebt den nächsten
+   offenen Schritt hervor und hakt erledigte ab. Nach jedem Speichern führt **„Weiter“** zum
+   nächsten Schritt; die Reiter bleiben zum Nachsehen erreichbar.
 3. „Zweites Beispiel öffnen“ zeigt Verlagsangabe und OCR bei „Die Heimath in Amerika“.
 
 Begriffe wie *Endbestätigung* und *Ground Truth* erklärt die Startseite und die Stelle, an der sie

@@ -133,7 +133,7 @@ def region_tab(cur: Current) -> None:
             horizontal=True,
             key=f"{cur.id}-region-choice",
         )
-    left, right = ui.image_and_controls()
+    left, right = ui.image_and_controls(pinned="regionen")
     with right:
         preview_xywh = region_editor(cur, by_id[choice])
     with left:
@@ -180,7 +180,7 @@ def region_editor(cur: Current, region: dict) -> list[int]:
             blocked_de="Speichern oder verwerfen Sie zuerst Ihre Änderungen unter „Rahmen korrigieren“."
             if sync != ui.CLEAN
             else None,
-            button_label="Rahmen bestätigen und speichern",
+            button_label="Rahmen als geprüft bestätigen",
         )
     with st.expander("Rahmen korrigieren", expanded=sync != ui.CLEAN):
         ui.origin_note(region.get("region_origin_de"))
@@ -220,7 +220,7 @@ def region_coordinates(
     )
     buttons = st.columns(2)
     buttons[0].button(
-        "Koordinaten speichern",
+        "Rahmen speichern (Entwurf)",
         key=f"{region_id}-save",
         on_click=actions.save_coordinates,
         args=(cur.id, region_id),
@@ -246,27 +246,24 @@ def region_continue(cur: Current, region_id: str) -> None:
         ),
         None,
     )
-    if pending:
-        label = f"Nächsten Rahmen prüfen · {pending['label_de']}"
-        changes = {f"{cur.id}-region-choice": pending["id"]}
-    else:
-        target = next(
-            (
-                area["tab_de"]
-                for area in review.review_areas(cur.record)
-                if not area["done"]
-            ),
-            "Prüfung",
-        )
-        label = f"Weiter · {workflow.STEPS[target][0]}"
-        changes = {f"{cur.id}-tabs": target}
+    if pending is None:
+        workflow.continue_button(cur.id, cur.record, f"{region_id}-continue")
+        return
     st.button(
-        label,
+        f"Weiter: nächsten Rahmen prüfen ({pending['label_de']})",
         key=f"{region_id}-continue",
         type="primary",
+        icon=":material/arrow_forward:",
         on_click=st.session_state.update,
-        args=(changes,),
+        args=({f"{cur.id}-region-choice": pending["id"]},),
     )
+
+
+def tab_continue(cur: Current, tab: str) -> None:
+    """Sind alle Prüfbereiche dieses Reiters bestätigt, führt „Weiter“ zum nächsten Schritt."""
+    if all(a["done"] for a in review.review_areas(cur.record) if a["tab_de"] == tab):
+        st.success(f"Alle Bereiche in „{tab}“ sind bestätigt.", icon=ui.CONFIRMED)
+        workflow.continue_button(cur.id, cur.record, f"{cur.id}-{tab.lower()}-continue")
 
 
 def description_tab(cur: Current) -> None:
@@ -278,7 +275,7 @@ def description_tab(cur: Current) -> None:
         ),
         None,
     )
-    left, right = ui.image_and_controls()
+    left, right = ui.image_and_controls(pinned="beschreibung")
     with left:
         if illustration:
             st.image(
@@ -293,6 +290,7 @@ def description_tab(cur: Current) -> None:
             if "keywords_de" in region:
                 st.divider()
                 keyword_editor(cur, region)
+        tab_continue(cur, "Beschreibung")
 
 
 def description_editor(cur: Current) -> None:
@@ -315,7 +313,7 @@ def description_editor(cur: Current) -> None:
         ui.conflict_note([key], [stored], f"„{stored}“")
     ui.edit_state(sync, "Speichern setzt die Bestätigung der Beschreibung zurück.")
     st.button(
-        "Beschreibung speichern",
+        "Text speichern (Entwurf)",
         key=f"{key}-save",
         on_click=actions.save_description,
         args=(cur.id,),
@@ -354,7 +352,7 @@ def keyword_editor(cur: Current, region: dict) -> None:
         ui.conflict_note([key], stored, "; ".join(region["keywords_de"]))
     ui.edit_state(sync, "Speichern setzt die Bestätigung der Suchbegriffe zurück.")
     st.button(
-        "Suchbegriffe speichern",
+        "Begriffe speichern (Entwurf)",
         key=f"{key}-save",
         on_click=actions.save_keywords,
         args=(cur.id, region_id),
@@ -396,6 +394,7 @@ def transcription_tab(cur: Current) -> None:
                     region,
                     ocr if ocr and ocr["region_id"] == region["id"] else None,
                 )
+    tab_continue(cur, "Transkription")
     with st.expander("Erste Lesung (unverändert, mit Zeilenumbruch)"):
         st.code(transcription["initial_user_transcription"], language=None)
 
@@ -426,7 +425,7 @@ def transcription_editor(cur: Current, region: dict, ocr: dict | None) -> None:
             sync, "Speichern setzt nur den Prüfstand dieses Textes auf „vorläufig“."
         )
         st.button(
-            "Transkription speichern",
+            "Lesung speichern (Entwurf)",
             key=f"{key}-save",
             on_click=actions.save_transcription,
             args=(cur.id, field),

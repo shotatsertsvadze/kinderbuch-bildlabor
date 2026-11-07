@@ -1,38 +1,81 @@
+/* Lesesaal: ruhiger Papiergrund, Scans als Blickfang, Berliner Blau nur für die nächste Handlung. */
+
+h1, h2, h3 {
+  letter-spacing: -0.015em;
+}
+
 .st-key-collection-hero,
 .st-key-review-guide {
-  background: rgba(13, 101, 91, 0.07);
+  background: #fffdf8;
+  border-left: 4px solid #1f4e79 !important;
+  box-shadow: 0 1px 2px rgba(30, 34, 48, 0.06);
 }
 
 .st-key-collection-hero h1 {
-  font-size: clamp(2rem, 4.5vw, 3.75rem);
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
   line-height: 1.05;
-  letter-spacing: -0.035em;
 }
 
-.st-key-collection-hero img {
-  border-radius: 0.65rem;
+/* Scans wie auf einem Lesepult: leicht abgesetzt, nie breiter als ihre Spalte */
+[data-testid="stImageContainer"] {
+  max-width: 100%;
 }
 
-.st-key-lead-open button,
+[data-testid="stImage"] img {
+  max-width: 100% !important;
+  height: auto;
+  border-radius: 0.35rem;
+  box-shadow: 0 2px 10px rgba(60, 40, 15, 0.18);
+}
+
+/* Prüfpfad: nummerierte Schritte als Leiste, deutlich anders als die Reiter darunter */
 .st-key-review-guide button {
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  border-radius: 999px;
 }
 
-.st-key-review-guide button:hover,
-.st-key-lead-open button:hover {
-  transform: translateY(-2px);
+.st-key-review-guide button[data-testid="stBaseButton-secondary"] {
+  background: transparent;
 }
 
-.st-key-review-guide button:focus-visible,
-.st-key-lead-open button:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 3px;
+/* Breite Fenster: Scan bleibt beim Blättern neben Häkchen und Schaltflächen */
+@media (min-width: 641px) {
+  [data-testid="stLayoutWrapper"]:has(> [class*="st-key-pinned-scan-"]) {
+    position: sticky;
+    top: 4rem;
+  }
 }
 
-.st-key-review-guide button[data-testid="stBaseButton-primary"],
-.st-key-lead-open button {
-  animation: bildlabor-next-step 720ms ease-out 2;
-  box-shadow: 0 3px 10px rgba(13, 101, 91, 0.2);
+/* Schmale Fenster: Spalten stehen untereinander, Scans dürfen die Bedienung nicht wegschieben */
+@media (max-width: 640px) {
+  [data-testid="stImage"] img {
+    max-height: 50vh;
+    width: auto !important;
+    object-fit: contain;
+  }
+}
+
+/* Sichtbarer Tastaturfokus überall */
+button:focus-visible,
+a:focus-visible,
+[role="tab"]:focus-visible,
+[role="radio"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+label:has(input:focus-visible) {
+  outline: 3px solid #1f4e79 !important;
+  outline-offset: 2px;
+}
+
+/* Eine kurze Bewegung auf der empfohlenen nächsten Handlung: „Weiter“, sonst der aktuelle Schritt */
+.st-key-lead-open button,
+[class*="-continue"] button,
+.st-key-review-guide button[data-testid="stBaseButton-primary"] {
+  animation: bildlabor-next-step 700ms ease-out 2;
+  box-shadow: 0 3px 10px rgba(31, 78, 121, 0.25);
+}
+
+[data-testid="stMain"]:has([class*="-continue"] button) .st-key-review-guide button {
+  animation: none;
 }
 
 @keyframes bildlabor-next-step {
@@ -41,10 +84,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .st-key-review-guide button,
-  .st-key-lead-open button {
+  *, *::before, *::after {
     animation: none !important;
-    transition: none;
-    transform: none;
+    transition: none !important;
   }
 }

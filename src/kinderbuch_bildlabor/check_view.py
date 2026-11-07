@@ -13,6 +13,7 @@ from kinderbuch_bildlabor import (
     store,
     ui,
     validate,
+    workflow,
 )
 from kinderbuch_bildlabor.ui import Current
 
@@ -43,6 +44,14 @@ CATEGORY_STYLE = {
 
 def validation_tab(cur: Current, collection: list[dict]) -> None:
     findings = validate.run_all(cur.working, cur.src, collection)
+    state = review.readiness(cur.record, findings)
+    ui.section("Stand des Objekts")
+    st.write(state)
+    if workflow.approved(cur.record):
+        workflow.continue_button(cur.id, cur.record, f"{cur.id}-final-continue")
+    decisions(cur, findings)
+    final_approval(cur, state, findings)
+    ui.section("Alle Prüfergebnisse")
     st.caption(
         "Alle Prüfungen laufen gegen die gespeicherten Quelldateien, ohne Netzabruf. "
         "Doppelte Kennungen werden über die ganze Sammlung geprüft."
@@ -50,51 +59,13 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
     for category, label in validate.CATEGORY_LABELS_DE.items():
         show, icon, meaning = CATEGORY_STYLE[category]
         selected = [f for f in findings if f.category == category]
-        ui.section(f"{label}: {len(selected)}")
+        ui.subsection(f"{label}: {len(selected)}")
         st.caption(meaning)
         if selected:
             show("\n".join(f"- {f.message_de}" for f in selected), icon=icon)
         else:
             st.success("Keine.", icon=ui.OK)
-    decisions(cur, findings)
-    ui.section("Endbestätigung des Objekts")
-    st.caption(
-        "Endbestätigung heißt: Eine benannte Person hat den gesamten gespeicherten Arbeitsstand "
-        "durchgesehen. Sie ist keine Ground-Truth-Freigabe, also keine geprüfte Referenz zur "
-        "Bewertung von Verfahren; dafür fehlt eine unabhängige Zweitprüfung. Jede spätere "
-        "Inhaltsänderung hebt sie auf."
-    )
-    state = review.readiness(cur.record, findings)
-    st.write(state)
-    blockers = validate.approval_blockers(findings)
-    if blockers:
-        st.warning(
-            "Endbestätigung gesperrt:\n"
-            + "\n".join(f"- {f.message_de}" for f in blockers)
-        )
-    approval = cur.record.get("final_approval")
-    if approval:
-        st.success(
-            f"Endbestätigung erteilt von {approval['by']} · {ui.local_time(approval['at'])}"
-        )
-    ack = st.checkbox(
-        "Ich bestätige den gesamten gespeicherten Arbeitsstand; keine Ground-Truth-Freigabe.",
-        key=f"{cur.id}-final-ack",
-    )
-    enabled = state == "Bereit zur Endbestätigung" and bool(actions.reviewer()) and ack
-    st.button(
-        "Endbestätigung erteilen",
-        key=f"{cur.id}-final-confirm",
-        disabled=not enabled,
-        on_click=actions.approve_object,
-        args=(cur.id, cur.record, ack),
-    )
-    if not enabled:
-        st.caption(
-            "Erforderlich: alle Bereiche bestätigt, keine Blocker, Name und ausdrückliche Zustimmung. "
-            "Bereits bestätigte Objekte benötigen keine erneute Bestätigung."
-        )
-    ui.section("Bewusst leere optionale Angaben")
+    ui.subsection("Bewusst leere optionale Angaben")
     st.write(
         (", ".join(validate.unknown_optional_fields(cur.record)) or "Keine.")
         + " (kein Fehler)"
@@ -109,15 +80,60 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
         )
 
 
+def final_approval(cur: Current, state: str, findings: list) -> None:
+    ui.section("Endbestätigung des Objekts")
+    st.caption(
+        "Eine benannte Person hat den gesamten gespeicherten Arbeitsstand durchgesehen. Das ist "
+        "keine Ground-Truth-Freigabe; dafür fehlt eine unabhängige Zweitprüfung. Jede spätere "
+        "Inhaltsänderung hebt sie auf."
+    )
+    blockers = validate.approval_blockers(findings)
+    if blockers:
+        st.warning(
+            "Endbestätigung gesperrt:\n"
+            + "\n".join(f"- {f.message_de}" for f in blockers)
+        )
+    approval = cur.record.get("final_approval")
+    if approval:
+        st.success(
+            f"Endbestätigung erteilt von {approval['by']} · {ui.local_time(approval['at'])}"
+        )
+        workflow.continue_button(cur.id, cur.record, f"{cur.id}-approved-continue")
+        return
+    ack = st.checkbox(
+        "Ich bestätige den gesamten gespeicherten Arbeitsstand; keine Ground-Truth-Freigabe.",
+        key=f"{cur.id}-final-ack",
+    )
+    reason = (
+        "Erst alle Prüfbereiche bestätigen und die gesperrten Punkte oben klären."
+        if state != "Bereit zur Endbestätigung"
+        else "Tragen Sie oben im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
+        if not actions.reviewer()
+        else "Bitte zuerst das Häkchen setzen."
+        if not ack
+        else None
+    )
+    st.button(
+        "Endbestätigung erteilen",
+        key=f"{cur.id}-final-confirm",
+        disabled=reason is not None,
+        type="primary",
+        icon=ui.CONFIRMED,
+        on_click=actions.approve_object,
+        args=(cur.id, cur.record, ack),
+    )
+    if reason:
+        st.caption(f"{ui.LOCK} Noch nicht möglich: {reason}")
+
+
 def decisions(cur: Current, findings: list) -> None:
     decidable = [f for f in findings if validate.decidable(cur.record, f)]
     if not decidable:
         return
-    ui.section("Entscheidungen zu fachlichen Hinweisen")
+    ui.section("Hinweise begründet entscheiden")
     st.caption(
-        "Belegte Unterschiede lassen sich nicht wegklicken. Eine benannte Person hält fest, wie mit "
-        "ihnen umgegangen wird, und begründet das. Nicht entscheidbare Hinweise bleiben offen. "
-        "Fehlende Bestätigungen und technische Fehler lassen sich so nicht übergehen."
+        "Belegte Unterschiede lassen sich nicht wegklicken. Halten Sie mit Ihrem Namen fest, wie "
+        "damit umgegangen wird, und begründen Sie das. „Nicht entscheidbar“ lässt den Hinweis offen."
     )
     for finding in decidable:
         with st.container(border=True):
@@ -158,7 +174,8 @@ def export_tab(cur: Current) -> None:
         key=f"{cur.id}-export",
         on_click=actions.run_export,
         args=(cur.id,),
-        type="primary",
+        type="secondary" if state == "current" else "primary",
+        icon=":material/download:",
     )
     if state == "none":
         st.info("Noch kein Export für dieses Objekt vorhanden.", icon=ui.INFO)
@@ -213,6 +230,7 @@ def roundtrip(cur: Current, state: str, exported: dict) -> None:
         on_click=actions.run_roundtrip,
         args=(cur.id,),
         disabled=state != "current",
+        type="primary",
     )
     if state != "current":
         st.caption(
@@ -223,6 +241,27 @@ def roundtrip(cur: Current, state: str, exported: dict) -> None:
     result = st.session_state.get(f"{cur.id}-roundtrip-result")
     if not result or result[0] != exported["exported_at"]:
         return
+    if all(ok for _, ok in result[1]) and not result[2]:
+        if not workflow.approved(cur.record):
+            st.info(
+                "Export vollständig zurückgelesen. Das Objekt ist noch nicht endbestätigt; "
+                "dieser Export ist ein Zwischenstand.",
+                icon=ui.INFO,
+            )
+            workflow.continue_button(cur.id, cur.record, f"{cur.id}-export-continue")
+        else:
+            st.success(
+                "Fertig: Endbestätigt, exportiert und vollständig zurückgelesen.",
+                icon=ui.CONFIRMED,
+            )
+            st.button(
+                "Weiter: zurück zur Sammlung",
+                key=f"{cur.id}-export-continue",
+                type="primary",
+                icon=":material/arrow_forward:",
+                on_click=actions.open_object,
+                args=("sammlung",),
+            )
     for label, ok in result[1]:
         if ok:
             st.success(f"Erhalten: {label}", icon=ui.OK)

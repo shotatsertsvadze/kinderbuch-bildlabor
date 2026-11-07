@@ -34,8 +34,10 @@ def subsection(title: str) -> None:
     st.markdown(f"**{title}**")
 
 
-def image_and_controls():
-    return st.columns(SPLIT, gap="large")
+def image_and_controls(pinned: str | None = None):
+    """Bild links, Bedienung rechts; mit `pinned` bleibt der Scan beim Blättern neben der Bedienung."""
+    left, right = st.columns(SPLIT, gap="large")
+    return (left.container(key=f"pinned-scan-{pinned}") if pinned else left), right
 
 
 def neutral_badge(text: str) -> None:
@@ -137,32 +139,36 @@ def confirm_controls(
     on_click,
     args=(),
     blocked_de: str | None = None,
-    button_label: str = "Bestätigen und speichern",
+    button_label: str = "Als geprüft bestätigen",
 ) -> None:
     """Bestätigung mit erklärter Bedeutung und sichtbarem Grund, falls gesperrt."""
-    subsection("Prüfung bestätigen")
-    st.caption(f"Bedeutung: {meaning_de}")
-    checked = st.checkbox(
-        statement_de, key=f"{key}-check", disabled=blocked_de is not None
-    )
-    reviewer = st.session_state.get("reviewer", "").strip()
-    reason = blocked_de or (
-        "Bitte zuerst das Häkchen setzen."
-        if not checked
-        else "Tragen Sie im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
-        if not reviewer
-        else None
-    )
-    st.button(
-        button_label,
-        key=f"{key}-confirm",
-        on_click=on_click,
-        args=args,
-        disabled=reason is not None,
-        type="primary",
-    )
-    if reason:
-        st.caption(f"{LOCK} Noch nicht möglich: {reason}")
+    with st.container(border=True, key=f"{key}-box"):
+        subsection("Prüfung mit Ihrem Namen bestätigen")
+        st.caption(
+            f"{meaning_de} Speichern ändert nur den Inhalt; erst die Bestätigung zählt als geprüft."
+        )
+        checked = st.checkbox(
+            statement_de, key=f"{key}-check", disabled=blocked_de is not None
+        )
+        reviewer = st.session_state.get("reviewer", "").strip()
+        reason = blocked_de or (
+            "Bitte zuerst das Häkchen setzen."
+            if not checked
+            else "Tragen Sie oben im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
+            if not reviewer
+            else None
+        )
+        st.button(
+            button_label,
+            key=f"{key}-confirm",
+            on_click=on_click,
+            args=args,
+            disabled=reason is not None,
+            type="primary",
+            icon=CONFIRMED,
+        )
+        if reason:
+            st.caption(f"{LOCK} Noch nicht möglich: {reason}")
 
 
 def confirmed_note(record: dict, area: str) -> None:

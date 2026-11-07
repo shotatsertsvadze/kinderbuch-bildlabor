@@ -13,33 +13,36 @@ Bildschirmfotos zeigen den Stand vor der menschlichen Prüfung: Entscheidungen s
 - Tabelle der Fallstudie: fünf Abbildungen aus „Genovefa“, manuell jeweils „Abbildung“, automatisch
   „Druckermarke“, „Exlibris“ oder „Karte“. Auswahlkriterium nennen: alle Zeilen dieses Buches mit
   manueller Klasse. Keine Aussage über Colibri insgesamt.
-- Links einen Namen eintragen, dann „Leitbeispiel öffnen“. Der hervorgehobene Schritt zeigt, was
-  als Nächstes zu prüfen ist. Jede Schaltfläche öffnet den zugehörigen Reiter.
+- „Leitbeispiel öffnen“, dann im Prüfpfad einen Namen eintragen. Der hervorgehobene Schritt zeigt,
+  was als Nächstes zu prüfen ist; erledigte Schritte sind abgehakt. Nach jedem Speichern führt
+  „Weiter“ zum nächsten Schritt.
 
 ## 0:30 – Leitbeispiel Scan 22, Reiter „Klassifikation“ (60 Sekunden)
 
 ![Klassifikation](screenshots/02-klassifikation.png)
 
-- Im Prüfpfad „Klassen vergleichen“ wählen.
-- Links der Ausschnitt der markierten Region und die ganze Seite: eine gerahmte Illustration im
-  Fließtext, zwei Figuren im Gewölbe. Automatisch „Karte“.
-- Rechts beide Colibri-Angaben mit Herkunft. Hinweis: Die Spalte heißt in Colibri „groundtruth“, wird
-  hier aber ebenfalls am Bild geprüft.
-- Belege: Prüfstand der Region, Bildbeschreibung, Seitenbezug im METS (Kapitel „[Text und
-  Illustrationen]“, Seite 16), Link zur Originalansicht.
-- Entscheidung: Auswahl und Pflichtbegründung, gespeichert mit Name und Zeitpunkt.
-- Unten „Was im Export erhalten bleibt“: dieselben Werte, die in der CSV stehen.
+- Im Prüfpfad „2 · Klassen vergleichen“ wählen.
+- Links das Material: Ausschnitt der markierten Region, Belege (Prüfstand der Region,
+  Bildbeschreibung, Seitenbezug im METS: Kapitel „[Text und Illustrationen]“, Seite 16, Link zur
+  Originalansicht) und die ganze Seite. Eine gerahmte Illustration, zwei Figuren im Gewölbe.
+- Rechts die Frage „Welche Klasse trifft zu?“ mit beiden Colibri-Angaben: manuell „Abbildung“,
+  automatisch „Karte“. Das Fragezeichen erklärt, dass die Spalte in Colibri „groundtruth“ heißt
+  und trotzdem am Bild geprüft wird.
+- Darunter die Entscheidung: Auswahl und Pflichtbegründung, gespeichert mit Name und Zeitpunkt.
+- „Was im Export erhalten bleibt“ aufklappen: dieselben Werte, die in der CSV stehen.
 
 ## 1:30 – Regionen und Prüfung (40 Sekunden)
 
 ![Regionen](screenshots/03-regionen.png)
 ![Prüfung](screenshots/04-pruefung.png)
 
-- Reiter „Regionen“: x-Wert per Pfeiltaste ändern, Vorschau und „Ungespeicherte Änderung“ zeigen, dann
-  „Eingaben verwerfen“. Gespeicherte Änderungen der Region heben eine Klassifikationsentscheidung auf.
-- Reiter „Prüfung“: technische Fehler, offene Hinweise, nicht ausgeführte Prüfungen und begründet
-  entschiedene Hinweise stehen getrennt. Der Hinweis zum unbekannten Illustrator wird begründet
-  entschieden, nicht ausgeblendet. Danach ist die Endbestätigung möglich; sie ist keine Ground Truth.
+- Reiter „Regionen“: Häkchen und Bestätigung stehen neben dem Scan. Unter „Rahmen korrigieren“ den
+  x-Wert per Pfeiltaste ändern, Vorschau und „Ungespeicherte Änderung“ zeigen, dann „Eingaben
+  verwerfen“. „Speichern (Entwurf)“ ändert nur den Inhalt; erst „Als geprüft bestätigen“ zählt als
+  geprüft. Gespeicherte Änderungen der Region heben eine Klassifikationsentscheidung auf.
+- Reiter „Prüfung“: oben, was zu tun ist. Der Hinweis zum unbekannten Illustrator wird begründet
+  entschieden, nicht ausgeblendet; danach ist die Endbestätigung möglich. Sie ist keine Ground
+  Truth. Darunter alle Prüfergebnisse getrennt nach Art.
 
 ## 2:10 – Export (20 Sekunden)
 

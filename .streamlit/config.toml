@@ -8,14 +8,18 @@ gatherUsageStats = false
 [client]
 toolbarMode = "minimal"
 
+# Lesesaal: Papierton als Grund, dunkle Tinte als Schrift, Berliner Blau nur für die nächste Handlung
 [theme]
 base = "light"
-primaryColor = "#0D655B"
-backgroundColor = "#F2F7F6"
-secondaryBackgroundColor = "#E4EFEE"
-textColor = "#17333C"
-borderColor = "#C3D9D6"
+primaryColor = "#1F4E79"
+backgroundColor = "#F7F3EB"
+secondaryBackgroundColor = "#EFE7D8"
+textColor = "#1E2230"
+borderColor = "#DCD1BD"
 font = "sans-serif"
 headingFont = "serif"
 baseFontSize = 16
-baseRadius = "0.65rem"
+baseRadius = "0.5rem"
+
+[theme.sidebar]
+backgroundColor = "#EFE7D8"

@@ -1,0 +1,50 @@
+.st-key-collection-hero,
+.st-key-review-guide {
+  background: rgba(13, 101, 91, 0.07);
+}
+
+.st-key-collection-hero h1 {
+  font-size: clamp(2rem, 4.5vw, 3.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.st-key-collection-hero img {
+  border-radius: 0.65rem;
+}
+
+.st-key-lead-open button,
+.st-key-review-guide button {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.st-key-review-guide button:hover,
+.st-key-lead-open button:hover {
+  transform: translateY(-2px);
+}
+
+.st-key-review-guide button:focus-visible,
+.st-key-lead-open button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.st-key-review-guide button[data-testid="stBaseButton-primary"],
+.st-key-lead-open button {
+  animation: bildlabor-next-step 720ms ease-out 2;
+  box-shadow: 0 3px 10px rgba(13, 101, 91, 0.2);
+}
+
+@keyframes bildlabor-next-step {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-key-review-guide button,
+  .st-key-lead-open button {
+    animation: none !important;
+    transition: none;
+    transform: none;
+  }
+}

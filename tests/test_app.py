@@ -527,3 +527,15 @@ def test_start_page_states_question_selection_and_opens_lead_case():
     app.button(key="lead-open").click().run()
     assert app.radio(key="view").value == LEAD
     assert not store.WORK_DIR.exists()
+
+
+def test_review_guide_opens_the_step_and_advances_after_confirmation():
+    app = open_app(LEAD)
+    assert app.button(key="guide-regionen").proto.type == "primary"
+    app.button(key="guide-regionen").click().run()
+    assert app.session_state[f"{LEAD}-tabs"] == "Regionen"
+    confirm(app, LEAD_REGION)
+    assert app.button(key="guide-klassifikation").proto.type == "primary"
+    app.button(key="guide-klassifikation").click().run()
+    assert app.session_state[f"{LEAD}-tabs"] == "Klassifikation"
+    assert not app.exception

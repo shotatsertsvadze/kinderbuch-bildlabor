@@ -8,16 +8,19 @@ Bildschirmfotos zeigen den Stand vor der menschlichen Prüfung: Entscheidungen s
 
 ![Startseite](screenshots/01-start.png)
 
-- Leitfrage vorlesen. Colibri führt zu jeder Abbildung eine manuelle und eine automatische Klasse.
+- Leitfrage neben der Illustration vorlesen. Colibri führt eine automatische und, wo vorhanden,
+  eine manuelle Klasse.
 - Tabelle der Fallstudie: fünf Abbildungen aus „Genovefa“, manuell jeweils „Abbildung“, automatisch
   „Druckermarke“, „Exlibris“ oder „Karte“. Auswahlkriterium nennen: alle Zeilen dieses Buches mit
   manueller Klasse. Keine Aussage über Colibri insgesamt.
-- Links einen Namen eintragen, dann „Leitbeispiel öffnen“.
+- Links einen Namen eintragen, dann „Leitbeispiel öffnen“. Der hervorgehobene Schritt zeigt, was
+  als Nächstes zu prüfen ist. Jede Schaltfläche öffnet den zugehörigen Reiter.
 
 ## 0:30 – Leitbeispiel Scan 22, Reiter „Klassifikation“ (60 Sekunden)
 
 ![Klassifikation](screenshots/02-klassifikation.png)
 
+- Im Prüfpfad „Klassen vergleichen“ wählen.
 - Links der Ausschnitt der markierten Region und die ganze Seite: eine gerahmte Illustration im
   Fließtext, zwei Figuren im Gewölbe. Automatisch „Karte“.
 - Rechts beide Colibri-Angaben mit Herkunft. Hinweis: Die Spalte heißt in Colibri „groundtruth“, wird

@@ -8,9 +8,14 @@ gatherUsageStats = false
 [client]
 toolbarMode = "minimal"
 
-# Gestaltung an einer Stelle. Farben folgen bewusst dem hellen/dunklen Standard von Streamlit;
-# die Markierungsfarben der Bildregionen stehen in regions.py.
 [theme]
+base = "light"
+primaryColor = "#0D655B"
+backgroundColor = "#F2F7F6"
+secondaryBackgroundColor = "#E4EFEE"
+textColor = "#17333C"
+borderColor = "#C3D9D6"
 font = "sans-serif"
+headingFont = "serif"
 baseFontSize = 16
-baseRadius = "0.5rem"
+baseRadius = "0.65rem"

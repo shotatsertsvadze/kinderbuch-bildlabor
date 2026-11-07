@@ -34,27 +34,6 @@ TERMS = [
     ),
 ]
 
-STEPS = [
-    (
-        "Quelle",
-        "Digitalisat, IIIF-Bild und METS/MODS der Staatsbibliothek, Metadaten aus Colibri",
-    ),
-    ("Regionen", "Illustration und Textbereiche als Pixelrechtecke im Originalbild"),
-    ("Beschreibung", "sichtbarer Bildinhalt und projektlokale Suchbegriffe"),
-    (
-        "Transkription",
-        "Bildtitel und Aufdrucke zeichengetreu, neben der gespeicherten OCR-Ausgabe",
-    ),
-    (
-        "Prüfung",
-        "jeder Bereich wird einzeln am Bild bestätigt; Änderungen setzen nur ihn zurück",
-    ),
-    (
-        "Export",
-        "JSON und CSV mit Herkunft, Rechten und Prüfprotokoll, mit Rückladeprüfung",
-    ),
-]
-
 
 @st.cache_resource(max_entries=64)
 def thumbnail(path, xywh: tuple[int, ...]) -> Image.Image:
@@ -64,31 +43,11 @@ def thumbnail(path, xywh: tuple[int, ...]) -> Image.Image:
 
 
 def render(collection: list[ui.Current]) -> None:
-    st.title("Kinderbuch-Bildlabor")
-    st.markdown(f"#### {QUESTION}")
-    st.markdown(
-        "Der Colibri-Datensatz der Staatsbibliothek zu Berlin enthält zu Abbildungen aus "
-        "digitalisierten Kinder- und Jugendbüchern eine manuelle und eine automatische Klasse. "
-        "Weichen beide ab, muss jemand am Originalbild entscheiden, die Entscheidung begründen und "
-        "sie so weitergeben, dass Herkunft und beide Ausgangswerte erhalten bleiben. Dieser lokale "
-        "Prototyp zeigt den Ablauf an echten Beispielen, ohne Netzabruf."
-    )
     by_id = {cur.id: cur for cur in collection}
+    hero(by_id[LEAD])
     case_study(collection)
     second_example(by_id[SECOND].record)
-    first_steps()
-    st.info(
-        "Alle Angaben sind Arbeitsstände. Grenzen, Beschreibungen und Lesungen gelten erst nach "
-        "ausdrücklicher Bestätigung durch eine prüfende Person als geprüft; nichts davon ist Ground Truth.",
-        icon=ui.INFO,
-    )
-
-    ui.section("Ablauf je Objekt")
-    st.markdown(
-        "\n".join(
-            f"{n}. **{name}:** {text}" for n, (name, text) in enumerate(STEPS, start=1)
-        )
-    )
+    glossary()
 
     books = {cur.record["source"]["ppn"] for cur in collection}
     ui.section(f"Stichprobe: {len(collection)} Illustrationen aus {len(books)} Büchern")
@@ -98,6 +57,37 @@ def render(collection: list[ui.Current]) -> None:
         with columns[index % 3], st.container(border=True):
             card(cur, records)
     collection_export(collection)
+
+
+def hero(cur: ui.Current) -> None:
+    illustration = cur.record["region_annotations"][0]
+    with st.container(key="collection-hero", border=True):
+        text, picture = st.columns([6, 5], gap="large", vertical_alignment="center")
+        with text:
+            st.caption("BILDARCHIV · FALLSTUDIE")
+            st.title("Kinderbuch-Bildlabor")
+            st.markdown(f"**{QUESTION}**")
+            st.write(
+                "Öffnen Sie eine historische Illustration, vergleichen Sie die Angaben im "
+                "Colibri-Datensatz und halten Sie Ihre Entscheidung mit Quelle fest."
+            )
+            st.button(
+                "Leitbeispiel öffnen: Genovefa, Scan 22",
+                key="lead-open",
+                help="Hier beginnen. Der Prüfpfad führt vom Bildausschnitt bis zum Export.",
+                on_click=actions.open_object,
+                args=(cur.id,),
+                type="primary",
+                icon=":material/arrow_forward:",
+            )
+            st.caption("Bild ansehen → Klassen vergleichen → Ergebnis exportieren")
+        with picture:
+            st.image(
+                regions.crop(ui.page_image(cur.src.page_image), illustration["xywh"]),
+                width="stretch",
+                alt="Historische Illustration mit zwei Figuren in einem Gewölbe",
+                caption="Genovefa · Augsburg 1810 · Scan 22",
+            )
 
 
 def case_study(collection: list[ui.Current]) -> None:
@@ -128,14 +118,6 @@ def case_study(collection: list[ui.Current]) -> None:
             }
         )
     st.dataframe(rows, hide_index=True)
-    st.button(
-        "Leitbeispiel öffnen: Genovefa, Scan 22 (automatisch „Karte“)",
-        key="lead-open",
-        on_click=actions.open_object,
-        args=(LEAD,),
-        type="primary",
-        icon=":material/arrow_forward:",
-    )
 
 
 def second_example(record: dict) -> None:
@@ -158,18 +140,8 @@ def second_example(record: dict) -> None:
     )
 
 
-def first_steps() -> None:
-    ui.section("Erste Schritte")
-    st.markdown(
-        "1. Links unter „Prüfende Person“ den eigenen Namen eintragen. Er wird bei jeder "
-        "Bestätigung und Entscheidung gespeichert.\n"
-        "2. Leitbeispiel öffnen, Reiter „Klassifikation“: markierte Region, beide Klassen, Belege, "
-        "Entscheidung mit Begründung.\n"
-        "3. Die übrigen Prüfbereiche folgen dem Hinweis „Nächster Schritt“.\n"
-        "4. Reiter „Prüfung“: offene Hinweise entscheiden, dann Endbestätigung. Reiter „Export“: "
-        "JSON und CSV erzeugen und mit der Rückladeprüfung kontrollieren."
-    )
-    with st.expander("Begriffe kurz erklärt", expanded=True):
+def glossary() -> None:
+    with st.expander("Begriffe kurz erklärt"):
         st.markdown("\n".join(f"- **{term}:** {text}" for term, text in TERMS))
 
 

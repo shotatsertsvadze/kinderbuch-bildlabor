@@ -36,9 +36,9 @@ ist nur auf diesem Rechner erreichbar. Beenden mit `Strg+C` im Terminal.
 ## Wo anfangen
 
 1. Links unter „Prüfende Person“ einen Namen eintragen.
-2. Auf der Startseite **„Leitbeispiel öffnen: Genovefa, Scan 22“** wählen und den Reiter
-   **„Klassifikation“** öffnen: markierte Region im Originalscan, beide Colibri-Klassen, Belege,
-   Entscheidung mit Begründung und die Werte, die im Export ankommen.
+2. Auf der Startseite **„Leitbeispiel öffnen: Genovefa, Scan 22“** wählen. Der Prüfpfad hebt
+   den nächsten offenen Schritt hervor. Mit **„Bild prüfen“** öffnen Sie die Regionen, mit
+   **„Klassen vergleichen“** die Colibri-Angaben und die Entscheidung mit Begründung.
 3. „Zweites Beispiel öffnen“ zeigt Verlagsangabe und OCR bei „Die Heimath in Amerika“.
 
 Begriffe wie *Endbestätigung* und *Ground Truth* erklärt die Startseite und die Stelle, an der sie

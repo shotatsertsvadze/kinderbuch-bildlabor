@@ -6,6 +6,7 @@ Arbeitet nur mit den gespeicherten Quelldateien; kein Netzabruf, keine OCR.
 
 import json
 from collections.abc import Callable
+from pathlib import Path
 
 import streamlit as st
 
@@ -19,11 +20,13 @@ from kinderbuch_bildlabor import (
     store,
     ui,
     validate,
+    workflow,
 )
 
 st.set_page_config(
     page_title="Kinderbuch-Bildlabor", page_icon=":material/menu_book:", layout="wide"
 )
+st.html(Path(workflow.__file__).with_name("workflow.css"))
 
 COLLECTION = "sammlung"
 
@@ -93,16 +96,11 @@ def object_page(cur: ui.Current) -> None:
         f"{biblio['author_display']} · {biblio['publication_place']} {biblio['publication_date']} · "
         f"{source['institution']} · {source['ppn']}"
     )
-    areas = review.review_areas(record)
-    done = sum(a["done"] for a in areas)
     export_current = check_view.export_state(cur)[0] == "current"
     findings = validate.run_all(cur.working, cur.src, [x.record for x in collection])
     blockers = len(validate.approval_blockers(findings))
-    st.info(
-        f"**Nächster Schritt:** {ui.next_step(record, export_current, blockers)}  \n"
-        f"{done} von {len(areas)} Prüfbereichen bestätigt.",
-        icon=":material/arrow_forward:",
-    )
+    tabs_key = f"{cur.id}-tabs"
+    workflow.render(record, tabs_key, export_current, blockers)
     names = ["Übersicht"]
     views: list[Callable[[ui.Current], None]] = [object_view.overview_tab]
     if review.classification_labels(record):
@@ -120,7 +118,7 @@ def object_page(cur: ui.Current) -> None:
         check_view.export_tab,
     ]
     # Eigener Schlüssel je Objekt: ein neu geöffnetes Objekt beginnt mit der Übersicht
-    for tab, view in zip(st.tabs(names, key=f"{cur.id}-tabs"), views):
+    for tab, view in zip(st.tabs(names, key=tabs_key, on_change="rerun"), views):
         with tab:
             view(cur)
 

@@ -145,7 +145,9 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
             key=f"{key}-outcome",
         )
         st.text_area(
-            "Begründung: Welche Belege am Bild haben Sie herangezogen?",
+            "Begründung: Welche Beobachtungen am Bild stützen Ihre Entscheidung?"
+            if code == review.CLASSIFICATION
+            else "Begründung: Welche Quellen stützen Ihre Entscheidung?",
             key=f"{key}-rationale",
             height=ui.TEXT_AREA_HEIGHT,
         )

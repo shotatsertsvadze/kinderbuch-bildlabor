@@ -522,7 +522,7 @@ def test_start_page_states_question_selection_and_opens_lead_case():
     app = open_app("sammlung")
     assert any("abweichende Bildklassifikationen" in m for m in texts(app, "markdown"))
     assert any(
-        "nur für diese fünf geprüften Beispiele" in c for c in texts(app, "caption")
+        "nur für diese fünf ausgewählten Beispiele" in c for c in texts(app, "caption")
     )
     app.button(key="lead-open").click().run()
     assert app.radio(key="view").value == LEAD

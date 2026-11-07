@@ -11,6 +11,17 @@ die automatische Colibri-Klasse voneinander abweichen. Zweites Beispiel: „Die 
 Überblick: [docs/PROJEKTUEBERSICHT.md](docs/PROJEKTUEBERSICHT.md) ·
 Rundgang in drei Minuten: [docs/DEMO.md](docs/DEMO.md)
 
+## Mein Anteil
+
+Ich habe die Fragestellung entwickelt, die Quellen ausgewählt und am Pilotobjekt die Lesung der
+Bildunterschriften vorbereitet. Den Rahmen um den Bildtitel habe ich am Scan geprüft und in meiner
+Arbeitskopie bestätigt. Die Umsetzung der App und die Entwürfe für die Genovefa-Beschreibungen und
+Suchbegriffe entstanden mit Unterstützung eines KI-Assistenten. Die Projektübersicht zeigt den
+Begründungsvorschlag für Scan 22 und seinen aktuellen Prüfstand.
+
+Im Übergabe-ZIP liegt der dokumentierte Pilotstand unter `ergebnis/`. JSON und CSV lassen sich
+direkt ansehen. Die Anwendung startet mit den Quelldatensätzen für eine eigene Prüfung.
+
 ## Installation
 
 1. **uv installieren** (offizielle Anleitung: <https://docs.astral.sh/uv/getting-started/installation/>):

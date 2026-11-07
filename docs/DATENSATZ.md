@@ -56,6 +56,19 @@ nicht um Originalzeichnungen, Nachlassmaterial oder Comics. Die Drucktechnik ist
 
 ## Klassifikationsentscheidung
 
+Die [Colibri-Datensatzkarte](https://huggingface.co/datasets/SBB/Colibri#annotation-process) beschreibt
+16 Klassen im ursprünglichen Annotationsschema. `groundtruth` enthält menschliche Annotationen aus
+dem Forschungsprojekt Human.Machine.Culture und einem Workshop mit Bibliotheksfachleuten.
+`classification` führt die Klassifikation des Modells. In der geprüften CSV steht `-0` in
+`groundtruth` bei Zeilen ohne manuelle Klasse. Für die Fallstudie wurden diese Zeilen bei der Auswahl
+ausgeschlossen.
+
+Die [Annotationsrichtlinie der SBB](https://github.com/qurator-spk/sbb_images/blob/master/doc/Annotation-Guide.md#beispiele-f%C3%BCr-kategorien)
+führt „Abbildung“ und „Karte“ als eigene Klassen. Sie fasst „Abbildung“ weit und zeigt Karten und
+Kartenausschnitte bei „Karte“. Ein Unterschied zwischen beiden Werten wird im Bildlabor anhand des
+Bildmotivs geprüft. Eine begründete lokale Entscheidung lässt sich zusammen mit den Quellenwerten
+für eine Rückmeldung an die Datensatzpflege exportieren.
+
 Weichen manuelle und automatische Klasse ab, entscheidet eine benannte Person am Bild: manuelle Klasse
 trifft zu, automatische trifft zu, keine von beiden, oder nicht entscheidbar. Eine Begründung ist
 Pflicht. Die Entscheidung beruht auf den gespeicherten Regionsgrenzen der Illustration; ändern sie sich,
@@ -73,14 +86,16 @@ Ausgangswerte bleiben stets erhalten.
 | Transkription | vorläufig | geprüft |
 | OCR-Ausgabe | ungeprüft (bleibt so; dient nur dem Vergleich) | – |
 
-Jede Bestätigung steht mit Name, Zeitpunkt und Bereich im Prüfprotokoll (`review_log`). Jede
-Speicherung steht im Änderungsprotokoll (`change_log`). Eine Bestätigung gilt immer dem angezeigten
+In der App erfasste Bestätigungen stehen mit Name, Zeitpunkt und Bereich im Prüfprotokoll (`review_log`).
+Der vorgegebene Status der Pilot-Suchbegriffe stammt aus dem Startpaket und hat dort keinen eigenen
+Protokolleintrag. Jede Speicherung steht im Änderungsprotokoll (`change_log`). Eine Bestätigung gilt immer dem angezeigten
 Stand. Wurde der Inhalt inzwischen anderswo geändert, wird sie abgelehnt.
 
 ## Herkunft der Arbeitsstände bei Genovefa
 
-- Regionsgrenzen: automatisch an der gedruckten Rahmenlinie ermittelt (Dunkelwert-Profil), ungeprüft.
+- Regionsgrenzen: automatisch an der gedruckten Rahmenlinie ermittelt (Dunkelwert-Profil).
 - Beschreibungen und Suchbegriffe: Entwürfe des KI-Assistenten (Claude) vom 06.11.2026 nach Ansicht
-  der Scans, ungeprüft.
+  der Scans.
 - Die Herkunft steht in den Feldern `region_origin_de`, `description_origin_de` und
-  `keyword_origin_de` und wird in Oberfläche und CSV angezeigt.
+  `keyword_origin_de`. Oberfläche und CSV zeigen Herkunft und aktuellen Prüfstand getrennt. Der
+  vollständige JSON-Export bewahrt die überlieferten Feldtexte des Datensatzes.

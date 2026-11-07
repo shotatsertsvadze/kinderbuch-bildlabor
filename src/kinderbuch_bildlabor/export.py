@@ -142,7 +142,9 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
                 "hoehe": h,
                 "koordinatenbezug": f"Pixel im Ausgangsbild {source['image_width']} × {source['image_height']}",
                 "regionen_pruefstatus": region["review_status"],
-                "regionen_herkunft": region.get("region_origin_de"),
+                "regionen_herkunft": review.origin_label(
+                    region.get("region_origin_de")
+                ),
                 # Die Beschreibung gilt dem ganzen Bild und steht deshalb nur in der Zeile der Illustration
                 "beschreibung": description["working_description_de"]
                 if region["region_type"] == "illustration"
@@ -150,13 +152,17 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
                 "beschreibung_pruefstatus": description["review_status"]
                 if region["region_type"] == "illustration"
                 else None,
-                "beschreibung_herkunft": description.get("description_origin_de")
-                if region["region_type"] == "illustration"
+                "beschreibung_herkunft": review.origin_label(
+                    description.get("description_origin_de")
+                )
+                if illustration
                 else None,
                 "suchbegriffe": "; ".join(region.get("keywords_de", [])),
                 "suchbegriffe_vokabular": region.get("keyword_vocabulary"),
                 "suchbegriffe_pruefstatus": region.get("keyword_review_status"),
-                "suchbegriffe_herkunft": region.get("keyword_origin_de"),
+                "suchbegriffe_herkunft": review.origin_label(
+                    region.get("keyword_origin_de")
+                ),
                 "transkription": transcription[field] if field else None,
                 "transkription_pruefstatus": transcription["review_status_by_field"][
                     field

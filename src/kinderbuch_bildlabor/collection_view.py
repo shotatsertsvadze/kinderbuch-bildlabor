@@ -69,8 +69,8 @@ def hero(cur: ui.Current) -> None:
             st.markdown(f"**{QUESTION}**")
             manual, automatic = review.classification_labels(cur.record) or ("", "")
             st.write(
-                f"Für diesen Holzschnitt nennt Colibri zwei Klassen: manuell „{manual}“, "
-                f"automatisch „{automatic}“. Sie prüfen am Bild, welche zutrifft, begründen Ihre "
+                f"Colibri führt für diese Illustration die manuelle Klasse „{manual}“ "
+                f"und die automatische Klasse „{automatic}“. Sie prüfen am Bild, welche zutrifft, begründen Ihre "
                 "Entscheidung und exportieren sie mit Herkunft."
             )
             st.button(
@@ -100,7 +100,7 @@ def case_study(collection: list[ui.Current]) -> None:
     st.caption(
         "Auswahl: alle fünf Abbildungen aus „Genovefa“ (Augsburg 1810, PPN1772789429), zu denen "
         "Colibri eine manuelle Klasse enthält. Sie lautet jeweils „Abbildung“; die automatische "
-        "Klasse weicht in allen fünf ab. Zahlen gelten nur für diese fünf geprüften Beispiele, "
+        "Klasse weicht in allen fünf ab. Zahlen gelten nur für diese fünf ausgewählten Beispiele, "
         "nicht für Colibri insgesamt."
     )
     rows = []

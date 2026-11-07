@@ -104,8 +104,8 @@ def status_badge(status: str) -> None:
 
 
 def origin_note(text: str | None) -> None:
-    if text:
-        st.caption(f":material/smart_toy: Herkunft: {text}")
+    if origin := review.origin_label(text):
+        st.caption(f":material/smart_toy: Herkunft: {origin}")
 
 
 def source_text(text: str) -> None:

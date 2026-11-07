@@ -54,6 +54,24 @@ def test_csv_has_one_row_per_region_with_provenance(tmp_path):
     assert all(r["rechte_quellwerk"] == "Public Domain Mark 1.0" for r in rows)
 
 
+def test_csv_separates_original_draft_provenance_from_review_status():
+    record = store.new_working_copy(store.object_source("genovefa-scan-022"))["record"]
+    region = record["region_annotations"][0]
+    review.confirm_region(record, region["id"], "Testperson", region["xywh"])
+    row = export.csv_rows(record, "2026-11-07T00:00:00+00:00")[0]
+
+    assert row["regionen_pruefstatus"] == "visually_reviewed"
+    assert all(
+        "ungeprüft" not in row[key]
+        for key in (
+            "regionen_herkunft",
+            "beschreibung_herkunft",
+            "suchbegriffe_herkunft",
+        )
+    )
+    assert region["region_origin_de"].endswith(", ungeprüft")
+
+
 def export_then_confirm(tmp_path):
     """Nachgestellter Ablauf: exportieren, danach eine Bestätigung speichern."""
     working = store.load_working_copy(

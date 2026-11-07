@@ -10,10 +10,11 @@ steht mit Name und Zeitpunkt im Prüfprotokoll jedes Objekts und im Export.
 |---|---|
 | Genovefa, Scan 22 (Leitbeispiel) | Regionsgrenzen, Klassifikation, Beschreibung, Suchbegriffe, Hinweis Illustrator |
 | Genovefa, Scan 14, 16, 17, 85 | wie Scan 22; bei Scan 85 ist der Gegenstand der Person rechts im Entwurf als unsicher markiert |
-| Die Heimath in Amerika, Scan 6 | Regionsgrenzen „Illustration“ und „Verlagsangabe“, Beschreibung, beide Transkriptionen (Lesung „I.P.“ oder „L.P.“ Setzer), Hinweise Verlag und Illustrator |
+| Die Heimath in Amerika, Scan 6 | Im Quellstand alle Regionen, Beschreibung, beide Transkriptionen (Lesung „I.P.“ oder „L.P.“ Setzer), Hinweise Verlag und Illustrator |
 
-Die Region „Bildtitel“ und die Suchbegriffe des Pilotobjekts sind bereits bestätigt beziehungsweise
-angenommen. Zur Seitenzahl bei Genovefa: Die METS-Seitenbezeichnungen (8, 10, 11, 16, 79) entsprechen
+Der getrennte Ergebnisexport des Pilotobjekts dokumentiert die persönliche Bestätigung der Region
+„Bildtitel“. Die Annahme der Pilot-Suchbegriffe stammt aus dem Startpaket und hat dort keinen eigenen
+Protokolleintrag mit Name und Zeitpunkt. Zur Seitenzahl bei Genovefa: Die METS-Seitenbezeichnungen (8, 10, 11, 16, 79) entsprechen
 vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer.
 
 ## Bekannte Einschränkungen

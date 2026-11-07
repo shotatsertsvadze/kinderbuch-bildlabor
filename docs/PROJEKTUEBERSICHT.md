@@ -35,6 +35,12 @@ Alle Aussagen gelten nur für diese fünf Beispiele; sie sagen nichts über die 
 Gewölbe. Die automatische Klasse lautet „Karte“. Der Unterschied ist am Bild leicht nachvollziehbar.
 Die Entscheidung trifft trotzdem die prüfende Person, nicht die Anwendung.
 
+**Begründungsvorschlag zur Prüfung am Original:** Der Ausschnitt zeigt zwei Figuren in einem
+gewölbten Innenraum mit einer Treppe links. Die szenische Darstellung entspricht der Klasse
+„Abbildung“. Für die Klasse „Karte“ fehlen im Ausschnitt kartografische Merkmale. Der Vorschlag
+entstand mit KI-Unterstützung und wartet auf die Bestätigung durch die prüfende Person. Die beiden
+Colibri-Werte bleiben als Quellenangaben sichtbar.
+
 ## Was die prüfende Person sieht
 
 1. **Original und Region:** den Scan in voller Auflösung (IIIF) mit der markierten Region in
@@ -71,16 +77,17 @@ Die Entscheidung trifft trotzdem die prüfende Person, nicht die Anwendung.
 
 ## Stand und Grenzen
 
-- Die menschliche Prüfung der Stichprobe steht noch aus. Bestätigt ist nur, was im Prüfprotokoll mit
-  Namen steht. Siehe [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md).
+- Die Genovefa-Prüfungen stehen noch aus. Die persönliche Prüfung des Titelrahmens am Pilotobjekt
+  ist im separaten Ergebnisexport des Übergabe-ZIP mit Name und Zeitpunkt dokumentiert. Die App
+  öffnet für die eigene Prüfung den jeweiligen Quellstand. Siehe [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md).
 - Keine Live-Abfrage von OAI-PMH oder IIIF, keine neue OCR, keine XSD-Validierung, keine GND-Anbindung.
 - Einzelplatzbetrieb: ein Server, gern mehrere Browserfenster.
 
 ## Beitrag
 
 - **Shota Tsertsvadze:** Fragestellung und fachliche Anforderungen, Auswahl der Quellen, erste Lesung
-  der Bildunterschriften des Pilotobjekts, Annahme der Pilot-Suchbegriffe, Bestätigung der Region
-  „Bildtitel“ (siehe Prüfprotokoll) und alle weiteren mit Namen protokollierten Entscheidungen.
+  der Bildunterschriften des Pilotobjekts und Prüfung der Region „Bildtitel“ in der lokalen
+  Arbeitskopie. Der separate Pilotexport enthält das zugehörige Prüfprotokoll.
 - **KI-Programmierassistent (Claude):** Umsetzung von Anwendung und Tests nach diesen Vorgaben sowie die
   als „Entwurf des KI-Assistenten“ gekennzeichneten Beschreibungs- und Suchbegriffsvorschläge.
 - **Quellen:** Digitalisate und Metadaten der Staatsbibliothek zu Berlin (Public Domain Mark 1.0);

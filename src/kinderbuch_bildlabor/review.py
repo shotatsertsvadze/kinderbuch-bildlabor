@@ -50,6 +50,12 @@ def status_label(status: str) -> str:
     return STATUS_LABELS_DE.get(status, status)
 
 
+def origin_label(text: str | None) -> str | None:
+    if text is None:
+        return None
+    return text.removesuffix("; ungeprüft").removesuffix(", ungeprüft")
+
+
 def review_areas(record: dict) -> list[dict]:
     """Alle einzeln bestätigbaren Prüfbereiche in Arbeitsreihenfolge."""
     areas = [

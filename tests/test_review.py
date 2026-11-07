@@ -2,7 +2,7 @@ import copy
 
 import pytest
 
-from kinderbuch_bildlabor import review, store, validate
+from kinderbuch_bildlabor import review, store, ui, validate
 
 
 def ready_record():
@@ -22,13 +22,13 @@ def ready_record():
 
 def test_explicit_approval_and_invalidation():
     record = ready_record()
-    assert review.readiness(record, []) == "Bereit zur Endprüfung"
+    assert review.readiness(record, []) == "Bereit zur Endbestätigung"
     for name, ack in [(" ", True), ("Person", False)]:
         with pytest.raises(review.ApprovalBlocked):
             review.approve_final(record, copy.deepcopy(record), name, ack, [])
     seen = copy.deepcopy(record)
     assert review.approve_final(record, seen, "Person", True, [])
-    assert review.readiness(record, []) == "Abschließend bestätigt"
+    assert review.readiness(record, []) == "Endbestätigt"
     text = record["image_description"]["working_description_de"]
     assert not review.set_description(record, text, text)
     assert record["final_approval"]["by"] == "Person"
@@ -57,3 +57,11 @@ def test_blockers_and_stale_record():
     ]
     assert validate.approval_blockers(findings) == []
     assert review.approve_final(record, copy.deepcopy(record), "Person", True, findings)
+
+
+def test_next_step_points_to_final_confirmation_and_then_reports_it():
+    record = ready_record()
+    before = ui.next_step(record, True)
+    assert "Endbestätigung" in before and "nicht vorgesehen" not in before
+    review.approve_final(record, copy.deepcopy(record), "Person", True, [])
+    assert "endbestätigt" in ui.next_step(record, True)

@@ -42,7 +42,7 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
             show("\n".join(f"- {f.message_de}" for f in selected), icon=icon)
         else:
             st.success("Keine.", icon=ui.OK)
-    ui.section("Abschließende Objektprüfung")
+    ui.section("Endbestätigung des Objekts")
     state = review.readiness(cur.record, findings)
     st.write(state)
     blockers = validate.approval_blockers(findings)
@@ -54,15 +54,15 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
     approval = cur.record.get("final_approval")
     if approval:
         st.success(
-            f"Abschließend bestätigt von {approval['by']} · {ui.local_time(approval['at'])}"
+            f"Endbestätigung erteilt von {approval['by']} · {ui.local_time(approval['at'])}"
         )
     ack = st.checkbox(
         "Ich bestätige den gesamten gespeicherten Arbeitsstand; keine Ground-Truth-Freigabe.",
         key=f"{cur.id}-final-ack",
     )
-    enabled = state == "Bereit zur Endprüfung" and bool(actions.reviewer()) and ack
+    enabled = state == "Bereit zur Endbestätigung" and bool(actions.reviewer()) and ack
     st.button(
-        "Objekt abschließend bestätigen",
+        "Endbestätigung erteilen",
         key=f"{cur.id}-final-confirm",
         disabled=not enabled,
         on_click=actions.approve_object,

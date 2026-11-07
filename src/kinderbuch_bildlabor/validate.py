@@ -194,7 +194,7 @@ def check_open_reviews(record: dict) -> list[Finding]:
     if not record.get("final_approval"):
         findings.append(
             Finding(
-                REVIEW, "RECORD_FINAL_REVIEW", "Objekt insgesamt: Endprüfung offen."
+                REVIEW, "RECORD_FINAL_REVIEW", "Objekt insgesamt: Endbestätigung offen."
             )
         )
     for item in record.get("review_items", []):

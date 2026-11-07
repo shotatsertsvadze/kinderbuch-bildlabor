@@ -293,7 +293,7 @@ def test_missing_book_metadata_becomes_blocking_finding(missing_book_metadata):
     working["record"] = record
     assert expected in validate.run_all(working, replace(PILOT, oai_record=path))
     assert validate.approval_blockers(findings) == [expected]
-    assert review.readiness(record, []) == "Bereit zur Endprüfung"
+    assert review.readiness(record, []) == "Bereit zur Endbestätigung"
     with pytest.raises(review.ApprovalBlocked):
         review.approve_final(record, before, "Prüfer", True, findings)
     assert record == before

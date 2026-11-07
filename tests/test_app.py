@@ -341,7 +341,7 @@ def test_final_approval_workflow(monkeypatch):
         lambda *args: [f for f in original(*args) if f.code != "MODS_DIFFERENCE"],
     )
     app.run()
-    assert "Bereit zur Endprüfung" in texts(app, "markdown")
+    assert "Bereit zur Endbestätigung" in texts(app, "markdown")
     app.text_input(key="reviewer").input("Endprüfer").run()
     app.checkbox(key=f"{PILOT}-final-ack").check().run()
     app.button(key=f"{PILOT}-final-confirm").click().run()
@@ -352,7 +352,7 @@ def test_final_approval_workflow(monkeypatch):
     assert all(m.startswith("Erhalten:") for m in roundtrip_messages(app))
     restarted = open_app()
     assert any(
-        "Abschließend bestätigt von Endprüfer" in s for s in texts(restarted, "success")
+        "Endbestätigung erteilt von Endprüfer" in s for s in texts(restarted, "success")
     )
     save_description(restarted, "Neue Beschreibung nach Endprüfung")
     assert "final_approval" not in saved()["record"]

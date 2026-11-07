@@ -231,7 +231,7 @@ def approve_object(object_id: str, seen: dict, acknowledged: bool) -> None:
         return review.approve_final(record, seen, reviewer(), acknowledged, findings)
 
     try:
-        store.update_working_copy(src, approve, "Abschließende Objektbestätigung")
+        store.update_working_copy(src, approve, "Endbestätigung")
     except (review.ContentChanged, review.ApprovalBlocked) as error:
         st.session_state.notice = str(error)
     except OSError as error:

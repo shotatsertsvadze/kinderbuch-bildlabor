@@ -27,7 +27,7 @@ STATUS_LABELS_DE = {
     TRANSCRIPTION_PROVISIONAL: "vorläufig",
     TRANSCRIPTION_REVIEWED: "geprüft – nicht als Ground Truth freigegeben",
     "unreviewed": "ungeprüft",
-    "draft_pending_final_review": "Entwurf – Endprüfung offen",
+    "draft_pending_final_review": "Entwurf – Endbestätigung offen",
 }
 
 
@@ -245,8 +245,8 @@ def readiness(record: dict, findings: list) -> str:
     if approval_blockers(findings) or not all(a["done"] for a in review_areas(record)):
         return "Offen"
     if record.get("final_approval") and record.get("status") == FINAL_APPROVED:
-        return "Abschließend bestätigt"
-    return "Bereit zur Endprüfung"
+        return "Endbestätigt"
+    return "Bereit zur Endbestätigung"
 
 
 def approve_final(
@@ -266,7 +266,7 @@ def approve_final(
     log(
         record,
         "final_review",
-        "Objekt abschließend bestätigt (keine Ground-Truth-Freigabe)",
+        "Endbestätigung des Objekts erteilt (keine Ground-Truth-Freigabe)",
         by.strip(),
     )
     return True

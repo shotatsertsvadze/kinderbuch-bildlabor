@@ -228,7 +228,9 @@ def next_step(record: dict, export_current: bool) -> str:
         )
     if not export_current:
         return "Export erstellen (Reiter „Export“)."
+    if record.get("final_approval") and record.get("status") == review.FINAL_APPROVED:
+        return "Das Objekt ist endbestätigt und exportiert. Das ist keine Ground-Truth-Freigabe."
     return (
-        "Alle Prüfbereiche sind bestätigt und exportiert. Die fachlichen Hinweise bleiben bestehen; "
-        "eine abschließende Freigabe des Objekts ist in dieser Version nicht vorgesehen."
+        "Alle Prüfbereiche sind bestätigt und exportiert. Die Endbestätigung erfolgt im "
+        "Reiter „Prüfung“, sofern keine blockierenden Befunde offen sind."
     )

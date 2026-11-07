@@ -119,7 +119,8 @@ def object_page(cur: ui.Current) -> None:
         lambda c: check_view.validation_tab(c, [x.record for x in collection]),
         check_view.export_tab,
     ]
-    for tab, view in zip(st.tabs(names), views):
+    # Eigener Schlüssel je Objekt: ein neu geöffnetes Objekt beginnt mit der Übersicht
+    for tab, view in zip(st.tabs(names, key=f"{cur.id}-tabs"), views):
         with tab:
             view(cur)
 

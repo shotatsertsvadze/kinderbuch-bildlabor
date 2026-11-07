@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from kinderbuch_bildlabor import actions, regions, review, store, ui
+from kinderbuch_bildlabor import actions, regions, review, store, ui, workflow
 from kinderbuch_bildlabor.ui import Current
 
 
@@ -160,9 +160,46 @@ def region_editor(cur: Current, region: dict) -> list[int]:
     width, height = cur.size
     ui.section(f"Region {region_option(cur.record, region)}")
     ui.status_badge(region["review_status"])
-    ui.origin_note(region.get("region_origin_de"))
     keys = actions.xywh_keys(region_id)
     sync = ui.sync_fields(keys, region["xywh"])
+    if region["review_status"] == review.REGION_REVIEWED:
+        ui.confirmed_note(cur.record, region_id)
+        if sync == ui.CLEAN:
+            region_continue(cur, region_id)
+    else:
+        st.markdown(
+            "**Prüfen Sie den markierten Rahmen im Scan.** Passt er genau um den Bereich, "
+            "setzen Sie das Häkchen und speichern Sie die Prüfung."
+        )
+        ui.confirm_controls(
+            f"{region_id}-review",
+            "Ihre Bestätigung gilt für die gespeicherten Grenzen.",
+            "Der Rahmen erfasst den Bereich vollständig.",
+            actions.confirm_region,
+            (cur.id, region_id, region["xywh"]),
+            blocked_de="Speichern oder verwerfen Sie zuerst Ihre Änderungen unter „Rahmen korrigieren“."
+            if sync != ui.CLEAN
+            else None,
+            button_label="Rahmen bestätigen und speichern",
+        )
+    with st.expander("Rahmen korrigieren", expanded=sync != ui.CLEAN):
+        ui.origin_note(region.get("region_origin_de"))
+        shown = region_coordinates(cur, region, keys, sync, width, height)
+    st.image(
+        regions.crop(ui.page_image(cur.src.page_image), shown),
+        width=ui.crop_width(shown),
+        caption="Ausschnitt mit den eingegebenen Werten"
+        if sync != ui.CLEAN
+        else "Ausschnitt (gespeicherter Stand)",
+        alt="Ausschnitt der gewählten Region aus der gescannten Seite.",
+    )
+    return shown
+
+
+def region_coordinates(
+    cur: Current, region: dict, keys: list[str], sync: str, width: int, height: int
+) -> list[int]:
+    region_id = region["id"]
     cols = st.columns(4)
     for col, key, label, limit in zip(
         cols,
@@ -181,15 +218,6 @@ def region_editor(cur: Current, region: dict) -> list[int]:
         sync,
         f"Gespeichert ist {region['xywh']}. Speichern setzt den Prüfstand dieser Region zurück.",
     )
-    shown = region["xywh"] if problems else xywh
-    st.image(
-        regions.crop(ui.page_image(cur.src.page_image), shown),
-        width=ui.crop_width(shown),
-        caption="Ausschnitt mit den eingegebenen Werten"
-        if sync != ui.CLEAN
-        else "Ausschnitt (gespeicherter Stand)",
-        alt="Ausschnitt der gewählten Region aus der gescannten Seite.",
-    )
     buttons = st.columns(2)
     buttons[0].button(
         "Koordinaten speichern",
@@ -206,22 +234,39 @@ def region_editor(cur: Current, region: dict) -> list[int]:
         disabled=sync != ui.EDITED,
     )
 
-    st.divider()
-    if region["review_status"] == review.REGION_REVIEWED:
-        ui.confirmed_note(cur.record, region_id)
+    return region["xywh"] if problems else xywh
+
+
+def region_continue(cur: Current, region_id: str) -> None:
+    pending = next(
+        (
+            region
+            for region in cur.record["region_annotations"]
+            if region["review_status"] != review.REGION_REVIEWED
+        ),
+        None,
+    )
+    if pending:
+        label = f"Nächsten Rahmen prüfen · {pending['label_de']}"
+        changes = {f"{cur.id}-region-choice": pending["id"]}
     else:
-        ui.confirm_controls(
-            f"{region_id}-review",
-            "Die gespeicherten Grenzen umfassen den Bereich vollständig und knapp. "
-            "Keine Aussage über Bildinhalt oder Transkription.",
-            "Ich habe die gespeicherten Grenzen dieser Region am Bild geprüft.",
-            actions.confirm_region,
-            (cur.id, region_id, region["xywh"]),
-            blocked_de="Erst die Eingaben speichern oder verwerfen."
-            if sync != ui.CLEAN
-            else None,
+        target = next(
+            (
+                area["tab_de"]
+                for area in review.review_areas(cur.record)
+                if not area["done"]
+            ),
+            "Prüfung",
         )
-    return shown
+        label = f"Weiter · {workflow.STEPS[target][0]}"
+        changes = {f"{cur.id}-tabs": target}
+    st.button(
+        label,
+        key=f"{region_id}-continue",
+        type="primary",
+        on_click=st.session_state.update,
+        args=(changes,),
+    )
 
 
 def description_tab(cur: Current) -> None:

@@ -51,11 +51,13 @@ def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> 
 
     with st.container(key="review-guide", border=True):
         st.markdown("**Ihr Prüfpfad**")
-        st.markdown(
-            f"**Nächster Schritt** · {ui.next_step(record, export_current, blockers)}"
-        )
-        if not st.session_state.get("reviewer", "").strip():
-            st.caption("Tragen Sie zum Speichern Ihren Namen in der Seitenleiste ein.")
+        next_step, reviewer = st.columns([3, 2], vertical_alignment="center")
+        with next_step:
+            st.markdown(
+                f"**Nächster Schritt** · {ui.next_step(record, export_current, blockers)}"
+            )
+        with reviewer:
+            ui.reviewer_input()
         done = sum(area["done"] for area in areas)
         st.progress(
             done / len(areas), text=f"{done} von {len(areas)} Prüfbereichen bestätigt"

@@ -534,8 +534,9 @@ def test_review_guide_opens_the_step_and_advances_after_confirmation():
     assert app.button(key="guide-regionen").proto.type == "primary"
     app.button(key="guide-regionen").click().run()
     assert app.session_state[f"{LEAD}-tabs"] == "Regionen"
+    assert any("markierten Rahmen" in text for text in texts(app, "markdown"))
     confirm(app, LEAD_REGION)
     assert app.button(key="guide-klassifikation").proto.type == "primary"
-    app.button(key="guide-klassifikation").click().run()
+    app.button(key=f"{LEAD_REGION}-continue").click().run()
     assert app.session_state[f"{LEAD}-tabs"] == "Klassifikation"
     assert not app.exception

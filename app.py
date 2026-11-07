@@ -62,16 +62,13 @@ def view_label(view: str) -> str:
 
 def sidebar() -> str:
     st.sidebar.markdown("### Kinderbuch-Bildlabor")
-    st.sidebar.text_input(
-        "Prüfende Person",
-        key="reviewer",
-        placeholder="Vor- und Nachname",
-        help="Wird bei jeder ausdrücklichen Bestätigung mit Zeitpunkt gespeichert.",
-    )
     view = st.sidebar.radio(
         "Ansicht", [COLLECTION, *by_id], format_func=view_label, key="view"
     )
-    if view != COLLECTION:
+    if view == COLLECTION:
+        with st.sidebar:
+            ui.reviewer_input()
+    else:
         working = by_id[view].working
         if working["change_log"]:
             st.sidebar.caption(

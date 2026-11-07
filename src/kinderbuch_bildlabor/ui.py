@@ -121,6 +121,15 @@ def edit_state(sync: str, consequence_de: str = "") -> None:
         st.caption(":material/save: Entspricht dem gespeicherten Stand.")
 
 
+def reviewer_input() -> None:
+    st.text_input(
+        "Prüfende Person",
+        key="reviewer",
+        placeholder="Vor- und Nachname",
+        help="Der Name wird bei jeder Bestätigung und Entscheidung gespeichert.",
+    )
+
+
 def confirm_controls(
     key: str,
     meaning_de: str,
@@ -128,6 +137,7 @@ def confirm_controls(
     on_click,
     args=(),
     blocked_de: str | None = None,
+    button_label: str = "Bestätigen und speichern",
 ) -> None:
     """Bestätigung mit erklärter Bedeutung und sichtbarem Grund, falls gesperrt."""
     subsection("Prüfung bestätigen")
@@ -139,12 +149,12 @@ def confirm_controls(
     reason = blocked_de or (
         "Bitte zuerst das Häkchen setzen."
         if not checked
-        else "Bitte links unter „Prüfende Person“ Ihren Namen eintragen."
+        else "Tragen Sie im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
         if not reviewer
         else None
     )
     st.button(
-        "Bestätigen und speichern",
+        button_label,
         key=f"{key}-confirm",
         on_click=on_click,
         args=args,

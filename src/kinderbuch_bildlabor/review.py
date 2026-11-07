@@ -381,7 +381,7 @@ def record_decision(
 ) -> bool:
     if not by.strip():
         raise DecisionInvalid(
-            "Bitte links unter „Prüfende Person“ Ihren Namen eintragen."
+            "Tragen Sie im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
         )
     if outcome not in decision_options(code, record):
         raise DecisionInvalid("Bitte eine Entscheidung auswählen.")

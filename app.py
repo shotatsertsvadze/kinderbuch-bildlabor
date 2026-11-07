@@ -4,6 +4,7 @@ Start: uv run streamlit run app.py
 Arbeitet nur mit den gespeicherten Quelldateien; kein Netzabruf, keine OCR.
 """
 
+import json
 from collections.abc import Callable
 
 import streamlit as st
@@ -24,8 +25,27 @@ st.set_page_config(
 
 COLLECTION = "sammlung"
 
+
 # Bei jedem Lauf frisch von der Platte: ein anderes Fenster kann inzwischen gespeichert haben
-collection = [ui.Current(src, store.load_working_copy(src)) for src in store.catalog()]
+def load_collection() -> list[ui.Current]:
+    loaded = []
+    for src in store.catalog():
+        try:
+            loaded.append(ui.Current(src, store.load_working_copy(src)))
+        except json.JSONDecodeError:
+            path = store.work_path(src.id).relative_to(store.DATA_DIR)
+            st.error(
+                f"Die Arbeitskopie {path} ist beschädigt und kann nicht gelesen werden. Die Datei wurde "
+                "nicht verändert. Bitte zuerst eine Kopie der Datei an einen sicheren Ort legen und "
+                "den Ordner .history neben ihr nach früheren Ständen durchsehen (er kann fehlen). "
+                "Erst danach die Datei ersetzen; ohne sie beginnt das Objekt neu aus der Quelle.",
+                icon=ui.ERROR,
+            )
+            st.stop()
+    return loaded
+
+
+collection = load_collection()
 by_id = {cur.id: cur for cur in collection}
 
 
@@ -101,7 +121,7 @@ def object_page(cur: ui.Current) -> None:
 
 view = sidebar()
 if notice := st.session_state.pop("notice", None):
-    st.error(notice, icon=":material/error:")
+    st.error(notice, icon=ui.ERROR)
 if view == COLLECTION:
     collection_view.render(collection)
 else:

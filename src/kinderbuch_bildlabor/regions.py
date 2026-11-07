@@ -32,13 +32,26 @@ def crop(image: Image.Image, xywh) -> Image.Image:
 
 
 def draw_regions(image: Image.Image, regions: list[dict]) -> Image.Image:
+    """Farbiger Rahmen mit weißem Rand außen und dunklem innen, damit er auf hellem wie dunklem Papier sichtbar bleibt."""
     marked = image.convert("RGB")
     draw = ImageDraw.Draw(marked)
     font = ImageFont.load_default(size=40)
     for number, region in enumerate(regions, start=1):
         x, y, w, h = region["xywh"]
         color = COLORS[(number - 1) % len(COLORS)]
+        draw.rectangle((x - 4, y - 4, x + w + 3, y + h + 3), outline="white", width=4)
         draw.rectangle((x, y, x + w - 1, y + h - 1), outline=color, width=6)
+        if w > 18 and h > 18:
+            draw.rectangle(
+                (x + 6, y + 6, x + w - 7, y + h - 7), outline="black", width=3
+            )
         # Nummer links außerhalb, damit sie keinen Text in der Region verdeckt
-        draw.text((max(x - 34, 0), y), str(number), fill=color, font=font)
+        draw.text(
+            (max(x - 34, 0), y),
+            str(number),
+            fill="white",
+            font=font,
+            stroke_width=4,
+            stroke_fill="black",
+        )
     return marked

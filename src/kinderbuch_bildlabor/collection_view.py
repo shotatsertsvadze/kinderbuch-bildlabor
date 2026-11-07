@@ -45,10 +45,10 @@ def render(collection: list[ui.Current]) -> None:
     st.info(
         "Alle Angaben sind Arbeitsstände. Grenzen, Beschreibungen und Lesungen gelten erst nach "
         "ausdrücklicher Bestätigung durch eine prüfende Person als geprüft; nichts davon ist Ground Truth.",
-        icon=":material/info:",
+        icon=ui.INFO,
     )
 
-    st.markdown("#### Ablauf je Objekt")
+    ui.section("Ablauf je Objekt")
     st.markdown(
         "\n".join(
             f"{n}. **{name}:** {text}" for n, (name, text) in enumerate(STEPS, start=1)
@@ -56,9 +56,7 @@ def render(collection: list[ui.Current]) -> None:
     )
 
     books = {cur.record["source"]["ppn"] for cur in collection}
-    st.markdown(
-        f"#### Stichprobe: {len(collection)} Illustrationen aus {len(books)} Büchern"
-    )
+    ui.section(f"Stichprobe: {len(collection)} Illustrationen aus {len(books)} Büchern")
     columns = st.columns(3)
     records = [cur.record for cur in collection]
     for index, cur in enumerate(collection):
@@ -72,7 +70,9 @@ def card(cur: ui.Current, records: list[dict]) -> None:
     biblio = record["bibliographic_metadata_from_colibri"]
     illustration = record["region_annotations"][0]
     st.image(
-        thumbnail(cur.src.page_image, tuple(illustration["xywh"])), width="stretch"
+        thumbnail(cur.src.page_image, tuple(illustration["xywh"])),
+        width="stretch",
+        alt=f"Illustration aus {biblio['title']}, Scan {source['scan_number']}",
     )
     st.markdown(
         f"**{biblio['title']}** ({biblio['publication_place']} {biblio['publication_date']})  \n"
@@ -101,7 +101,7 @@ def card(cur: ui.Current, records: list[dict]) -> None:
 
 
 def collection_export(collection: list[ui.Current]) -> None:
-    st.markdown("#### Sammlungsübersicht exportieren")
+    ui.section("Sammlungsübersicht exportieren")
     st.caption(
         "Eine CSV-Datei mit einer Zeile je Region aller Objekte, mit Prüfständen, Herkunft und Rechten. "
         "Vollständige JSON-Exporte entstehen je Objekt im Reiter „Export“."

@@ -52,7 +52,7 @@ def texts(app: AppTest, kind: str) -> list[str]:
 
 def test_start_page_lists_six_objects_from_two_books_and_writes_nothing():
     app = open_app("sammlung")
-    assert "#### Stichprobe: 6 Illustrationen aus 2 Büchern" in texts(app, "markdown")
+    assert "Stichprobe: 6 Illustrationen aus 2 Büchern" in texts(app, "subheader")
     assert len([b for b in app.button if b.key.startswith("open-")]) == 6
     app.button(key="open-genovefa-scan-014").click().run()
     assert app.radio(key="view").value == "genovefa-scan-014"
@@ -248,7 +248,7 @@ def test_genovefa_object_has_no_transcription_tab_and_shows_draft_origin():
     assert any("Entwurf des KI-Assistenten" in c for c in texts(app, "caption"))
     assert "in beiden nicht angegeben" in list(comparison_table(app)["Ergebnis"])
     assert not any(
-        "Technische Fehler" in m and ": 0" not in m for m in texts(app, "markdown")
+        "Technische Fehler" in m and ": 0" not in m for m in texts(app, "subheader")
     )
 
 
@@ -394,3 +394,45 @@ def test_real_validator_blocks_final_approval_on_open_review_items():
         )
     assert saved() == before
     assert "final_approval" not in saved()["record"]
+
+
+def test_damaged_working_copy_shows_error_and_stays_untouched(temp_data):
+    store.WORK_DIR.mkdir(parents=True)
+    path = store.work_path(PILOT)
+    path.write_text('{"record": {"id": "pil', encoding="utf-8")
+    app = AppTest.from_file(APP, default_timeout=30).run()
+    assert not app.exception
+    assert any("beschädigt" in e for e in texts(app, "error"))
+    assert path.read_text(encoding="utf-8") == '{"record": {"id": "pil'
+
+
+def test_damaged_export_is_reported_on_object_page_and_replaced_by_new_export():
+    store.EXPORT_DIR.mkdir(parents=True)
+    (store.EXPORT_DIR / f"{PILOT}.json").write_text('{"exported_at": ')
+    app = open_app()
+    assert any("Exportdatei ist beschädigt" in e for e in texts(app, "error"))
+    app.button(key=f"{PILOT}-export").click().run()
+    assert not app.exception
+    assert not any("beschädigt" in e for e in texts(app, "error"))
+    assert any("Export aktuell" in s for s in texts(app, "success"))
+
+
+def test_failed_export_write_shows_notice_instead_of_traceback(temp_data):
+    app = open_app()
+    temp_data.joinpath("exports").write_text("keine Ordner")
+    app.button(key=f"{PILOT}-export").click().run()
+    assert not app.exception
+    assert any("Schreiben fehlgeschlagen" in e for e in texts(app, "error"))
+
+
+def test_failed_save_shows_notice_and_keeps_saved_state(monkeypatch):
+    app = open_app()
+
+    def refuse(path, data):
+        raise PermissionError(13, "Permission denied", str(path))
+
+    monkeypatch.setattr(store, "write_json", refuse)
+    save_description(app, "Neue Beschreibung")
+    assert not app.exception
+    assert any("Permission denied" in e for e in texts(app, "error"))
+    assert not store.work_path(PILOT).exists()

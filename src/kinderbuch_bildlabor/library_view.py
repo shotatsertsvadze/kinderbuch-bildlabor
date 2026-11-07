@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 import streamlit as st
 
-from kinderbuch_bildlabor import oai, store
+from kinderbuch_bildlabor import oai, store, ui
 
 
 @st.cache_resource
@@ -31,26 +31,26 @@ def render(record: dict, src: store.ObjectSource) -> None:
     try:
         root = parsed_source(src.oai_record)
     except ET.ParseError as error:
-        st.error(f"XML-Parsing fehlgeschlagen: {error}", icon=":material/error:")
+        st.error(f"XML-Parsing fehlgeschlagen: {error}", icon=ui.ERROR)
         return
 
     checks = oai.content_checks(root, record)
     passed = sum(ok for _, ok in checks)
     cols = st.columns(3)
     with cols[0]:
-        st.success("XML-Parsing: erfolgreich", icon=":material/check:")
+        st.success("XML-Parsing: erfolgreich", icon=ui.OK)
     with cols[1]:
         (st.success if passed == len(checks) else st.warning)(
             f"Inhaltliche Prüfungen: {passed} von {len(checks)} bestanden",
-            icon=":material/check:" if passed == len(checks) else ":material/warning:",
+            icon=ui.OK if passed == len(checks) else ui.WARNING,
         )
     with cols[2]:
-        st.info("XSD-Validierung: nicht ausgeführt", icon=":material/pending:")
+        st.info("XSD-Validierung: nicht ausgeführt", icon=ui.PENDING)
 
     try:
         dmd_id, mods = oai.book_mods(root)
     except oai.MissingMetadata as error:
-        st.error(str(error), icon=":material/error:")
+        st.error(str(error), icon=ui.ERROR)
         return
     rows = oai.mapping_rows(mods)
     structure(root, dmd_id, len(rows))
@@ -64,7 +64,7 @@ def render(record: dict, src: store.ObjectSource) -> None:
 def structure(root: ET.Element, dmd_id: str, row_count: int) -> None:
     info = oai.envelope(root)
     sections = len(oai.mets(root).findall("mets:dmdSec", oai.NS))
-    st.markdown("#### Aufbau der Antwort")
+    ui.section("Aufbau der Antwort")
     st.markdown(
         f"1. **OAI-PMH-Hülle:** {info['verb']} für `{info['identifier']}`, "
         f"Datumsstempel {info['datestamp']}, Set `{info['set_spec']}`\n"
@@ -75,7 +75,7 @@ def structure(root: ET.Element, dmd_id: str, row_count: int) -> None:
 
 
 def comparison(record: dict, rows: list[oai.SourceValue]) -> None:
-    st.markdown("#### Vergleich mit den lokalen Buchdaten")
+    ui.section("Vergleich mit den lokalen Buchdaten")
     table = [
         {
             "Feld": c["label_de"],
@@ -96,7 +96,7 @@ def page_link(root: ET.Element, record: dict) -> None:
     source = record["source"]
     phys_id = source["physical_page_id"]
     structure = oai.structure_for_page(root, phys_id)
-    st.markdown("#### Bezug dieser Seite im METS")
+    ui.section("Bezug dieser Seite im METS")
     if structure is None:
         st.warning(
             f"Die Seite {phys_id} ist mit keinem logischen Strukturelement verknüpft."
@@ -129,7 +129,7 @@ def page_link(root: ET.Element, record: dict) -> None:
 
 
 def people(mods: ET.Element) -> None:
-    st.markdown("#### Personen und Rollen")
+    ui.section("Personen und Rollen")
     st.dataframe(
         [
             {
@@ -163,7 +163,7 @@ def mapping_table(rows: list[oai.SourceValue]) -> list[dict]:
 
 
 def mapping(rows: list[oai.SourceValue], dmd_id: str) -> None:
-    st.markdown("#### Mapping: Quellfeld → Originalwert → lokales Feld")
+    ui.section("Mapping: Quellfeld → Originalwert → lokales Feld")
     st.dataframe(mapping_table([r for r in rows if r.target]), hide_index=True)
     st.caption(
         f"Pfade relativ zum Buch-MODS ({dmd_id}); vollständiger Pfad unter „Technische Details“."
@@ -181,9 +181,9 @@ def technical(
     src: store.ObjectSource,
 ) -> None:
     with st.expander("Technische Details"):
+        ui.subsection("Inhaltliche Prüfungen")
         st.markdown(
-            "**Inhaltliche Prüfungen**\n"
-            + "\n".join(
+            "\n".join(
                 f"- {'Bestanden' if ok else 'Nicht bestanden'}: {label}"
                 for label, ok in checks
             )

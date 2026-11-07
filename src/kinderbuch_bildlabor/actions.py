@@ -4,6 +4,8 @@ Jede Aktion nennt ihr Objekt ausdrücklich, liest den gespeicherten Stand, ände
 speichert nur echte Änderungen. Eingaben in dieser Sitzung liegen in st.session_state.
 """
 
+from pathlib import Path
+
 import streamlit as st
 
 from kinderbuch_bildlabor import export, review, store, ui, validate
@@ -24,6 +26,14 @@ def region_label(object_id: str, region_id: str) -> str:
     return f"„{review.find_region(record, region_id)['label_de']}“"
 
 
+def write_failed(error: OSError) -> None:
+    where = f" ({Path(error.filename).name})" if error.filename else ""
+    st.session_state.notice = (
+        f"Schreiben fehlgeschlagen: {error.strerror}{where}. "
+        "Bitte Berechtigungen und freien Speicherplatz prüfen und erneut versuchen."
+    )
+
+
 def apply(object_id: str, area_de: str, change, *args) -> None:
     src = store.object_source(object_id)
     try:
@@ -33,13 +43,16 @@ def apply(object_id: str, area_de: str, change, *args) -> None:
     except review.ContentChanged as error:
         st.session_state.notice = str(error)
         return
+    except OSError as error:
+        write_failed(error)
+        return
     if not changed:
         st.toast(
             f"Nichts gespeichert: {area_de} entspricht bereits dem gespeicherten Stand.",
-            icon=":material/info:",
+            icon=ui.INFO,
         )
         return
-    st.toast(f"Gespeichert: {area_de}", icon=":material/check:")
+    st.toast(f"Gespeichert: {area_de}", icon=ui.OK)
 
 
 def xywh_keys(region_id: str) -> list[str]:
@@ -162,10 +175,14 @@ def export_paths(object_id: str):
 def run_export(object_id: str) -> None:
     json_path, csv_path = export_paths(object_id)
     current = store.load_working_copy(store.object_source(object_id))
-    data = export.export_json(current, json_path)
-    export.export_csv(current["record"], data["exported_at"], csv_path)
+    try:
+        data = export.export_json(current, json_path)
+        export.export_csv(current["record"], data["exported_at"], csv_path)
+    except OSError as error:
+        write_failed(error)
+        return
     st.session_state.pop(f"{object_id}-roundtrip-result", None)
-    st.toast("Exportiert: JSON und CSV", icon=":material/check:")
+    st.toast("Exportiert: JSON und CSV", icon=ui.OK)
 
 
 def run_roundtrip(object_id: str) -> None:
@@ -184,10 +201,14 @@ COLLECTION_CSV = "sammlung.csv"
 
 def run_collection_export() -> None:
     records = [store.load_working_copy(src)["record"] for src in store.catalog()]
-    export.export_collection_csv(
-        records, store.now_utc(), store.EXPORT_DIR / COLLECTION_CSV
-    )
-    st.toast("Exportiert: Sammlungsübersicht als CSV", icon=":material/check:")
+    try:
+        export.export_collection_csv(
+            records, store.now_utc(), store.EXPORT_DIR / COLLECTION_CSV
+        )
+    except OSError as error:
+        write_failed(error)
+        return
+    st.toast("Exportiert: Sammlungsübersicht als CSV", icon=ui.OK)
 
 
 def open_object(object_id: str) -> None:
@@ -213,3 +234,5 @@ def approve_object(object_id: str, seen: dict, acknowledged: bool) -> None:
         store.update_working_copy(src, approve, "Abschließende Objektbestätigung")
     except (review.ContentChanged, review.ApprovalBlocked) as error:
         st.session_state.notice = str(error)
+    except OSError as error:
+        write_failed(error)

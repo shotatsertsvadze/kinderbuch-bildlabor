@@ -9,7 +9,7 @@ from kinderbuch_bildlabor.ui import Current
 def overview_tab(cur: Current) -> None:
     record, source = cur.record, cur.record["source"]
     biblio = record["bibliographic_metadata_from_colibri"]
-    left, right = st.columns([2, 3], gap="large")
+    left, right = ui.image_and_controls()
     with left:
         st.image(
             regions.draw_regions(
@@ -17,9 +17,10 @@ def overview_tab(cur: Current) -> None:
             ),
             width="stretch",
             caption="Gesamtseite mit den gespeicherten Regionen (Vergrößern: Symbol oben rechts)",
+            alt="Gescannte Buchseite; die gespeicherten Regionen sind als nummerierte Rahmen markiert.",
         )
     with right:
-        st.markdown("#### Buch")
+        ui.section("Buch")
         st.markdown(
             f"**{biblio['title']}**  \n"
             f"Verfasser: {biblio['author_display']}  \n"
@@ -29,7 +30,7 @@ def overview_tab(cur: Current) -> None:
         st.caption(
             "Bibliografische Angaben aus Colibri; Abgleich mit METS/MODS im Reiter „Bibliotheksdaten“."
         )
-        st.markdown("#### Seite")
+        ui.section("Seite")
         label = source.get("page_label_mets")
         st.markdown(
             f"Scan {source['scan_number']} im Digitalisat ({source['physical_page_id']})  \n"
@@ -44,10 +45,10 @@ def overview_tab(cur: Current) -> None:
             source["viewer_url"],
             icon=":material/open_in_new:",
         )
-        st.markdown("#### Bildbeschreibung")
+        ui.section("Bildbeschreibung")
         ui.source_text(record["image_description"]["working_description_de"])
         ui.status_badge(record["image_description"]["review_status"])
-        st.markdown("#### Rechte und Herkunft")
+        ui.section("Rechte und Herkunft")
         st.markdown(
             f"Quellwerk: {biblio['rights_statement']}  \n"
             f"Colibri-Datensatz: [CC BY 4.0]({source['colibri_dataset_license']}) – "
@@ -62,7 +63,7 @@ def overview_tab(cur: Current) -> None:
     progress_table(record)
     if "working_publisher_statement" in (record.get("transcription") or {}):
         imprint_comparison(record)
-    st.markdown("#### Fachliche Hinweise")
+    ui.section("Fachliche Hinweise")
     with st.container(border=True):
         for item in record["review_items"]:
             st.markdown(f"- {item['note_de']}")
@@ -77,8 +78,8 @@ def overview_tab(cur: Current) -> None:
 
 def progress_table(record: dict) -> None:
     areas = review.review_areas(record)
-    st.markdown(
-        f"#### Prüfbereiche: {sum(a['done'] for a in areas)} von {len(areas)} bestätigt"
+    ui.section(
+        f"Prüfbereiche: {sum(a['done'] for a in areas)} von {len(areas)} bestätigt"
     )
     st.dataframe(
         [
@@ -96,13 +97,13 @@ def progress_table(record: dict) -> None:
 
 def imprint_comparison(record: dict) -> None:
     biblio = record["bibliographic_metadata_from_colibri"]
-    st.markdown("#### Verlagsangaben im Vergleich")
+    ui.section("Verlagsangaben im Vergleich")
     left, right = st.columns(2)
     with left, st.container(border=True):
-        st.markdown("**Bibliografische Angabe (Colibri, MODS)**")
+        ui.subsection("Bibliografische Angabe (Colibri, MODS)")
         st.text(f"Ort: {biblio['publication_place']}\nVerlag: {biblio['publisher']}")
     with right, st.container(border=True):
-        st.markdown("**Aufdruck auf dem Bildblatt (vorläufige Lesung)**")
+        ui.subsection("Aufdruck auf dem Bildblatt (vorläufige Lesung)")
         ui.source_text(record["transcription"]["working_publisher_statement"])
         ui.status_badge(
             record["transcription"]["review_status_by_field"][
@@ -132,7 +133,7 @@ def region_tab(cur: Current) -> None:
             horizontal=True,
             key=f"{cur.id}-region-choice",
         )
-    left, right = st.columns([2, 3], gap="large")
+    left, right = ui.image_and_controls()
     with right:
         preview_xywh = region_editor(cur, by_id[choice])
     with left:
@@ -144,6 +145,7 @@ def region_tab(cur: Current) -> None:
             regions.draw_regions(ui.page_image(cur.src.page_image), preview),
             width="stretch",
             caption="Gesamtseite; die gewählte Region mit den aktuell eingegebenen Werten",
+            alt="Gescannte Buchseite; die Regionen sind als nummerierte Rahmen markiert, die gewählte mit den eingegebenen Werten.",
         )
     width, height = cur.size
     st.caption(
@@ -152,17 +154,11 @@ def region_tab(cur: Current) -> None:
     )
 
 
-def crop_width(xywh: list[int], max_width: int = 560, max_height: int = 420) -> int:
-    """Anzeigebreite so, dass auch hohe Regionen nicht übermäßig viel Platz einnehmen."""
-    w, h = xywh[2], xywh[3]
-    return max(1, min(w, max_width, round(max_height * w / h)))
-
-
 def region_editor(cur: Current, region: dict) -> list[int]:
     """Bearbeitung einer Region; liefert die für die Vorschau gültigen Koordinaten."""
     region_id = region["id"]
     width, height = cur.size
-    st.markdown(f"#### Region {region_option(cur.record, region)}")
+    ui.section(f"Region {region_option(cur.record, region)}")
     ui.status_badge(region["review_status"])
     ui.origin_note(region.get("region_origin_de"))
     keys = actions.xywh_keys(region_id)
@@ -178,7 +174,7 @@ def region_editor(cur: Current, region: dict) -> list[int]:
     xywh = actions.input_xywh(region_id)
     problems = regions.bounds_problems(xywh, width, height)
     for problem in problems:
-        st.error(problem, icon=":material/error:")
+        st.error(problem, icon=ui.ERROR)
     if sync == ui.CONFLICT:
         ui.conflict_note(keys, region["xywh"], str(region["xywh"]))
     ui.edit_state(
@@ -188,10 +184,11 @@ def region_editor(cur: Current, region: dict) -> list[int]:
     shown = region["xywh"] if problems else xywh
     st.image(
         regions.crop(ui.page_image(cur.src.page_image), shown),
-        width=crop_width(shown),
+        width=ui.crop_width(shown),
         caption="Ausschnitt mit den eingegebenen Werten"
         if sync != ui.CLEAN
         else "Ausschnitt (gespeicherter Stand)",
+        alt="Ausschnitt der gewählten Region aus der gescannten Seite.",
     )
     buttons = st.columns(2)
     buttons[0].button(
@@ -236,13 +233,14 @@ def description_tab(cur: Current) -> None:
         ),
         None,
     )
-    left, right = st.columns([2, 3], gap="large")
+    left, right = ui.image_and_controls()
     with left:
         if illustration:
             st.image(
                 regions.crop(ui.page_image(cur.src.page_image), illustration["xywh"]),
                 width="stretch",
                 caption="Ausschnitt der Illustration (gespeicherte Grenzen)",
+                alt="Ausschnitt der Illustration aus der gescannten Seite.",
             )
     with right:
         description_editor(cur)
@@ -254,7 +252,7 @@ def description_tab(cur: Current) -> None:
 
 def description_editor(cur: Current) -> None:
     description = cur.record["image_description"]
-    st.markdown("#### Bildbeschreibung")
+    ui.section("Bildbeschreibung")
     ui.status_badge(description["review_status"])
     ui.origin_note(description.get("description_origin_de"))
     st.caption(
@@ -264,7 +262,9 @@ def description_editor(cur: Current) -> None:
     key, stored = actions.description_key(cur.id), description["working_description_de"]
     sync = ui.sync_fields([key], [stored], lambda values: [values[0].strip()])
     st.text_area(
-        "Bildbeschreibung (sichtbarer Inhalt, ohne Deutung)", key=key, height=140
+        "Bildbeschreibung (sichtbarer Inhalt, ohne Deutung)",
+        key=key,
+        height=ui.TEXT_AREA_HEIGHT,
     )
     if sync == ui.CONFLICT:
         ui.conflict_note([key], [stored], f"„{stored}“")
@@ -296,7 +296,7 @@ def description_editor(cur: Current) -> None:
 
 def keyword_editor(cur: Current, region: dict) -> None:
     region_id = region["id"]
-    st.markdown(f"#### Suchbegriffe: {region['label_de']}")
+    ui.section(f"Suchbegriffe: {region['label_de']}")
     ui.status_badge(region["keyword_review_status"])
     ui.origin_note(region.get("keyword_origin_de"))
     st.caption("Projektlokale Begriffe, keine geprüften GND-Verknüpfungen.")
@@ -304,7 +304,7 @@ def keyword_editor(cur: Current, region: dict) -> None:
     sync = ui.sync_fields(
         [key], stored, lambda values: [actions.keyword_list(values[0])]
     )
-    st.text_area("Ein Begriff pro Zeile", key=key, height=130)
+    st.text_area("Ein Begriff pro Zeile", key=key, height=ui.TEXT_AREA_HEIGHT)
     if sync == ui.CONFLICT:
         ui.conflict_note([key], stored, "; ".join(region["keywords_de"]))
     ui.edit_state(sync, "Speichern setzt die Bestätigung der Suchbegriffe zurück.")
@@ -332,7 +332,7 @@ def keyword_editor(cur: Current, region: dict) -> None:
 
 def transcription_tab(cur: Current) -> None:
     transcription = cur.record["transcription"]
-    st.badge("Keine Ground Truth", icon=":material/block:", color="gray")
+    ui.neutral_badge("Keine Ground Truth")
     st.caption(
         f"{transcription['review_note_de']} Bildtitel und Verlagsangabe werden einzeln geprüft."
     )
@@ -353,12 +353,13 @@ def transcription_editor(cur: Current, region: dict, ocr: dict | None) -> None:
     transcription = cur.record["transcription"]
     field = region["transcription_field"]
     status = transcription["review_status_by_field"][field]
-    st.markdown(f"#### {region['label_de']}")
+    ui.section(f"{region['label_de']}")
     ui.status_badge(status)
     st.image(
         regions.crop(ui.page_image(cur.src.page_image), region["xywh"]),
-        width=min(region["xywh"][2], 730),
+        width=ui.crop_width(region["xywh"]),
         caption="Vorlage: Ausschnitt aus dem Scan",
+        alt=f"Ausschnitt mit dem Text für: {region['label_de']}.",
     )
     key = actions.transcription_key(cur.id, field)
     sync = ui.sync_fields([key], [transcription[field]])
@@ -401,7 +402,7 @@ def transcription_editor(cur: Current, region: dict, ocr: dict | None) -> None:
 
 def ocr_block(cur: Current, ocr: dict) -> None:
     meta = store.read_json(cur.src.record.parent / ocr["result_file"])
-    st.markdown("**Gespeicherte OCR-Ausgabe** (unverändert, ungeprüft)")
+    ui.subsection("Gespeicherte OCR-Ausgabe (unverändert, ungeprüft)")
     st.code(ocr["raw_text"], language=None)
     st.caption(
         f"{meta['engine_version']}, Modell {meta['language_model']}, ohne Vorverarbeitung. "

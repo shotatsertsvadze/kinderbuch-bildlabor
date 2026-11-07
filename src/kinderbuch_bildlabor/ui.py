@@ -9,6 +9,44 @@ from PIL import Image
 
 from kinderbuch_bildlabor import review, store
 
+# Ein Symbol je Bedeutung, damit gleiche Zustände überall gleich aussehen
+OK = ":material/check:"
+CONFIRMED = ":material/check_circle:"
+ERROR = ":material/error:"
+WARNING = ":material/warning:"
+INFO = ":material/info:"
+PENDING = ":material/pending:"
+LOCK = ":material/lock:"
+BLOCKED = ":material/block:"
+
+# Gemeinsame Maße: Spaltenverhältnis Bild zu Bedienfeldern, Höhe von Textfeldern, größte Bildbreite
+SPLIT = [2, 3]
+TEXT_AREA_HEIGHT = 140
+MAX_CROP_WIDTH = 730
+MAX_CROP_HEIGHT = 420
+
+
+def section(title: str) -> None:
+    st.subheader(title)
+
+
+def subsection(title: str) -> None:
+    st.markdown(f"**{title}**")
+
+
+def image_and_controls():
+    return st.columns(SPLIT, gap="large")
+
+
+def neutral_badge(text: str) -> None:
+    st.badge(text, icon=BLOCKED, color="gray")
+
+
+def crop_width(xywh: list[int]) -> int:
+    """Anzeigebreite so, dass auch hohe Regionen nicht übermäßig viel Platz einnehmen."""
+    w, h = xywh[2], xywh[3]
+    return max(1, min(w, MAX_CROP_WIDTH, round(MAX_CROP_HEIGHT * w / h)))
+
 
 @dataclass
 class Current:
@@ -52,13 +90,13 @@ def status_badge(status: str) -> None:
     if status in review.DONE_STATUSES:
         st.badge(
             f"Bestätigt: {review.status_label(status)}",
-            icon=":material/check_circle:",
+            icon=CONFIRMED,
             color="green",
         )
     else:
         st.badge(
             f"Offen: {review.status_label(status)}",
-            icon=":material/pending:",
+            icon=PENDING,
             color="orange",
         )
 
@@ -92,7 +130,7 @@ def confirm_controls(
     blocked_de: str | None = None,
 ) -> None:
     """Bestätigung mit erklärter Bedeutung und sichtbarem Grund, falls gesperrt."""
-    st.markdown("**Prüfung bestätigen**")
+    subsection("Prüfung bestätigen")
     st.caption(f"Bedeutung: {meaning_de}")
     checked = st.checkbox(
         statement_de, key=f"{key}-check", disabled=blocked_de is not None
@@ -114,7 +152,7 @@ def confirm_controls(
         type="primary",
     )
     if reason:
-        st.caption(f":material/lock: Noch nicht möglich: {reason}")
+        st.caption(f"{LOCK} Noch nicht möglich: {reason}")
 
 
 def confirmed_note(record: dict, area: str) -> None:
@@ -123,7 +161,7 @@ def confirmed_note(record: dict, area: str) -> None:
         st.success(
             f"Bestätigt von {entry['by']} am {local_time(entry['at'])}. "
             "Eine spätere Änderung setzt diese Bestätigung zurück.",
-            icon=":material/verified:",
+            icon=CONFIRMED,
         )
 
 

@@ -1,4 +1,4 @@
-from PIL import Image, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageColor, ImageStat
 
 from kinderbuch_bildlabor import regions, store
 
@@ -43,3 +43,11 @@ def test_drawing_keeps_original_size():
     record = store.read_json(store.object_source("pilot-001").record)
     marked = regions.draw_regions(page, record["region_annotations"])
     assert marked.size == (WIDTH, HEIGHT)
+
+
+def test_region_frame_has_light_and_dark_edges_on_any_paper():
+    page = Image.new("RGB", (400, 400), (181, 160, 134))
+    marked = regions.draw_regions(page, [{"xywh": [100, 100, 200, 200]}])
+    assert marked.getpixel((98, 200)) == (255, 255, 255)
+    assert marked.getpixel((103, 200)) == ImageColor.getrgb(regions.COLORS[0])
+    assert marked.getpixel((107, 200)) == (0, 0, 0)

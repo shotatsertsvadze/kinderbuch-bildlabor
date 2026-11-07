@@ -1,6 +1,7 @@
 """Reiter „Prüfung“ und „Export“ eines Objekts."""
 
 import csv
+import json
 
 import streamlit as st
 
@@ -10,7 +11,7 @@ from kinderbuch_bildlabor.ui import Current
 CATEGORY_STYLE = {
     validate.TECHNICAL: (
         st.error,
-        ":material/error:",
+        ui.ERROR,
         "Formale Fehler in Daten oder Quelldateien. Sie verhindern eine verlässliche Nutzung.",
     ),
     validate.REVIEW: (
@@ -20,7 +21,7 @@ CATEGORY_STYLE = {
     ),
     validate.NOT_RUN: (
         st.info,
-        ":material/pending:",
+        ui.PENDING,
         "Bewusst nicht ausgeführt; über das Ergebnis ist nichts bekannt.",
     ),
 }
@@ -35,13 +36,13 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
     for category, label in validate.CATEGORY_LABELS_DE.items():
         show, icon, meaning = CATEGORY_STYLE[category]
         selected = [f for f in findings if f.category == category]
-        st.markdown(f"#### {label}: {len(selected)}")
+        ui.section(f"{label}: {len(selected)}")
         st.caption(meaning)
         if selected:
             show("\n".join(f"- {f.message_de}" for f in selected), icon=icon)
         else:
-            st.success("Keine.", icon=":material/check:")
-    st.markdown("#### Abschließende Objektprüfung")
+            st.success("Keine.", icon=ui.OK)
+    ui.section("Abschließende Objektprüfung")
     state = review.readiness(cur.record, findings)
     st.write(state)
     blockers = validate.approval_blockers(findings)
@@ -72,7 +73,7 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
             "Erforderlich: alle Bereiche bestätigt, keine Blocker, Name und ausdrückliche Zustimmung. "
             "Bereits bestätigte Objekte benötigen keine erneute Bestätigung."
         )
-    st.markdown("#### Bewusst leere optionale Angaben")
+    ui.section("Bewusst leere optionale Angaben")
     st.write(
         (", ".join(validate.unknown_optional_fields(cur.record)) or "Keine.")
         + " (kein Fehler)"
@@ -88,11 +89,14 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
 
 
 def export_state(cur: Current) -> tuple[str, list[dict] | None, dict | None]:
-    """'none', 'current', 'stale' oder 'foreign' mit späteren Änderungen und Exportdaten."""
+    """'none', 'damaged', 'current', 'stale' oder 'foreign' mit späteren Änderungen und Exportdaten."""
     json_path, _ = actions.export_paths(cur.id)
     if not json_path.exists():
         return "none", None, None
-    exported = store.read_json(json_path)
+    try:
+        exported = store.read_json(json_path)
+    except json.JSONDecodeError:
+        return "damaged", None, None
     later = export.later_changes(cur.working, exported)
     state = "foreign" if later is None else "stale" if later else "current"
     return state, later, exported
@@ -113,12 +117,18 @@ def export_tab(cur: Current) -> None:
         type="primary",
     )
     if state == "none":
-        st.info("Noch kein Export für dieses Objekt vorhanden.", icon=":material/info:")
+        st.info("Noch kein Export für dieses Objekt vorhanden.", icon=ui.INFO)
+    elif state == "damaged":
+        st.error(
+            "Die vorhandene Exportdatei ist beschädigt und kann nicht gelesen werden. "
+            "Ein neuer Export ersetzt sie.",
+            icon=ui.ERROR,
+        )
     elif state == "foreign":
         st.error(
             "Der vorhandene Export passt nicht zur Änderungsgeschichte dieses Arbeitsstands "
             "(zum Beispiel nach einem Zurücksetzen der Arbeitskopie). Bitte neu exportieren.",
-            icon=":material/error:",
+            icon=ui.ERROR,
         )
     elif state == "stale":
         assert later is not None and exported is not None
@@ -135,10 +145,10 @@ def export_tab(cur: Current) -> None:
         assert exported is not None
         st.success(
             f"Export aktuell: erstellt {ui.local_time(exported['exported_at'])}, seitdem nichts gespeichert.",
-            icon=":material/check:",
+            icon=ui.OK,
         )
 
-    if state != "none":
+    if state not in ("none", "damaged"):
         assert exported is not None
         roundtrip(cur, state, exported)
     if csv_path.exists():
@@ -152,7 +162,7 @@ def export_tab(cur: Current) -> None:
 
 
 def roundtrip(cur: Current, state: str, exported: dict) -> None:
-    st.markdown("#### Rückladeprüfung")
+    ui.section("Rückladeprüfung")
     st.button(
         "Export erneut laden und prüfen",
         key=f"{cur.id}-roundtrip",
@@ -162,7 +172,7 @@ def roundtrip(cur: Current, state: str, exported: dict) -> None:
     )
     if state != "current":
         st.caption(
-            ":material/lock: Noch nicht möglich: Die Rückladeprüfung ist nur für einen aktuellen Export "
+            f"{ui.LOCK} Noch nicht möglich: Die Rückladeprüfung ist nur für einen aktuellen Export "
             "aussagekräftig."
         )
         return
@@ -171,9 +181,9 @@ def roundtrip(cur: Current, state: str, exported: dict) -> None:
         return
     for label, ok in result[1]:
         if ok:
-            st.success(f"Erhalten: {label}", icon=":material/check:")
+            st.success(f"Erhalten: {label}", icon=ui.OK)
         else:
-            st.error(f"Abweichung: {label}", icon=":material/error:")
+            st.error(f"Abweichung: {label}", icon=ui.ERROR)
     if result[2]:
         st.markdown(
             "Abweichende Felder im Export:\n" + "\n".join(f"- `{p}`" for p in result[2])
@@ -181,12 +191,12 @@ def roundtrip(cur: Current, state: str, exported: dict) -> None:
 
 
 def review_log(record: dict) -> None:
-    st.markdown("#### Prüfprotokoll")
+    ui.section("Prüfprotokoll")
     log = record.get("review_log", [])
     if not log:
         st.info(
             "Noch keine Änderungen oder Bestätigungen protokolliert.",
-            icon=":material/info:",
+            icon=ui.INFO,
         )
         return
     st.dataframe(

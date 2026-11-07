@@ -12,9 +12,16 @@
 | 6 | genovefa-scan-085 | Genovefa | 85 | 79 | data/PPN1772789429/00000085_0.jpg | Abbildung / Exlibris |
 
 Beide Bücher stammen von Christoph von Schmid und sind in Augsburg erschienen. Das Pilotbuch enthält
-laut Colibri nur diese eine Abbildung. Bei „Genovefa“ wurden genau die fünf Abbildungen gewählt, die
-in Colibri manuell als „Abbildung“ annotiert sind. Die abweichenden automatischen Klassen stehen
-unverändert in den Datensätzen. Es handelt sich um Buchillustrationen in gedruckten Büchern
+laut Colibri nur diese eine Abbildung (manuell und automatisch „Abbildung“; im Pilot-Arbeitsmodell sind
+die Klassen nicht als Felder geführt).
+
+**Auswahl bei „Genovefa“:** alle Zeilen der Colibri-CSV zu PPN1772789429 mit manueller Klasse. Die CSV
+enthält 18 Zeilen zu diesem Buch; 13 tragen in der Spalte „groundtruth“ den Wert „-0“ statt einer Klasse
+(automatisch jeweils „Abbildung“), fünf tragen „Abbildung“. Bei allen fünf weicht die automatische
+Klasse ab: zweimal „Druckermarke“, zweimal „Exlibris“, einmal „Karte“. Geprüft am 07.11.2026 gegen
+die öffentliche CSV, deren SHA-256 mit dem Wert im Manifest übereinstimmt. Die Werte stehen
+unverändert in `colibri_groundtruth` und `colibri_classification` der Datensätze. Alle Zahlen gelten nur
+für dieses Buch und diese fünf Beispiele. Es handelt sich um Buchillustrationen in gedruckten Büchern
 (bei Genovefa in den Textseiten gedruckt, beim Pilotobjekt ein Frontispiz laut MODS-Umfangsangabe),
 nicht um Originalzeichnungen, Nachlassmaterial oder Comics. Die Drucktechnik ist nicht bestimmt.
 
@@ -47,6 +54,14 @@ nicht um Originalzeichnungen, Nachlassmaterial oder Comics. Die Drucktechnik ist
   Normalisierung. Die OCR-Ausgabe wird nie korrigiert, sondern getrennt gespeichert.
 - **Unbekannte Werte:** bleiben `null`, nicht leer und nicht geschätzt (Illustrator, gedruckte Seitenzahl).
 
+## Klassifikationsentscheidung
+
+Weichen manuelle und automatische Klasse ab, entscheidet eine benannte Person am Bild: manuelle Klasse
+trifft zu, automatische trifft zu, keine von beiden, oder nicht entscheidbar. Eine Begründung ist
+Pflicht. Die Entscheidung beruht auf den gespeicherten Regionsgrenzen der Illustration; ändern sie sich,
+wird sie aufgehoben. Gleiches Verfahren gilt für die Hinweise zu Verlag und Illustrator. Beide
+Ausgangswerte bleiben stets erhalten.
+
 ## Prüfstände
 
 | Bereich | offen | bestätigt |
@@ -54,6 +69,7 @@ nicht um Originalzeichnungen, Nachlassmaterial oder Comics. Die Drucktechnik ist
 | Regionsgrenzen | Entwurf – visuelle Prüfung offen | Grenzen visuell geprüft |
 | Beschreibung | ungeprüft | am Bild geprüft |
 | Suchbegriffe | Vorschlag – Prüfung offen / geändert – erneute Prüfung offen | vom Nutzer akzeptiert |
+| Klassifikation | Entscheidung am Bild offen / nicht entscheidbar | begründet entschieden |
 | Transkription | vorläufig | geprüft |
 | OCR-Ausgabe | ungeprüft (bleibt so; dient nur dem Vergleich) | – |
 

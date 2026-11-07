@@ -1,57 +1,69 @@
 # Kinderbuch-Bildlabor
 
-Lokaler Prototyp zur Erschließung und Qualitätsprüfung von Illustrationen aus digitalisierten
-Kinder- und Jugendbüchern des 19. Jahrhunderts (Staatsbibliothek zu Berlin, Colibri-Datensatz).
-Stichprobe: sechs Illustrationen aus zwei Büchern, alle mit offenen Prüfständen.
+**Wie lassen sich abweichende Bildklassifikationen in digitalisierten Kinderbüchern am Originalbild
+prüfen, begründet entscheiden und mit ihrer Herkunft weitergeben?**
 
-Worum es geht und was fertig ist: [docs/PROJEKTUEBERSICHT.md](docs/PROJEKTUEBERSICHT.md).
+Lokaler Prototyp mit echten Daten der Staatsbibliothek zu Berlin (Colibri-Datensatz, METS/MODS,
+IIIF-Scans). Fallstudie: fünf Illustrationen aus „Genovefa“ (Augsburg 1810), bei denen die manuelle und
+die automatische Colibri-Klasse voneinander abweichen. Zweites Beispiel: „Die Heimath in Amerika“
+(Augsburg 1850) mit Verlagsangabe, OCR-Ausgabe und Transkription.
 
-## Einrichtung
+Überblick: [docs/PROJEKTUEBERSICHT.md](docs/PROJEKTUEBERSICHT.md) ·
+Rundgang in drei Minuten: [docs/DEMO.md](docs/DEMO.md)
 
-Voraussetzung: [uv](https://docs.astral.sh/uv/). Python und alle Abhängigkeiten installiert uv selbst
-aus der Sperrdatei `uv.lock`.
+## Installation
 
-```bash
-uv sync
-```
+1. **uv installieren** (offizielle Anleitung: <https://docs.astral.sh/uv/getting-started/installation/>):
+   - macOS und Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+   - Windows (PowerShell): `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+   - alternativ mit Homebrew: `brew install uv`
 
-Eingesetzte Versionen (geprüft am 06.11.2026, jeweils aktuelle Version auf PyPI):
-Python 3.13.5, Streamlit 1.67.0, Pillow 13.0.0, pytest 9.2.0.
+   Danach ein neues Terminal öffnen und mit `uv --version` prüfen.
+2. **ZIP entpacken** und im Terminal in den Ordner wechseln, zum Beispiel
+   `cd ~/Downloads/kinderbuch-bildlabor`.
+3. **Einrichten:** `uv sync --locked`. uv lädt dabei Python 3.13 und die Abhängigkeiten in genau den
+   Versionen aus `uv.lock` (Streamlit 1.67.0, Pillow 13.0.0). Nur dieser Schritt braucht Internet.
 
-## Nutzung
+## Starten
 
 ```bash
 uv run streamlit run app.py
 ```
 
-Die Anwendung öffnet sich unter http://localhost:8501 und arbeitet ohne Internetverbindung.
+Der Browser öffnet <http://localhost:8501>. Die Anwendung arbeitet danach ohne Internetverbindung und
+ist nur auf diesem Rechner erreichbar. Beenden mit `Strg+C` im Terminal.
 
-1. Links unter „Prüfende Person“ den eigenen Namen eintragen. Er wird bei jeder Bestätigung gespeichert.
-2. Auf der Startseite ein Objekt öffnen. Der Hinweis „Nächster Schritt“ nennt den nächsten offenen Prüfbereich.
-3. Eingaben mit „Speichern“ übernehmen und Prüfungen mit „Bestätigen und speichern“ festhalten.
-4. Im Reiter „Export“ JSON und CSV erzeugen und mit der Rückladeprüfung kontrollieren.
+## Wo anfangen
 
-Ein Rundgang in drei Minuten: [docs/DEMO.md](docs/DEMO.md).
+1. Links unter „Prüfende Person“ einen Namen eintragen.
+2. Auf der Startseite **„Leitbeispiel öffnen: Genovefa, Scan 22“** wählen und den Reiter
+   **„Klassifikation“** öffnen: markierte Region im Originalscan, beide Colibri-Klassen, Belege,
+   Entscheidung mit Begründung und die Werte, die im Export ankommen.
+3. „Zweites Beispiel öffnen“ zeigt Verlagsangabe und OCR bei „Die Heimath in Amerika“.
+
+Begriffe wie *Endbestätigung* und *Ground Truth* erklärt die Startseite und die Stelle, an der sie
+vorkommen; ausführlich in [docs/BEGRIFFE.md](docs/BEGRIFFE.md).
+
+Zum Ausprobieren ohne Änderung der mitgelieferten Arbeitsstände einen eigenen Datenordner verwenden:
+
+```bash
+BILDLABOR_DATA_DIR=/tmp/bildlabor-probe uv run streamlit run app.py
+```
+
+(Windows PowerShell: `$env:BILDLABOR_DATA_DIR="$env:TEMP\bildlabor-probe"; uv run streamlit run app.py`)
 
 ## Daten
 
 - Quelldateien (werden nie verändert): `Kinderbuch_Bildlabor_Start/`, `sammlung/`
-- Arbeitsstände: `data/work/<objekt-id>.json`
-- Exporte: `exports/`
-- Vor jedem Überschreiben (auch bei Migrationen) wird der bisherige Dateistand unter
-  `data/work/.history/<objekt-id>/<sha256>.json` aufbewahrt; diese lokalen Kopien ersetzen
-  keine Sicherung auf einem anderen Gerät. Den gesamten Arbeitsordner regelmäßig extern sichern.
-- Zurück zum Quellstand: Server stoppen und die betreffende Arbeitsdatei zuerst in einen
-  getrennten Archivordner verschieben, nicht löschen. Ohne Archiv gehen eigene Bearbeitungen
-  und Bestätigungen verloren. Nach dem Neustart wird wieder der Quellstand angezeigt.
-- Wiederherstellen: Server stoppen, die aktuelle Arbeitsdatei zuerst archivieren und die gewünschte
-  Archiv- oder `.history`-Datei nach `data/work/<objekt-id>.json` kopieren. Dann neu starten;
-  ältere Formate werden dabei erneut migriert. Bei `BILDLABOR_DATA_DIR` liegen diese Ordner dort.
-- Probelauf mit getrenntem Datenordner, ohne die eigenen Arbeitsstände zu berühren:
-  `BILDLABOR_DATA_DIR=/tmp/probe uv run streamlit run app.py`
+- Arbeitsstände: `data/work/<objekt-id>.json`; Exporte: `exports/`. Beide entstehen erst beim Speichern.
+- Vor jedem Überschreiben wird der bisherige Stand unter `data/work/.history/<objekt-id>/<sha256>.json`
+  aufbewahrt. Das ersetzt keine Sicherung auf einem anderen Gerät.
+- Zurück zum Quellstand: Server stoppen, die Arbeitsdatei in einen Archivordner verschieben (nicht
+  löschen), neu starten.
+- Mit `BILDLABOR_DATA_DIR` liegen Arbeitsstände und Exporte im angegebenen Ordner.
 
-Beschreibung der Stichprobe, Rechte und Annotationsregeln: [docs/DATENSATZ.md](docs/DATENSATZ.md).
-Begriffe: [docs/BEGRIFFE.md](docs/BEGRIFFE.md). Wichtige Entscheidungen: [docs/adr/](docs/adr/).
+Stichprobe, Auswahlkriterien, Rechte und Annotationsregeln: [docs/DATENSATZ.md](docs/DATENSATZ.md).
+Entscheidungen zum Aufbau: [docs/adr/](docs/adr/). Bezug zur Stelle: [docs/BEZUG_ZUR_STELLE.md](docs/BEZUG_ZUR_STELLE.md).
 
 ## Qualitätsprüfungen
 
@@ -61,7 +73,5 @@ uv run --locked ruff format --check --no-cache .
 uv run --locked mypy --cache-dir=/dev/null
 uv run --locked python -B -m pytest -p no:cacheprovider -q
 ```
-
-Formatierung anwenden: `uv run --locked ruff format app.py src tests`.
 
 Die Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` nicht.

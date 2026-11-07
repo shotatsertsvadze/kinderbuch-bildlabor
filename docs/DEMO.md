@@ -1,72 +1,56 @@
 # Rundgang in drei Minuten
 
-Vorbereitung: `uv run streamlit run app.py`, Browserfenster breit (ab etwa 1280 Pixel). Für eine
-Vorführung ohne Änderung der eigenen Arbeitsstände:
-`BILDLABOR_DATA_DIR=/tmp/vorfuehrung uv run streamlit run app.py`.
+Vorbereitung: `BILDLABOR_DATA_DIR=/tmp/vorfuehrung uv run streamlit run app.py`, Browserfenster ab etwa
+1280 Pixel breit. Der eigene Datenordner lässt die mitgelieferten Arbeitsstände unberührt. Die
+Bildschirmfotos zeigen den Stand vor der menschlichen Prüfung: Entscheidungen sind noch offen.
 
-## 0:00 – Startseite (30 Sekunden)
+## 0:00 – Startseite: die Frage (30 Sekunden)
 
-![Startseite](screenshots/01-start-und-sammlung.png)
+![Startseite](screenshots/01-start.png)
 
-- Zweck in einem Satz: Illustrationen aus Kinderbüchern der Staatsbibliothek nachvollziehbar
-  erschließen, einzeln prüfen und mit Herkunft und Rechten exportieren.
-- Die Stichprobe umfasst sechs echte Illustrationen aus zwei Büchern von Christoph von Schmid. Jede
-  Karte zeigt, wie viele Prüfbereiche bestätigt sind.
-- Den eigenen Namen links unter „Prüfende Person“ eintragen.
+- Leitfrage vorlesen. Colibri führt zu jeder Abbildung eine manuelle und eine automatische Klasse.
+- Tabelle der Fallstudie: fünf Abbildungen aus „Genovefa“, manuell jeweils „Abbildung“, automatisch
+  „Druckermarke“, „Exlibris“ oder „Karte“. Auswahlkriterium nennen: alle Zeilen dieses Buches mit
+  manueller Klasse. Keine Aussage über Colibri insgesamt.
+- Links einen Namen eintragen, dann „Leitbeispiel öffnen“.
 
-## 0:30 – Pilotobjekt, Übersicht (30 Sekunden)
+## 0:30 – Leitbeispiel Scan 22, Reiter „Klassifikation“ (60 Sekunden)
 
-![Übersicht](screenshots/02-objekt-uebersicht.png)
+![Klassifikation](screenshots/02-klassifikation.png)
 
-- „Die Heimath in Amerika“, Scan 6 öffnen.
-- „Nächster Schritt“ nennt den nächsten offenen Bereich.
-- Verlagsangaben im Vergleich: Der Katalog nennt Augsburg, der Aufdruck auf dem Bildblatt Rottweil.
-  Beide Angaben bleiben mit ihrem Bezug stehen, keine wird „korrigiert“.
+- Links der Ausschnitt der markierten Region und die ganze Seite: ein gerahmter Holzschnitt im
+  Fließtext, zwei Figuren im Gewölbe. Automatisch „Karte“.
+- Rechts beide Colibri-Angaben mit Herkunft. Hinweis: Die Spalte heißt in Colibri „groundtruth“, wird
+  hier aber ebenfalls am Bild geprüft.
+- Belege: Prüfstand der Region, Bildbeschreibung, Seitenbezug im METS (Kapitel „[Text und
+  Illustrationen]“, Seite 16), Link zur Originalansicht.
+- Entscheidung: Auswahl und Pflichtbegründung, gespeichert mit Name und Zeitpunkt.
+- Unten „Was im Export erhalten bleibt“: dieselben Werte, die in der CSV stehen.
 
-## 1:00 – Regionen (40 Sekunden)
+## 1:30 – Regionen und Prüfung (40 Sekunden)
 
 ![Regionen](screenshots/03-regionen.png)
+![Prüfung](screenshots/04-pruefung.png)
 
-- Region „Bildtitel“ wählen und den Prüfstand zeigen. Eine eigene Arbeitskopie kann bereits eine
-  Bestätigung mit Name und Zeitpunkt enthalten; im unveränderten Quellpaket ist die Region noch offen.
-- Bei „Illustration“ die Breite um ein paar Pixel ändern. Es erscheinen der Hinweis „Ungespeicherte
-  Änderung“ und eine Vorschau. Mit „Eingaben verwerfen“ zurücknehmen.
-- Hinweis: Die Koordinaten beziehen sich auf das Originalbild, nicht auf die Anzeige.
+- Reiter „Regionen“: x-Wert per Pfeiltaste ändern, Vorschau und „Ungespeicherte Änderung“ zeigen, dann
+  „Eingaben verwerfen“. Gespeicherte Änderungen der Region heben eine Klassifikationsentscheidung auf.
+- Reiter „Prüfung“: technische Fehler, offene Hinweise, nicht ausgeführte Prüfungen und begründet
+  entschiedene Hinweise stehen getrennt. Der Hinweis zum unbekannten Illustrator wird begründet
+  entschieden, nicht ausgeblendet. Danach ist die Endbestätigung möglich; sie ist keine Ground Truth.
 
-## 1:40 – Transkription (30 Sekunden)
+## 2:10 – Export (20 Sekunden)
 
-![Transkription](screenshots/04-transkription.png)
+![Export](screenshots/05-export.png)
 
-- Bildausschnitt, Arbeitstranskription und unveränderte OCR-Ausgabe stehen nebeneinander
-  („Die Heimath“ gegenüber „Die Geimatly“).
-- Titel und Verlagsangabe werden getrennt bestätigt. Es gibt keine Ground Truth und deshalb keine
-  OCR-Bewertung.
+- „JSON und CSV exportieren“, dann „Export erneut laden und prüfen“: alle Prüfpunkte, auch die
+  Entscheidungen, bleiben erhalten.
 
-## 2:10 – Bibliotheksdaten (25 Sekunden)
+## 2:30 – Zweites Beispiel: „Die Heimath in Amerika“ (30 Sekunden)
 
-![Bibliotheksdaten](screenshots/05-bibliotheksdaten.png)
+![Verlagsangaben](screenshots/06-heimath-verlagsangaben.png)
+![Transkription](screenshots/07-heimath-transkription.png)
 
-- Die OAI-PMH-Antwort wird geparst. Das XSD steht ausdrücklich auf „nicht ausgeführt“.
-- Abgleich Colibri gegen MODS: sieben Felder übereinstimmend. Dazu der Seitenbezug im METS, Personen
-  mit Rollen (Verfasser, Geldgeber) und das vollständige Mapping mit XPath.
-
-## 2:35 – Prüfung und Export (25 Sekunden)
-
-![Prüfung](screenshots/06-pruefung.png)
-![Export](screenshots/07-export.png)
-
-- Prüfung: keine technischen Fehler. Offene fachliche Hinweise und bewusst nicht ausgeführte Prüfungen
-  (XSD, Live-Abgleich, GND, OCR-Bewertung) stehen getrennt.
-- Endbestätigung: „Offen“, „Bereit zur Endbestätigung“ oder „Endbestätigt“ zeigen.
-  Erst ohne Blocker und nach allen Einzelbestätigungen mit Name und Zustimmung bestätigen.
-  Die vorhandenen fachlichen Hinweise dürfen dafür nicht übergangen werden. Inhaltsänderungen
-  heben die Endbestätigung auf, nicht aber ihre Historie. Keine Ground-Truth-Freigabe.
-- Export: „JSON und CSV exportieren“ und danach „Export erneut laden und prüfen“. Alle Prüfpunkte
-  sind erhalten.
-
-## Falls Zeit bleibt
-
-![Genovefa](screenshots/08-genovefa-beschreibung.png)
-
-- Bei „Genovefa, Scan 14“ ist die Herkunft „Entwurf des KI-Assistenten“ an Beschreibung und
-  Suchbegriffen sichtbar. Ein Vorschlag wird erst durch eine Bestätigung zur geprüften Angabe.
+- Übersicht: Katalog nennt Augsburg und J. A. Schlosser, das Bildblatt eine Rottweiler Buchhandlung.
+  Zwei Kontexte, zwei Felder.
+- Reiter „Transkription“: OCR „‘Die Geimatly „ir Amerika.“ neben dem Ausschnitt und der Lesung „Die
+  Heimath in Amerika.“. Ohne Referenz keine OCR-Bewertung.

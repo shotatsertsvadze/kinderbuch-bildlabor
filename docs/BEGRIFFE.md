@@ -13,13 +13,15 @@ Oberfläche und Dokumentation sind deutsch, der Code ist englisch. Pro Konzept g
 | Beschreibung | `image_description` | Sichtbarer Bildinhalt ohne Deutung. |
 | Suchbegriffe | `keywords_de` | Projektlokale Begriffe je Region; keine GND-Verknüpfung. |
 | Transkription | `transcription` | Zeichengetreuer Text je Feld. Die OCR-Ausgabe steht getrennt daneben. |
-| Prüfbereich (kurz: Bereich) | `review_areas` | Einheit, die einzeln bestätigt wird: Regionsgrenzen, Beschreibung, Suchbegriffe, jede Transkription. |
+| Prüfbereich (kurz: Bereich) | `review_areas` | Einheit, die einzeln bestätigt wird: Regionsgrenzen, Klassifikation (falls abweichend), Beschreibung, Suchbegriffe, jede Transkription. |
 | Bestätigung | `confirm_*`, `review_log` | Ausdrückliche Bestätigung eines Prüfbereichs mit Name und Zeitpunkt. |
 | Endbestätigung | `final_approval`, `FINAL_APPROVED`, Protokollart `final_review` | Bestätigung des ganzen Objekts. Zustände: Offen, Bereit zur Endbestätigung, Endbestätigt. |
-| Ground Truth | | Geprüfte Referenz zur Bewertung. Wird hier nicht vergeben; auch die Endbestätigung ist keine. |
+| Klassifikation | `colibri_groundtruth`, `colibri_classification`, Reiter „Klassifikation“ | Die beiden Klassen, die Colibri zu einer Abbildung führt: manuell (Colibri-Spalte „groundtruth“) und automatisch (Spalte „classification“). Weichen sie ab, ist die Entscheidung ein eigener Prüfbereich. |
+| Begründete Entscheidung | `decisions`, `record_decision`, Kategorie `begruendet_entschieden` | Festlegung einer benannten Person zu einem belegten Unterschied, mit Pflichtbegründung. Der Hinweis bleibt sichtbar. Ändert sich der zugrunde liegende Inhalt, wird sie aufgehoben. |
+| Ground Truth | | Geprüfte Referenz zur Bewertung. Wird hier nicht vergeben; auch die Endbestätigung ist keine. Die Colibri-Spalte „groundtruth“ ist eine manuelle Klasse und wird hier ebenfalls am Bild geprüft. |
 | Reiter „Prüfung“ | `check_view` | Zeigt die Validierung und die Endbestätigung. Das Wort „Prüfung“ allein meint nichts anderes. |
-| Validierung, Befund | `validate`, `Finding` | Automatische Prüfung. Kategorien: technischer Fehler, fachlicher Hinweis, nicht ausgeführt. |
-| Blocker | `approval_blockers` | Befunde, die die Endbestätigung sperren: technische Fehler und fachliche Hinweise. |
+| Validierung, Befund | `validate`, `Finding` | Automatische Prüfung. Kategorien: technischer Fehler, fachlicher Hinweis, nicht ausgeführt, begründet entschieden. |
+| Blocker | `approval_blockers` | Befunde, die die Endbestätigung sperren: technische Fehler und fachliche Hinweise ohne begründete Entscheidung. |
 | Bibliotheksdaten | `library_view`, `oai` | METS/MODS aus der gespeicherten OAI-PMH-Antwort der Staatsbibliothek. |
 | Colibri-Metadaten | `source` | Bibliografische Zeile aus dem Colibri-Datensatz. |
 | Änderungsprotokoll, Prüfprotokoll | `change_log`, `review_log` | Jede Speicherung beziehungsweise jede Bestätigung. |

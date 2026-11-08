@@ -43,9 +43,12 @@ jobs:
           uv sync --locked
           uv run --locked ruff check --no-cache .
           uv run --locked ruff format --check --no-cache .
-          uv run --locked mypy --cache-dir=/dev/null
+          uv run --locked mypy
           uv run --locked python -B -m pytest -p no:cacheprovider -q
-          "dev\null angelegt: " + (Test-Path "$((Get-Location).Drive.Root)dev\null")
+          $devnull = Test-Path "$((Get-Location).Drive.Root)dev\null"
+          "dev\null angelegt: $devnull"
+          ".mypy_cache\.gitignore vorhanden: " + (Test-Path ".mypy_cache\.gitignore")
+          if ($devnull -or -not (Test-Path ".mypy_cache\.gitignore")) { throw "mypy-Zwischenspeicher nicht wie in der README beschrieben" }
       # Ein Schritt: Der Windows-Runner beendet am Schrittende alle darin gestarteten Prozesse
       # (belegt: im folgenden Schritt lauschte nichts mehr auf Port 8501).
       - name: App starten, Browser-Ablauf in Edge, Serverneustart, Prüfung nach Neustart

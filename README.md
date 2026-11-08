@@ -3,30 +3,14 @@
 **Wie lassen sich abweichende Bildklassifikationen in digitalisierten Kinderbüchern am Originalbild
 prüfen, begründet entscheiden und mit ihrer Herkunft weitergeben?**
 
-Lokaler Prototyp mit echten Daten der Staatsbibliothek zu Berlin (Colibri-Datensatz, METS/MODS,
-IIIF-Scans). Fallstudie: fünf Illustrationen aus „Genovefa“ (Augsburg 1810), bei denen die manuelle und
-die automatische Colibri-Klasse voneinander abweichen. Zweites Beispiel: „Die Heimath in Amerika“
-(Augsburg 1850) mit Verlagsangabe, OCR-Ausgabe und Transkription.
+Lokaler Prototyp mit Daten der Staatsbibliothek zu Berlin (Colibri-Datensatz, METS/MODS, IIIF-Scans).
+Die Anwendung arbeitet mit sechs vorbereiteten Beispielen aus zwei Büchern; der Import eigener Bilder
+und Metadaten ist eine mögliche zukünftige Erweiterung.
 
-Überblick: [docs/PROJEKTUEBERSICHT.md](docs/PROJEKTUEBERSICHT.md) ·
-Rundgang in drei Minuten: [docs/DEMO.md](docs/DEMO.md)
+**[Projektüberblick](docs/PROJEKTUEBERSICHT.md)** · **[Geprüftes Beispiel](docs/ergebnis/README.md)** ·
+**[Demo ansehen](docs/DEMO.md)**
 
-## Mein Anteil
-
-Ich habe die Fragestellung entwickelt, die Quellen ausgewählt und am Pilotobjekt die Lesung der
-Bildunterschriften vorbereitet. Den Rahmen um den Bildtitel habe ich am Scan geprüft und in meiner
-Arbeitskopie bestätigt. Genovefa, Scan 22 habe ich am 08.11.2026 selbst geprüft, entschieden und
-exportiert. Die Umsetzung der App und die Entwürfe für die Genovefa-Beschreibungen und Suchbegriffe
-entstanden mit Unterstützung eines KI-Assistenten.
-
-## Ergebnis ansehen ohne Installation
-
-[docs/ergebnis/](docs/ergebnis/README.md) enthält meinen Export zu Genovefa, Scan 22 und den
-Pilotexport, beide unverändert, mit Prüfsummen und Einschränkungen. Die Anwendung zeigt dasselbe
-Beispiel auf der Startseite mit Download. Sie selbst startet mit dem Quellstand: Dort ist alles
-offen, bis Sie im eigenen Datenordner prüfen. Die übrigen vier Genovefa-Scans sind ungeprüft.
-
-## Installation
+## Einrichtung
 
 1. **uv installieren** (offizielle Anleitung: <https://docs.astral.sh/uv/getting-started/installation/>):
    - macOS und Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
@@ -34,8 +18,8 @@ offen, bis Sie im eigenen Datenordner prüfen. Die übrigen vier Genovefa-Scans 
    - alternativ mit Homebrew: `brew install uv`
 
    Danach ein neues Terminal öffnen und mit `uv --version` prüfen.
-2. **ZIP entpacken** und im Terminal in den Ordner wechseln, zum Beispiel
-   `cd ~/Downloads/kinderbuch-bildlabor`.
+2. **Projektordner bereitstellen:** Übergabe-ZIP entpacken oder das Repository klonen und im Terminal
+   in den Ordner wechseln, zum Beispiel `cd ~/Downloads/kinderbuch-bildlabor`.
 3. **Einrichten:** `uv sync --locked`. uv lädt dabei Python 3.13 und die Abhängigkeiten in genau den
    Versionen aus `uv.lock` (Streamlit 1.67.0, Pillow 13.0.0). Nur dieser Schritt braucht Internet.
 
@@ -48,7 +32,16 @@ uv run streamlit run app.py
 Der Browser öffnet <http://localhost:8501>. Die Anwendung arbeitet danach ohne Internetverbindung und
 ist nur auf diesem Rechner erreichbar. Beenden mit `Strg+C` im Terminal.
 
-## Wo anfangen
+Für eine eigene Prüfung, die von anderen Arbeitsständen getrennt bleibt, einen eigenen Datenordner
+verwenden:
+
+```bash
+BILDLABOR_DATA_DIR=/tmp/bildlabor-probe uv run streamlit run app.py
+```
+
+(Windows PowerShell: `$env:BILDLABOR_DATA_DIR="$env:TEMP\bildlabor-probe"; uv run streamlit run app.py`)
+
+## Nutzung
 
 1. Auf der Startseite **„Leitbeispiel öffnen: Genovefa, Scan 22“** wählen.
 2. Im Prüfpfad unter „Prüfende Person“ einen Namen eintragen. Der Prüfpfad nennt den aktuellen
@@ -57,29 +50,17 @@ ist nur auf diesem Rechner erreichbar. Beenden mit `Strg+C` im Terminal.
    **„Weiter“** zum nächsten Schritt; die Reiter bleiben zum Nachsehen erreichbar.
 3. „Zweites Beispiel öffnen“ zeigt Verlagsangabe und OCR bei „Die Heimath in Amerika“.
 
-Begriffe wie *Endbestätigung* und *Ground Truth* erklärt die Startseite und die Stelle, an der sie
-vorkommen; ausführlich in [docs/BEGRIFFE.md](docs/BEGRIFFE.md).
+Ein frisch gestarteter Datenordner zeigt alle sechs Beispiele im Quellstand, also ungeprüft. Das
+geprüfte Beispiel steht davon getrennt auf der Startseite und unter
+[docs/ergebnis/](docs/ergebnis/README.md). Begriffe wie *Endbestätigung* und *Ground Truth* erklärt
+[docs/BEGRIFFE.md](docs/BEGRIFFE.md).
 
-Für eine eigene Prüfung, die von anderen Arbeitsständen getrennt bleibt, einen eigenen Datenordner verwenden:
-
-```bash
-BILDLABOR_DATA_DIR=/tmp/bildlabor-probe uv run streamlit run app.py
-```
-
-(Windows PowerShell: `$env:BILDLABOR_DATA_DIR="$env:TEMP\bildlabor-probe"; uv run streamlit run app.py`)
-
-## Daten
-
-- Quelldateien (werden nie verändert): `Kinderbuch_Bildlabor_Start/`, `sammlung/`
-- Arbeitsstände: `data/work/<objekt-id>.json`; Exporte: `exports/`. Beide entstehen erst beim Speichern.
-- Vor jedem Überschreiben wird der bisherige Stand unter `data/work/.history/<objekt-id>/<sha256>.json`
-  aufbewahrt. Das ersetzt keine Sicherung auf einem anderen Gerät.
-- Zurück zum Quellstand: Server stoppen, die Arbeitsdatei in einen Archivordner verschieben (nicht
-  löschen), neu starten.
-- Mit `BILDLABOR_DATA_DIR` liegen Arbeitsstände und Exporte im angegebenen Ordner.
-
-Stichprobe, Auswahlkriterien, Rechte und Annotationsregeln: [docs/DATENSATZ.md](docs/DATENSATZ.md).
-Entscheidungen zum Aufbau: [docs/adr/](docs/adr/). Bezug zur Stelle: [docs/BEZUG_ZUR_STELLE.md](docs/BEZUG_ZUR_STELLE.md).
+**Daten:** Quelldateien in `Kinderbuch_Bildlabor_Start/` und `sammlung/` werden nie verändert.
+Arbeitsstände (`data/work/`) und Exporte (`exports/`) entstehen erst beim Speichern, mit
+`BILDLABOR_DATA_DIR` im angegebenen Ordner. Vor jedem Überschreiben bleibt der bisherige Stand unter
+`data/work/.history/` erhalten; das ersetzt keine Sicherung auf einem anderen Gerät. Zurück zum
+Quellstand: Server stoppen, die Arbeitsdatei in einen Archivordner verschieben (nicht löschen), neu
+starten.
 
 ## Qualitätsprüfungen
 
@@ -93,3 +74,9 @@ uv run --locked python -B -m pytest -p no:cacheprovider -q
 Die Befehle gelten für macOS, Linux und Windows. mypy legt seinen Zwischenspeicher in `.mypy_cache/`
 ab; den Ordner markiert mypy selbst als von Git ignoriert, er kann jederzeit gelöscht werden. Die
 Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` nicht.
+
+## Weitere Dokumente
+
+[Datensatz und Auswahl](docs/DATENSATZ.md) · [Offene Punkte](docs/OFFENE_PUNKTE.md) ·
+[Architekturentscheidungen](docs/adr/) · [Abnahmebericht](docs/ABNAHME_2026-11-07.md) ·
+[Bezug zur Stelle](docs/BEZUG_ZUR_STELLE.md)

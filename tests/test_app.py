@@ -554,6 +554,26 @@ def test_start_page_shows_finished_example_from_unchanged_export_and_writes_noth
     assert not store.WORK_DIR.exists() and not store.EXPORT_DIR.exists()
 
 
+def test_downloaded_explanation_has_no_relative_links_and_keeps_decisions_verbatim():
+    """Nachweis vorher: Die Erläuterung verwies außerhalb des Ordners auf fehlende Bild- und Dateiziele."""
+    import re
+
+    from kinderbuch_bildlabor import example_view
+
+    readme = (example_view.EXAMPLE_DIR / "README.md").read_text(encoding="utf-8")
+    assert example_view.RELATIVE_LINK.search(readme)
+    text = example_view.standalone_explanation().decode("utf-8")
+    targets = re.findall(r"\]\(([^)\s]+)\)", text)
+    assert targets and all("://" in target for target in targets)
+    assert "genovefa-scan-022-illustration.jpg" in text
+    exported = store.read_json(example_view.EXAMPLE_DIR / "genovefa-scan-022.json")
+    for entry in exported["record"]["decisions"].values():
+        assert entry["outcome_de"] in text and entry["rationale_de"] in text
+    app = open_app("sammlung")
+    button = next(b for b in app.get("download_button") if "README" in b.proto.id)
+    assert button.proto.label == "Erläuterung herunterladen"
+
+
 def test_out_of_range_coordinates_get_german_message_and_cannot_be_saved():
     """Nachweis vorher: Das Zahlenfeld wies 5000 mit Streamlits englischer Meldung ab."""
     app = open_app()

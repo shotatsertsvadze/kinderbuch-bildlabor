@@ -1,6 +1,14 @@
 # Kinderbuch-Bildlabor – Projektübersicht
 
-## Leitfrage
+## Motivation
+
+Ich habe mich auf eine Stelle im Datenmanagement einer Kinder- und Jugendbuchabteilung beworben. Mit
+diesem Projekt zeige ich an einer kleinen Stichprobe, wie ich mit Digitalisaten, Katalogdaten und
+Bildannotation arbeite, und ich möchte jede Entscheidung darin selbst erläutern und vertreten können.
+Es ist ein eigenständiger Prototyp auf Basis öffentlich zugänglicher Quellen. Interne Abläufe,
+Probleme oder Bedürfnisse der Bibliothek kenne ich nicht; das Projekt setzt keine voraus.
+
+## Fragestellung
 
 **Wie lassen sich abweichende Bildklassifikationen in digitalisierten Kinderbüchern am Originalbild
 prüfen, begründet entscheiden und mit ihrer Herkunft weitergeben?**
@@ -12,6 +20,14 @@ Original nachsehen, entscheiden, die Gründe festhalten und das Ergebnis so weit
 Ausgangswerte und ihre Herkunft erhalten bleiben. Das Bildlabor zeigt diesen Ablauf an echten Daten.
 Es ist ein lokaler Prototyp, kein Produktionssystem, und trifft keine Annahmen über interne Abläufe
 der Bibliothek.
+
+## Was die Anwendung umfasst
+
+Die Anwendung arbeitet mit sechs vorbereiteten Beispielen aus zwei Büchern: fünf Illustrationen aus
+„Genovefa“ (Augsburg 1810) und einem Bildblatt aus „Die Heimath in Amerika“ (Augsburg 1850). Scans,
+IIIF-Bildinformationen, OAI-PMH-Antworten mit METS/MODS und die Colibri-Werte liegen gespeichert im
+Projekt und werden lokal ausgewertet. Eigene Bilder oder Metadaten lassen sich nicht importieren; ein
+solcher Import ist eine mögliche zukünftige Erweiterung.
 
 ## Fallstudie: fünf Abbildungen aus „Genovefa“
 
@@ -53,7 +69,8 @@ Einschränkungen: [ergebnis/](ergebnis/README.md).
    die Entscheidung aufgehoben; das Protokoll behält sie.
 5. **Weitergabe:** JSON mit vollständigem Arbeitsstand, Entscheidungen, Herkunft, Rechten und
    Protokoll; CSV mit beiden Klassen, Entscheidung, Begründung, Person und Zeitpunkt. Eine
-   Rückladeprüfung bestätigt, dass nichts verloren geht.
+   Rückladeprüfung liest die gespeicherte JSON-Datei erneut ein und vergleicht sie mit dem
+   Arbeitsstand; die CSV-Datei wird dabei nicht zurückgelesen.
 
 ## Zweites Beispiel: „Die Heimath in Amerika“ (Augsburg 1850)
 
@@ -75,22 +92,49 @@ Einschränkungen: [ergebnis/](ergebnis/README.md).
   Pflichtprüfungen bleiben Sperren.
 - Endbestätigung ist keine Ground-Truth-Freigabe.
 
-## Stand und Grenzen
+## Drei Stände
 
-- Geprüft ist Genovefa, Scan 22; die Scans 14, 16, 17 und 85 stehen aus. Am Pilotobjekt ist nur der
-  Titelrahmen bestätigt. Beide Exporte liegen unverändert unter [ergebnis/](ergebnis/README.md). Die
-  App öffnet für eine eigene Prüfung den jeweiligen Quellstand. Siehe [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md).
-- Keine Live-Abfrage von OAI-PMH oder IIIF, keine neue OCR, keine XSD-Validierung, keine GND-Anbindung.
-- Einzelplatzbetrieb: ein Server, gern mehrere Browserfenster.
+| Stand | Wo | Inhalt |
+|---|---|---|
+| Geprüftes Beispiel | [ergebnis/](ergebnis/README.md) | Genovefa, Scan 22: von mir geprüft, entschieden und endbestätigt; unveränderter Export als JSON und CSV |
+| Weitere Beispiele | in der Anwendung; [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md) | Genovefa, Scans 14, 16, 17 und 85 ungeprüft; „Die Heimath in Amerika“: nur der Titelrahmen bestätigt (Pilotexport unter [ergebnis/](ergebnis/README.md)) |
+| Frischer Arbeitsstand der App | eigener Datenordner nach dem Start | alle sechs Objekte im Quellstand, alle Prüfbereiche offen |
 
-## Beitrag
+Die Anwendung zeigt das geprüfte Beispiel auf der Startseite aus den Dateien unter `docs/ergebnis/`.
+Eigene Prüfungen in der Anwendung verändern diese Dateien nicht.
 
-- **Shota Tsertsvadze:** Fragestellung und fachliche Anforderungen, Auswahl der Quellen, erste Lesung
-  der Bildunterschriften des Pilotobjekts, Prüfung der Region „Bildtitel“ sowie Prüfung und
-  Entscheidungen zu Genovefa, Scan 22. Beide Exporte mit Prüfprotokoll liegen unter
-  [ergebnis/](ergebnis/README.md).
-- **KI-Programmierassistent (Claude):** Umsetzung von Anwendung und Tests nach diesen Vorgaben sowie die
-  als „Entwurf des KI-Assistenten“ gekennzeichneten Beschreibungs- und Suchbegriffsvorschläge.
-- **Quellen:** Digitalisate und Metadaten der Staatsbibliothek zu Berlin (Public Domain Mark 1.0);
-  Colibri-Datensatz von Sebastian Schmideler, Sigrun Putjenter und Jörg Lehmann (CC BY 4.0,
-  DOI 10.5281/zenodo.15535927).
+## Mein Beitrag
+
+- Fragestellung, fachliche Anforderungen und Auswahl der Quellen.
+- Erste Lesung der Bildunterschriften des Pilotobjekts und Prüfung der Region „Bildtitel“ am Scan.
+- Prüfung von Genovefa, Scan 22 am Bild: Regionsgrenzen, Beschreibung und Suchbegriffe bestätigt,
+  Klassifikation und Illustrator-Hinweis entschieden und begründet, Endbestätigung erteilt und
+  exportiert. Die Entscheidungen stehen wörtlich unter [ergebnis/](ergebnis/README.md).
+- Durchsicht der Anwendung im Browser und Vorgaben zu Bedienung und Übergabe.
+
+## KI-Unterstützung
+
+- Ein KI-Programmierassistent (Claude) hat Anwendung, Tests und Entwürfe der Dokumentation nach meinen
+  Vorgaben umgesetzt.
+- Die Beschreibungs- und Suchbegriffsvorschläge zu den Genovefa-Scans stammen vom KI-Assistenten. Sie
+  sind in der Anwendung und im Export als „Entwurf des KI-Assistenten“ gekennzeichnet und gelten erst
+  nach einer Bestätigung mit Name und Zeitpunkt als geprüft.
+- Entscheidungen und Bestätigungen im geprüften Beispiel habe ich selbst in der Anwendung getroffen;
+  der Assistent hat keine Prüfung in meinem Namen ausgeführt.
+
+## Grenzen
+
+- Geprüft ist ein Beispiel. Eine Zweitprüfung durch eine andere Person gab es nicht; die
+  Endbestätigung ist keine Ground-Truth-Freigabe.
+- Sechs vorbereitete Beispiele, kein Import eigener Daten (siehe oben).
+- Keine Live-Abfrage von OAI-PMH oder IIIF, keine neue OCR, keine XSD-Validierung, keine
+  GND-Anbindung.
+- Einzelplatzbetrieb: ein Server, gern mehrere Browserfenster; mehrere Server auf einem Datenordner
+  sind nicht abgesichert.
+- Getestet unter macOS und auf einem Windows-Server-2025-Runner mit Edge, nicht unter Windows 11
+  (Einzelheiten: [ABNAHME_2026-11-07.md](ABNAHME_2026-11-07.md)).
+
+## Quellen
+
+Digitalisate und Metadaten der Staatsbibliothek zu Berlin (Public Domain Mark 1.0); Colibri-Datensatz
+von Sebastian Schmideler, Sigrun Putjenter und Jörg Lehmann (CC BY 4.0, DOI 10.5281/zenodo.15535927).

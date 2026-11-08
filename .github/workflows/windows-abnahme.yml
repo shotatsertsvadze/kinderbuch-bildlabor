@@ -55,6 +55,12 @@ jobs:
           for ($i = 0; $i -lt 90; $i++) { if (Test-NetConnection localhost -Port 8501 -InformationLevel Quiet -WarningAction SilentlyContinue) { break }; Start-Sleep 2 }
           Get-Content "$env:RUNNER_TEMP\app1.out"
           if (-not (Test-NetConnection localhost -Port 8501 -InformationLevel Quiet)) { Get-Content "$env:RUNNER_TEMP\app1.err"; throw "App nicht erreichbar" }
+          Start-Sleep 5
+          "Edge-Prozesse nach App-Start: " + @(Get-Process msedge -ErrorAction SilentlyContinue).Count
+          Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Select-Object -First 3 ProcessId, ParentProcessId, CommandLine | Format-List
+      - name: Diagnose – startet danach noch ein einfacher Prozess?
+        shell: cmd
+        run: ver
       - name: Browser-Ablauf Scan 22 in Edge
         run: uv run --no-project --with playwright ci-windows\win_e2e.py flow http://localhost:8501 "$env:PKG" "$env:BILDLABOR_DATA_DIR" "$env:RUNNER_TEMP\e2e" msedge
       - name: Server neu starten

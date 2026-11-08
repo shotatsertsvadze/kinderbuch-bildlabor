@@ -16,9 +16,10 @@ liegt unter [ergebnis/](ergebnis/README.md) und erscheint auf der Startseite.
 - Tabelle der Fallstudie: fünf Abbildungen aus „Genovefa“, manuell jeweils „Abbildung“, automatisch
   „Druckermarke“, „Exlibris“ oder „Karte“. Auswahlkriterium nennen: alle Zeilen dieses Buches mit
   manueller Klasse. Keine Aussage über Colibri insgesamt.
-- „Leitbeispiel öffnen“, dann im Prüfpfad einen Namen eintragen. Der hervorgehobene Schritt zeigt,
-  was als Nächstes zu prüfen ist; erledigte Schritte sind abgehakt. Nach jedem Speichern führt
-  „Weiter“ zum nächsten Schritt.
+- „Leitbeispiel öffnen“, dann im Prüfpfad einen Namen eintragen. Der Prüfpfad nennt den aktuellen
+  Schritt und die nächste Handlung; der Balken zählt die Prüfbereiche (bestätigt, als Entwurf
+  gespeichert, offen), getrennt davon steht die Endbestätigung. Erledigte Schritte sind abgehakt.
+  Nach jedem Speichern führt „Weiter“ zum nächsten Schritt.
 
 ## 0:30 – Leitbeispiel Scan 22, Reiter „Klassifikation“ (60 Sekunden)
 
@@ -51,8 +52,10 @@ liegt unter [ergebnis/](ergebnis/README.md) und erscheint auf der Startseite.
 
 ![Export](screenshots/05-export.png)
 
-- „JSON und CSV exportieren“, dann „Export erneut laden und prüfen“: alle Prüfpunkte, auch die
-  Entscheidungen, bleiben erhalten.
+- Drei Stufen: Export vorbereiten, Dateien speichern, Export prüfen. „JSON und CSV exportieren“
+  nennt Dateien, Ordner und Zeitpunkt und bietet beide Dateien einzeln zum Herunterladen an.
+  „Export erneut laden und prüfen“: alle Prüfpunkte, auch die Entscheidungen, bleiben erhalten. Die
+  Prüfung gilt für diese Sitzung und genau diese Datei; die CSV wird dabei nicht zurückgelesen.
 
 ## 2:30 – Zweites Beispiel: „Die Heimath in Amerika“ (30 Sekunden)
 

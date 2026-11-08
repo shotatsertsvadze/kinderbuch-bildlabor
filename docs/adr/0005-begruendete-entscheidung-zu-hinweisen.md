@@ -14,7 +14,9 @@ Technische Fehler, fehlende Bereichsbestätigungen und nicht ausgeführte Prüfu
 entscheidbar. Eine Entscheidung gilt nur für den genauen Hinweistext und den Inhalt, auf dem sie beruht
 (Klassifikation: Regionsgrenzen der Illustration; Verlag: Lesung der Verlagsangabe; Illustrator: Feld
 Illustrator). Ändert sich dieser Inhalt, wird sie aufgehoben; Entscheidung und Aufhebung bleiben im
-Prüfprotokoll. Jede neue Entscheidung hebt eine Endbestätigung auf.
+Prüfprotokoll. Jede neue Entscheidung hebt eine Endbestätigung auf. Eine bestehende Entscheidung kann
+eine Person ausdrücklich und unverändert erneut bestätigen; dann gelten ihr Name und der neue
+Zeitpunkt, frühere Einträge bleiben im Protokoll, und auch das hebt eine Endbestätigung auf.
 
 Folgen: Die Klassifikation ist ein eigener Prüfbereich im Reiter „Klassifikation“. JSON enthält alle
 Entscheidungen samt Grundlage, CSV die Klassifikationsentscheidung je Illustration und die übrigen

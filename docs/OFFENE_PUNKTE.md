@@ -11,7 +11,7 @@ Anwendung zeigt dagegen für jedes Objekt den Quellstand, also alles offen.
 
 | Objekt | Stand laut Export | Offen |
 |---|---|---|
-| Genovefa, Scan 22 (Leitbeispiel) | alle vier Prüfbereiche bestätigt, Klassifikation und Illustrator entschieden, endbestätigt (08.11.2026) | Die Begründungen sind knapp: zur Klassifikation ohne Beobachtung am Bild, zum Illustrator der Platzhalter „test 2“. Keine Zweitprüfung. |
+| Genovefa, Scan 22 (Leitbeispiel) | alle vier Prüfbereiche bestätigt, Klassifikation und Illustrator begründet entschieden, endbestätigt von Shota Tsertsvadze (08.11.2026) | Zum Illustrator nur der Bildausschnitt geprüft, keine weiteren Quellen. Rahmen, Beschreibung und Suchbegriffe tragen im Protokoll den Namen „shota“. Keine Zweitprüfung. |
 | Genovefa, Scan 14, 16, 17, 85 | kein Export, Quellstand | Regionsgrenzen, Klassifikation, Beschreibung, Suchbegriffe, Hinweis Illustrator; bei Scan 85 ist der Gegenstand der Person rechts im Entwurf als unsicher markiert |
 | Die Heimath in Amerika, Scan 6 | Region „Bildtitel“ bestätigt (06.11.2026) | Regionen „Illustration“ und „Verlagsangabe“, Beschreibung, beide Transkriptionen (Lesung „I.P.“ oder „L.P.“ Setzer), Hinweise Verlag und Illustrator |
 
@@ -25,7 +25,7 @@ vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer
 - Gedruckte Seitenzahl und Illustrator lassen sich in der Oberfläche nicht bearbeiten.
 - Koordinaten werden über Zahlenfelder bearbeitet (auch per Pfeiltaste), nicht durch Ziehen im Bild.
 - Unter etwa 650 Pixel Fensterbreite stehen Bild und Bearbeitung untereinander; dann ist mehr Blättern nötig.
-- Eine Entscheidung lässt sich ersetzen, aber nicht ersatzlos zurücknehmen; dafür den Arbeitsstand
+- Eine Entscheidung lässt sich ersetzen oder unverändert erneut bestätigen, aber nicht ersatzlos zurücknehmen; dafür den Arbeitsstand
   zurücksetzen (siehe README).
 
 ## Nicht umgesetzt (mögliche Erweiterungen)

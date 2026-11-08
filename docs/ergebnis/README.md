@@ -6,25 +6,42 @@ bis jemand im eigenen Datenordner prüft.
 
 | Datei | Inhalt | SHA-256 |
 |---|---|---|
-| [genovefa-scan-022.json](genovefa-scan-022.json) | vollständiger Arbeitsstand mit Entscheidungen, Prüfprotokoll und Änderungsgeschichte | `05647307abbf6d57297dbda2dd181355c6b8fdc891addd5f8f446f1a279c6bcc` |
-| [genovefa-scan-022.csv](genovefa-scan-022.csv) | eine Zeile je Region mit beiden Colibri-Klassen, Entscheidung, Herkunft und Rechten | `c0f23225f243f05d235446ac164c34b3515e350f603c3fed4da562160bb0c9e3` |
+| [genovefa-scan-022.json](genovefa-scan-022.json) | vollständiger Arbeitsstand mit Entscheidungen, Prüfprotokoll und Änderungsgeschichte | `388cc6d2ead4410df9c3d7209610ea80eeecac733b5f223fdbef2b13158106e6` |
+| [genovefa-scan-022.csv](genovefa-scan-022.csv) | eine Zeile je Region mit beiden Colibri-Klassen, Entscheidung, Herkunft und Rechten | `f54441509f82c62b7863b47450a289456ec04d1ceb1c1bfc8f7afb74473cc39b` |
 | [pilot-001.json](pilot-001.json) | Pilotobjekt „Die Heimath in Amerika“, Scan 6 | `febad0e61af20420cf85ffc58110dd325d6f2b4f2de167848fcac64595e955fd` |
 | [pilot-001.csv](pilot-001.csv) | dasselbe als CSV | `9ed2e6abad8beb95d094b90dca3545a0567b04f090b82ea8576ada05082bcd8a` |
 
 ## Genovefa, Scan 22
 
-Geprüft im Arbeitsordner der bewerbenden Person, exportiert am 08.11.2026 um 12:27 Uhr. Der Export
-entspricht dem gespeicherten Arbeitsstand. Alle Einträge im Prüfprotokoll tragen den Namen „Shota“.
-Zeiten in Berliner Ortszeit:
+Geprüft im Arbeitsordner der bewerbenden Person, exportiert am 08.11.2026 um 19:11:25 Uhr. Der
+Export entspricht dem gespeicherten Arbeitsstand; seitdem wurde nichts gespeichert. Die
+Rückladeprüfung der Anwendung, rein lesend auf Export und Arbeitsstand angewendet, ergibt 6 von 6
+Prüfpunkten erhalten. Beide geltenden Entscheidungen und die Endbestätigung tragen den Namen
+„Shota Tsertsvadze“.
 
-| Zeit | Vorgang |
-|---|---|
-| 11:34 | Regionsgrenzen der Illustration bestätigt (Koordinaten unverändert: 229, 299, 924, 617) |
-| 11:36 | Klassifikation entschieden: „Manuelle Klasse trifft zu: Abbildung“. Begründung: „Manuelle Klasse trifft zu, es ist eine Abbildung.“ |
-| 11:37 | Bildbeschreibung bestätigt (Entwurf des KI-Assistenten, Text unverändert) |
-| 12:25 | Suchbegriffe bestätigt (Entwurf des KI-Assistenten, unverändert: Mann, Frau, Gewölbe, Treppe, Gitterfenster) |
-| 12:26 | Hinweis Illustrator entschieden: „Illustrator bleibt unbekannt; Feld bewusst leer“. Begründung: „test 2“ |
-| 12:26 | Endbestätigung erteilt |
+Geltender Stand:
+
+- Klassifikation: „Manuelle Klasse trifft zu: Abbildung“. Begründung: „Der Bildausschnitt zeigt zwei
+  Figuren in einem gewölbten Innenraum mit einer Treppe. Die szenische Darstellung spricht für die
+  Klasse „Abbildung“. Kartografische Merkmale sind im Ausschnitt nicht erkennbar.“
+- Illustrator: „Illustrator bleibt unbekannt; Feld bewusst leer“. Begründung: „Im geprüften
+  Bildausschnitt konnte ich keine eindeutige Angabe zum Illustrator erkennen. Die Zuschreibung bleibt
+  offen; das Feld bleibt daher leer. Weitere Quellen wurden von mir nicht geprüft.“
+- Regionsgrenzen (229, 299, 924, 617), Bildbeschreibung und Suchbegriffe (Mann, Frau, Gewölbe,
+  Treppe, Gitterfenster) sind bestätigt und entsprechen unverändert den Entwürfen.
+- Endbestätigung: Shota Tsertsvadze, 19:11 Uhr.
+
+Das Prüfprotokoll ist vollständig erhalten, auch mit früheren Namensangaben. Zeiten in Berliner
+Ortszeit:
+
+| Zeit | Name im Protokoll | Vorgang |
+|---|---|---|
+| 13:50–13:52 | shota | Regionsgrenzen, Bildbeschreibung und Suchbegriffe bestätigt; Klassifikation und Illustrator mit der Begründung „Entscheidung trifft zu“ entschieden; Endbestätigung |
+| 14:18–14:19 | ShotaTest | beide Entscheidungen mit den heute geltenden Begründungen neu festgehalten; Endbestätigung |
+| 19:02–19:11 | Shota Tsertsvadze | beide Entscheidungen unverändert erneut bestätigt (Illustrator zweimal); Endbestätigung zuletzt um 19:11 Uhr |
+
+Jede neue oder erneut bestätigte Entscheidung hat die vorige Endbestätigung aufgehoben. Auch diese
+Aufhebungen stehen im Protokoll.
 
 Das Beispiel zeigt, wie eine Entscheidung weitergegeben wird:
 - Beide Colibri-Werte bleiben unverändert erhalten (manuell „Abbildung“, automatisch „Karte“).
@@ -34,14 +51,16 @@ Das Beispiel zeigt, wie eine Entscheidung weitergegeben wird:
 
 ## Einschränkungen
 
-- Beide Begründungen stehen wörtlich so, wie sie gespeichert wurden. Die Begründung zur Klassifikation
-  wiederholt die gewählte Antwort und nennt keine Beobachtung am Bild. Die Begründung zum Illustrator
-  lautet „test 2“ und ist keine fachliche Begründung.
 - Die Endbestätigung ist keine Ground-Truth-Freigabe. Es gab keine Zweitprüfung durch eine andere
   Person.
+- Zum Illustrator wurden nach eigener Angabe nur der Bildausschnitt, keine weiteren Quellen geprüft.
+- Die Bestätigungen von Rahmen, Beschreibung und Suchbegriffe tragen im Protokoll den Namen „shota“.
+  Sie wurden nicht erneut bestätigt.
 - Geprüft ist nur Scan 22. Die Scans 14, 16, 17 und 85 sind offen (siehe [OFFENE_PUNKTE.md](../OFFENE_PUNKTE.md)).
 - Im JSON stehen die Herkunftsfelder in ihrem überlieferten Wortlaut, einschließlich „ungeprüft“. Der
   Prüfstand steht in den eigenen Statusfeldern; die CSV zeigt beides getrennt.
+- Das frühere Beispiel (Export vom 08.11.2026, 12:27 Uhr, aus einem anderen Arbeitsordner) ist durch
+  diesen Export ersetzt. Es bleibt in der Git-Geschichte (Commit `c13a701`) erhalten.
 
 ## Pilotobjekt „Die Heimath in Amerika“
 

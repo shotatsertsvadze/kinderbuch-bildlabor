@@ -35,8 +35,9 @@ Alle Aussagen gelten nur für diese fünf Beispiele; sie sagen nichts über die 
 Gewölbe. Die automatische Klasse lautet „Karte“. Der Unterschied ist am Bild leicht nachvollziehbar.
 Die Entscheidung trifft trotzdem die prüfende Person, nicht die Anwendung.
 
-**Ergebnis für Scan 22:** Am 08.11.2026 geprüft und exportiert von „Shota“: Klassifikation
-„Manuelle Klasse trifft zu: Abbildung“, Illustrator bleibt unbekannt, Endbestätigung erteilt. Beide
+**Ergebnis für Scan 22:** Am 08.11.2026 geprüft und exportiert von Shota Tsertsvadze: Klassifikation
+„Manuelle Klasse trifft zu: Abbildung“ mit Begründung am Bild, Illustrator bleibt unbekannt,
+Endbestätigung erteilt. Beide
 Colibri-Werte bleiben als Quellenangaben erhalten. Export, Begründungen im Wortlaut und
 Einschränkungen: [ergebnis/](ergebnis/README.md).
 

@@ -1,32 +1,68 @@
 {
-  "exported_at": "2026-11-08T11:27:48+00:00",
+  "exported_at": "2026-11-08T18:11:25+00:00",
   "based_on": {
     "file": "sammlung/genovefa/scan_022.json",
     "sha256": "38453607946b9edd76b1644d77c0abbc0fb87c192c2eadb2d776d052c81d6bff"
   },
   "change_log": [
     {
-      "saved_at": "2026-11-08T10:34:05+00:00",
+      "saved_at": "2026-11-08T12:50:54+00:00",
       "area_de": "Bestätigung Regionsgrenzen „Illustration“"
     },
     {
-      "saved_at": "2026-11-08T10:36:42+00:00",
+      "saved_at": "2026-11-08T12:51:15+00:00",
       "area_de": "Begründete Entscheidung"
     },
     {
-      "saved_at": "2026-11-08T10:37:10+00:00",
+      "saved_at": "2026-11-08T12:51:32+00:00",
       "area_de": "Bestätigung Bildbeschreibung"
     },
     {
-      "saved_at": "2026-11-08T11:25:55+00:00",
+      "saved_at": "2026-11-08T12:51:41+00:00",
       "area_de": "Bestätigung Suchbegriffe"
     },
     {
-      "saved_at": "2026-11-08T11:26:29+00:00",
+      "saved_at": "2026-11-08T12:52:28+00:00",
       "area_de": "Begründete Entscheidung"
     },
     {
-      "saved_at": "2026-11-08T11:26:45+00:00",
+      "saved_at": "2026-11-08T12:52:33+00:00",
+      "area_de": "Endbestätigung"
+    },
+    {
+      "saved_at": "2026-11-08T13:18:35+00:00",
+      "area_de": "Begründete Entscheidung"
+    },
+    {
+      "saved_at": "2026-11-08T13:19:03+00:00",
+      "area_de": "Begründete Entscheidung"
+    },
+    {
+      "saved_at": "2026-11-08T13:19:07+00:00",
+      "area_de": "Endbestätigung"
+    },
+    {
+      "saved_at": "2026-11-08T18:02:14+00:00",
+      "area_de": "Entscheidung erneut bestätigt"
+    },
+    {
+      "saved_at": "2026-11-08T18:02:35+00:00",
+      "area_de": "Endbestätigung"
+    },
+    {
+      "saved_at": "2026-11-08T18:09:32+00:00",
+      "area_de": "Entscheidung erneut bestätigt"
+    },
+    {
+      "saved_at": "2026-11-08T18:09:37+00:00",
+      "area_de": "Endbestätigung"
+    },
+    {
+      "saved_at": "2026-11-08T18:11:09+00:00",
+      "area_de": "Entscheidung erneut bestätigt"
+    },
+    {
+      "saved_at": "2026-11-08T18:11:21+00:00",
       "area_de": "Endbestätigung"
     }
   ],
@@ -104,40 +140,114 @@
     "evaluation": null,
     "review_log": [
       {
-        "at": "2026-11-08T10:34:05+00:00",
+        "at": "2026-11-08T12:50:54+00:00",
         "area": "genovefa-scan-022-region-01",
         "action": "Regionsgrenzen visuell bestätigt",
-        "by": "Shota"
+        "by": "shota"
       },
       {
-        "at": "2026-11-08T10:36:42+00:00",
+        "at": "2026-11-08T12:51:15+00:00",
         "area": "decision/CLASSIFICATION_DIFFERENCE",
-        "action": "Entscheidung: Manuelle Klasse trifft zu: Abbildung. Begründung: Manuelle Klasse trifft zu, es ist eine Abbildung.",
-        "by": "Shota"
+        "action": "Entscheidung: Manuelle Klasse trifft zu: Abbildung. Begründung: Entscheidung trifft zu.",
+        "by": "shota"
       },
       {
-        "at": "2026-11-08T10:37:10+00:00",
+        "at": "2026-11-08T12:51:32+00:00",
         "area": "image_description",
         "action": "Bildbeschreibung am Bild bestätigt",
-        "by": "Shota"
+        "by": "shota"
       },
       {
-        "at": "2026-11-08T11:25:55+00:00",
+        "at": "2026-11-08T12:51:41+00:00",
         "area": "genovefa-scan-022-region-01/keywords_de",
         "action": "Suchbegriffe bestätigt",
-        "by": "Shota"
+        "by": "shota"
       },
       {
-        "at": "2026-11-08T11:26:29+00:00",
+        "at": "2026-11-08T12:52:28+00:00",
         "area": "decision/ILLUSTRATOR_ATTRIBUTION",
-        "action": "Entscheidung: Illustrator bleibt unbekannt; Feld bewusst leer. Begründung: test 2",
-        "by": "Shota"
+        "action": "Entscheidung: Illustrator bleibt unbekannt; Feld bewusst leer. Begründung: Entscheidung trifft zu",
+        "by": "shota"
       },
       {
-        "at": "2026-11-08T11:26:45+00:00",
+        "at": "2026-11-08T12:52:33+00:00",
         "area": "final_review",
         "action": "Endbestätigung des Objekts erteilt (keine Ground-Truth-Freigabe)",
-        "by": "Shota"
+        "by": "shota"
+      },
+      {
+        "at": "2026-11-08T13:18:35+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung durch Inhaltsänderung aufgehoben"
+      },
+      {
+        "at": "2026-11-08T13:18:35+00:00",
+        "area": "decision/CLASSIFICATION_DIFFERENCE",
+        "action": "Entscheidung: Manuelle Klasse trifft zu: Abbildung. Begründung: Der Bildausschnitt zeigt zwei Figuren in einem gewölbten Innenraum mit einer Treppe. Die szenische Darstellung spricht für die Klasse „Abbildung“. Kartografische Merkmale sind im Ausschnitt nicht erkennbar.",
+        "by": "ShotaTest"
+      },
+      {
+        "at": "2026-11-08T13:19:03+00:00",
+        "area": "decision/ILLUSTRATOR_ATTRIBUTION",
+        "action": "Entscheidung: Illustrator bleibt unbekannt; Feld bewusst leer. Begründung: Im geprüften Bildausschnitt konnte ich keine eindeutige Angabe zum Illustrator erkennen. Die Zuschreibung bleibt offen; das Feld bleibt daher leer. Weitere Quellen wurden von mir nicht geprüft.",
+        "by": "ShotaTest"
+      },
+      {
+        "at": "2026-11-08T13:19:07+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung des Objekts erteilt (keine Ground-Truth-Freigabe)",
+        "by": "ShotaTest"
+      },
+      {
+        "at": "2026-11-08T18:02:14+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung durch erneute Bestätigung einer Entscheidung aufgehoben"
+      },
+      {
+        "at": "2026-11-08T18:02:14+00:00",
+        "area": "decision/CLASSIFICATION_DIFFERENCE",
+        "action": "Entscheidung unverändert erneut bestätigt: Manuelle Klasse trifft zu: Abbildung. Begründung: Der Bildausschnitt zeigt zwei Figuren in einem gewölbten Innenraum mit einer Treppe. Die szenische Darstellung spricht für die Klasse „Abbildung“. Kartografische Merkmale sind im Ausschnitt nicht erkennbar.",
+        "by": "Shota Tsertsvadze"
+      },
+      {
+        "at": "2026-11-08T18:02:35+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung des Objekts erteilt (keine Ground-Truth-Freigabe)",
+        "by": "Shota Tsertsvadze"
+      },
+      {
+        "at": "2026-11-08T18:09:32+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung durch erneute Bestätigung einer Entscheidung aufgehoben"
+      },
+      {
+        "at": "2026-11-08T18:09:32+00:00",
+        "area": "decision/ILLUSTRATOR_ATTRIBUTION",
+        "action": "Entscheidung unverändert erneut bestätigt: Illustrator bleibt unbekannt; Feld bewusst leer. Begründung: Im geprüften Bildausschnitt konnte ich keine eindeutige Angabe zum Illustrator erkennen. Die Zuschreibung bleibt offen; das Feld bleibt daher leer. Weitere Quellen wurden von mir nicht geprüft.",
+        "by": "Shota Tsertsvadze"
+      },
+      {
+        "at": "2026-11-08T18:09:37+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung des Objekts erteilt (keine Ground-Truth-Freigabe)",
+        "by": "Shota Tsertsvadze"
+      },
+      {
+        "at": "2026-11-08T18:11:09+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung durch erneute Bestätigung einer Entscheidung aufgehoben"
+      },
+      {
+        "at": "2026-11-08T18:11:09+00:00",
+        "area": "decision/ILLUSTRATOR_ATTRIBUTION",
+        "action": "Entscheidung unverändert erneut bestätigt: Illustrator bleibt unbekannt; Feld bewusst leer. Begründung: Im geprüften Bildausschnitt konnte ich keine eindeutige Angabe zum Illustrator erkennen. Die Zuschreibung bleibt offen; das Feld bleibt daher leer. Weitere Quellen wurden von mir nicht geprüft.",
+        "by": "Shota Tsertsvadze"
+      },
+      {
+        "at": "2026-11-08T18:11:21+00:00",
+        "area": "final_review",
+        "action": "Endbestätigung des Objekts erteilt (keine Ground-Truth-Freigabe)",
+        "by": "Shota Tsertsvadze"
       }
     ],
     "decisions": {
@@ -145,7 +255,7 @@
         "code": "CLASSIFICATION_DIFFERENCE",
         "finding_de": "Bildklassifikation in Colibri abweichend: manuell „Abbildung“, automatisch „Karte“.",
         "outcome_de": "Manuelle Klasse trifft zu: Abbildung",
-        "rationale_de": "Manuelle Klasse trifft zu, es ist eine Abbildung.",
+        "rationale_de": "Der Bildausschnitt zeigt zwei Figuren in einem gewölbten Innenraum mit einer Treppe. Die szenische Darstellung spricht für die Klasse „Abbildung“. Kartografische Merkmale sind im Ausschnitt nicht erkennbar.",
         "basis": [
           [
             229,
@@ -154,22 +264,22 @@
             617
           ]
         ],
-        "by": "Shota",
-        "at": "2026-11-08T10:36:42+00:00"
+        "by": "Shota Tsertsvadze",
+        "at": "2026-11-08T18:02:14+00:00"
       },
       "ILLUSTRATOR_ATTRIBUTION: Buchautor und Illustrator sind unterschiedliche Rollen. Der Illustrator ist bislang nicht ermittelt.": {
         "code": "ILLUSTRATOR_ATTRIBUTION",
         "finding_de": "Buchautor und Illustrator sind unterschiedliche Rollen. Der Illustrator ist bislang nicht ermittelt.",
         "outcome_de": "Illustrator bleibt unbekannt; Feld bewusst leer",
-        "rationale_de": "test 2",
+        "rationale_de": "Im geprüften Bildausschnitt konnte ich keine eindeutige Angabe zum Illustrator erkennen. Die Zuschreibung bleibt offen; das Feld bleibt daher leer. Weitere Quellen wurden von mir nicht geprüft.",
         "basis": null,
-        "by": "Shota",
-        "at": "2026-11-08T11:26:29+00:00"
+        "by": "Shota Tsertsvadze",
+        "at": "2026-11-08T18:11:09+00:00"
       }
     },
     "final_approval": {
-      "by": "Shota",
-      "at": "2026-11-08T11:26:45+00:00"
+      "by": "Shota Tsertsvadze",
+      "at": "2026-11-08T18:11:21+00:00"
     }
   }
 }

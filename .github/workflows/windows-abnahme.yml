@@ -51,16 +51,21 @@ jobs:
         run: |
           $env:BILDLABOR_DATA_DIR = "$env:TEMP\bildlabor-probe"
           "BILDLABOR_DATA_DIR=$env:BILDLABOR_DATA_DIR" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          Start-Process uv -ArgumentList "run","streamlit","run","app.py" -RedirectStandardOutput "$env:RUNNER_TEMP\app1.out" -RedirectStandardError "$env:RUNNER_TEMP\app1.err"
+          # Runner ohne Bedienoberfläche: kein automatisch geöffnetes Edge (belegt: sonst 10 Edge-Prozesse in der Dienstsitzung)
+          Start-Process uv -ArgumentList "run","streamlit","run","app.py","--server.headless","true" -RedirectStandardOutput "$env:RUNNER_TEMP\app1.out" -RedirectStandardError "$env:RUNNER_TEMP\app1.err"
           for ($i = 0; $i -lt 90; $i++) { if (Test-NetConnection localhost -Port 8501 -InformationLevel Quiet -WarningAction SilentlyContinue) { break }; Start-Sleep 2 }
           Get-Content "$env:RUNNER_TEMP\app1.out"
           if (-not (Test-NetConnection localhost -Port 8501 -InformationLevel Quiet)) { Get-Content "$env:RUNNER_TEMP\app1.err"; throw "App nicht erreichbar" }
           Start-Sleep 5
           "Edge-Prozesse nach App-Start: " + @(Get-Process msedge -ErrorAction SilentlyContinue).Count
           Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Select-Object -First 3 ProcessId, ParentProcessId, CommandLine | Format-List
-      - name: Diagnose – startet danach noch ein einfacher Prozess?
-        shell: cmd
-        run: ver
+      - name: Diagnose – lauscht die App, über welche Adresse?
+        run: |
+          netstat -ano | Select-String ":8501 "
+          "IPv4 127.0.0.1: " + (Test-NetConnection 127.0.0.1 -Port 8501 -InformationLevel Quiet -WarningAction SilentlyContinue)
+          "IPv6 ::1: " + (Test-NetConnection ::1 -Port 8501 -InformationLevel Quiet -WarningAction SilentlyContinue)
+          "localhost löst auf zu: " + ((Resolve-DnsName localhost -ErrorAction SilentlyContinue | ForEach-Object { $_.IPAddress }) -join ", ")
+          "Edge-Prozesse: " + @(Get-Process msedge -ErrorAction SilentlyContinue).Count
       - name: Browser-Ablauf Scan 22 in Edge
         run: uv run --no-project --with playwright ci-windows\win_e2e.py flow http://localhost:8501 "$env:PKG" "$env:BILDLABOR_DATA_DIR" "$env:RUNNER_TEMP\e2e" msedge
       - name: Server neu starten
@@ -68,7 +73,7 @@ jobs:
         run: |
           Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*streamlit*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
           Start-Sleep 3
-          Start-Process uv -ArgumentList "run","streamlit","run","app.py" -RedirectStandardOutput "$env:RUNNER_TEMP\app2.out" -RedirectStandardError "$env:RUNNER_TEMP\app2.err"
+          Start-Process uv -ArgumentList "run","streamlit","run","app.py","--server.headless","true" -RedirectStandardOutput "$env:RUNNER_TEMP\app2.out" -RedirectStandardError "$env:RUNNER_TEMP\app2.err"
           for ($i = 0; $i -lt 90; $i++) { if (Test-NetConnection localhost -Port 8501 -InformationLevel Quiet -WarningAction SilentlyContinue) { break }; Start-Sleep 2 }
       - name: Nach Neustart prüfen (Persistenz, JSON, CSV)
         run: uv run --no-project --with playwright ci-windows\win_e2e.py after_restart http://localhost:8501 "$env:PKG" "$env:BILDLABOR_DATA_DIR" "$env:RUNNER_TEMP\e2e" msedge

@@ -23,12 +23,12 @@ jobs:
           "uv vorinstalliert: " + [bool](Get-Command uv -ErrorAction SilentlyContinue)
       - name: Übergabe-ZIP prüfen und in Pfad mit Leerzeichen und Umlaut entpacken
         run: |
-          $hash = (Get-FileHash ci-windows\kinderbuch-bildlabor.zip -Algorithm SHA256).Hash.ToLower()
+          $hash = (Get-FileHash ci-windows\kinderbuch-bildlabor-v2.zip -Algorithm SHA256).Hash.ToLower()
           $expected = (Get-Content ci-windows\expected.sha256).Trim()
           "ZIP SHA-256: $hash"
           if ($hash -ne $expected) { throw "Prüfsumme weicht ab, erwartet $expected" }
           $target = Join-Path $env:USERPROFILE "Prüfung Bildlabor ä"
-          Expand-Archive ci-windows\kinderbuch-bildlabor.zip -DestinationPath $target
+          Expand-Archive ci-windows\kinderbuch-bildlabor-v2.zip -DestinationPath $target
           "PKG=$target\kinderbuch-bildlabor" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: uv wie im README installieren
         run: |

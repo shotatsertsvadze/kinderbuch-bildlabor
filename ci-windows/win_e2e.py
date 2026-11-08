@@ -1,5 +1,5 @@
 """Windows-Abnahme im echten Browser. Aufruf: win_e2e.py PHASE URL PAKET DATEN AUSGABE [KANAL]"""
-import csv, json, pathlib, sys
+import csv, json, pathlib, re, sys
 from playwright.sync_api import sync_playwright
 
 PHASE, URL = sys.argv[1], sys.argv[2]
@@ -30,7 +30,15 @@ def flow(pg, browser):
     for label, f in [("JSON herunterladen", "genovefa-scan-022.json"), ("CSV herunterladen", "genovefa-scan-022.csv"), ("Erläuterung herunterladen", "README.md")]:
         with pg.expect_download() as info: vis(pg.get_by_role("button", name=label)).click()
         d = info.value; tgt = OUT / ("download-" + d.suggested_filename); d.save_as(tgt)
-        report(tgt.read_bytes() == (erg / f).read_bytes(), f"Download {f} byte-identisch")
+        if f != "README.md":
+            report(tgt.read_bytes() == (erg / f).read_bytes(), f"Download {f} byte-identisch"); continue
+        # Erläuterung allein in einem leeren Ordner: keine relativen Verweise, Entscheidungen wörtlich
+        alone = OUT / "erlaeuterung-allein"; alone.mkdir(exist_ok=True); text = tgt.read_text(encoding="utf-8")
+        (alone / tgt.name).write_text(text, encoding="utf-8")
+        rel = [t for t in re.findall(r"\]\(([^)\s]+)\)", text) if "://" not in t and not (alone / t).exists()]
+        rec = json.loads((erg / "genovefa-scan-022.json").read_text(encoding="utf-8"))["record"]
+        verbatim = all(e["rationale_de"] in text and e["outcome_de"] in text for e in rec["decisions"].values())
+        report(not rel and verbatim, "Download Erläuterung ohne relative Verweise, Entscheidungen wörtlich", rel)
     vis(pg.get_by_role("button", name="Leitbeispiel öffnen")).click(); settle(pg, 3000)
     report("SCHRITT 1 VON 5" in main(pg).upper() and "0 von 4 bestätigt" in main(pg), "Leitbeispiel im Quellstand")
     vis(pg.get_by_role("button", name="1 · Bild prüfen")).click(); settle(pg); name(pg)

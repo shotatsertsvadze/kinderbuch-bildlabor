@@ -1,11 +1,22 @@
 """Startseite: das mitgelieferte, persönlich geprüfte Beispiel (unveränderter Export)."""
 
+import re
+
 import streamlit as st
 
 from kinderbuch_bildlabor import store, ui
 
 EXAMPLE_DIR = store.ROOT / "docs" / "ergebnis"
 EXAMPLE = "genovefa-scan-022"
+# Markdown-Bild oder -Link mit relativem Ziel; externe Adressen bleiben unberührt
+RELATIVE_LINK = re.compile(r"(!?)\[([^\]]*)\]\((?![a-z]+://)([^)\s]+)\)")
+DOWNLOAD_NOTE = (
+    "> Erläuterung zum geprüften Beispiel aus dem Projekt Kinderbuch-Bildlabor "
+    "(im Projekt: docs/ergebnis/README.md). Für diesen Download sind Verweise auf "
+    "Projektdateien als Text angegeben. JSON und CSV gibt es auf der Startseite der "
+    "Anwendung einzeln zum Herunterladen; Abbildung und weitere Dokumente liegen im "
+    "Projektordner.\n\n"
+)
 
 
 def render() -> None:
@@ -40,6 +51,19 @@ def decision_lines(record: dict) -> list[str]:
     ]
 
 
+def standalone_explanation() -> bytes:
+    """Erläuterung ohne relative Verweise, weil sie außerhalb des Projektordners gelesen wird."""
+    text = (EXAMPLE_DIR / "README.md").read_text(encoding="utf-8")
+
+    def as_text(match: re.Match) -> str:
+        image, label, target = match.groups()
+        if image:
+            return f"(Abbildung im Projektordner unter docs/ergebnis/{target}: {label})"
+        return label
+
+    return (DOWNLOAD_NOTE + RELATIVE_LINK.sub(as_text, text)).encode("utf-8")
+
+
 def downloads() -> None:
     files = [
         (f"{EXAMPLE}.json", "JSON herunterladen", "application/json"),
@@ -50,7 +74,9 @@ def downloads() -> None:
         for name, label, mime in files:
             st.download_button(
                 label,
-                data=(EXAMPLE_DIR / name).read_bytes(),
+                data=standalone_explanation()
+                if name == "README.md"
+                else (EXAMPLE_DIR / name).read_bytes(),
                 file_name=name if name != "README.md" else "ergebnis-erlaeuterung.md",
                 mime=mime,
                 key=f"example-{name}",

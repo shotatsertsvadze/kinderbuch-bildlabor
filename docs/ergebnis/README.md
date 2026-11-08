@@ -1,8 +1,47 @@
-# Abgeschlossenes Beispiel: Genovefa, Scan 22
+# Geprüftes Beispiel: Genovefa, Scan 22
 
-Dieser Ordner enthält zwei unveränderte Exporte aus der Anwendung. Sie lassen sich ohne Installation
-ansehen. Die Anwendung selbst startet dagegen mit dem Quellstand: Dort sind alle Prüfbereiche offen,
-bis jemand im eigenen Datenordner prüft.
+Diese Seite zeigt ohne Installation, was die bewerbende Person an einer Illustration selbst geprüft und
+entschieden hat. Grundlage ist ihr unveränderter Export aus der Anwendung.
+
+Drei Stände sind zu unterscheiden:
+
+| Stand | Wo | Inhalt |
+|---|---|---|
+| Geprüftes Beispiel | diese Seite, Dateien in diesem Ordner | Genovefa, Scan 22: von Shota Tsertsvadze geprüft, entschieden und endbestätigt |
+| Weitere Beispiele | in der Anwendung, Liste in [OFFENE_PUNKTE.md](../OFFENE_PUNKTE.md) | Genovefa, Scans 14, 16, 17 und 85 ungeprüft; „Die Heimath in Amerika“ nur der Titelrahmen bestätigt (Pilotexport unten) |
+| Frischer Arbeitsstand der App | eigener Datenordner nach dem Start | alle sechs Objekte im Quellstand, alle Prüfbereiche offen, bis jemand selbst prüft |
+
+## Auf einen Blick
+
+![Illustration aus Genovefa (Augsburg 1810), Scan 22: zwei Figuren in einem gewölbten Raum mit Treppe und vergittertem Fenster](genovefa-scan-022-illustration.jpg)
+
+Ausschnitt aus Scan 22 von „Genovefa“ (Augsburg 1810, PPN1772789429), Region 229, 299, 924, 617
+(x, y, Breite, Höhe in Pixeln des Scans). Quelle: Staatsbibliothek zu Berlin – Preußischer Kulturbesitz,
+[Originalansicht](https://digital.staatsbibliothek-berlin.de/werkansicht?PPN=PPN1772789429&PHYSID=PHYS_0022), Public Domain Mark 1.0.
+
+**Ausgangsklassen im Colibri-Datensatz**
+
+| Colibri-Spalte | Klasse |
+|---|---|
+| manuell (`groundtruth`) | Abbildung |
+| automatisch (`classification`) | Karte |
+
+**Entscheidung zur Klassifikation** (Shota Tsertsvadze, wörtlich aus dem Export)
+
+> Manuelle Klasse trifft zu: Abbildung
+>
+> Begründung: „Der Bildausschnitt zeigt zwei Figuren in einem gewölbten Innenraum mit einer Treppe. Die szenische Darstellung spricht für die Klasse „Abbildung“. Kartografische Merkmale sind im Ausschnitt nicht erkennbar.“
+
+**Entscheidung zum Illustrator** (Shota Tsertsvadze, wörtlich aus dem Export)
+
+> Illustrator bleibt unbekannt; Feld bewusst leer
+>
+> Begründung: „Im geprüften Bildausschnitt konnte ich keine eindeutige Angabe zum Illustrator erkennen. Die Zuschreibung bleibt offen; das Feld bleibt daher leer. Weitere Quellen wurden von mir nicht geprüft.“
+
+Endbestätigung: Shota Tsertsvadze, 08.11.2026, 19:11 Uhr. Sie ist keine
+Ground-Truth-Freigabe; eine Zweitprüfung durch eine andere Person gab es nicht.
+
+**Dateien**
 
 | Datei | Inhalt | SHA-256 |
 |---|---|---|
@@ -11,25 +50,16 @@ bis jemand im eigenen Datenordner prüft.
 | [pilot-001.json](pilot-001.json) | Pilotobjekt „Die Heimath in Amerika“, Scan 6 | `febad0e61af20420cf85ffc58110dd325d6f2b4f2de167848fcac64595e955fd` |
 | [pilot-001.csv](pilot-001.csv) | dasselbe als CSV | `9ed2e6abad8beb95d094b90dca3545a0567b04f090b82ea8576ada05082bcd8a` |
 
-## Genovefa, Scan 22
+JSON und CSV sind unveränderte Exporte. Der Bildausschnitt wurde für diese Seite aus dem mitgelieferten
+Quellscan `sammlung/genovefa/scan_022_page.jpg` erzeugt und gehört nicht zum Export.
+
+## Einzelheiten zu Genovefa, Scan 22
 
 Geprüft im Arbeitsordner der bewerbenden Person, exportiert am 08.11.2026 um 19:11:25 Uhr. Der
 Export entspricht dem gespeicherten Arbeitsstand; seitdem wurde nichts gespeichert. Die
 Rückladeprüfung der Anwendung, rein lesend auf Export und Arbeitsstand angewendet, ergibt 6 von 6
 Prüfpunkten erhalten. Beide geltenden Entscheidungen und die Endbestätigung tragen den Namen
 „Shota Tsertsvadze“.
-
-Geltender Stand:
-
-- Klassifikation: „Manuelle Klasse trifft zu: Abbildung“. Begründung: „Der Bildausschnitt zeigt zwei
-  Figuren in einem gewölbten Innenraum mit einer Treppe. Die szenische Darstellung spricht für die
-  Klasse „Abbildung“. Kartografische Merkmale sind im Ausschnitt nicht erkennbar.“
-- Illustrator: „Illustrator bleibt unbekannt; Feld bewusst leer“. Begründung: „Im geprüften
-  Bildausschnitt konnte ich keine eindeutige Angabe zum Illustrator erkennen. Die Zuschreibung bleibt
-  offen; das Feld bleibt daher leer. Weitere Quellen wurden von mir nicht geprüft.“
-- Regionsgrenzen (229, 299, 924, 617), Bildbeschreibung und Suchbegriffe (Mann, Frau, Gewölbe,
-  Treppe, Gitterfenster) sind bestätigt und entsprechen unverändert den Entwürfen.
-- Endbestätigung: Shota Tsertsvadze, 19:11 Uhr.
 
 Das Prüfprotokoll ist vollständig erhalten, auch mit früheren Namensangaben. Zeiten in Berliner
 Ortszeit:

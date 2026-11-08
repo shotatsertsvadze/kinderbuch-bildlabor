@@ -24,7 +24,7 @@ vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer
 - Mehrere Browserfenster an einem Server sind abgesichert, mehrere Server auf einem Datenordner nicht.
 - Gedruckte Seitenzahl und Illustrator lassen sich in der Oberfläche nicht bearbeiten.
 - Koordinaten werden über Zahlenfelder bearbeitet (auch per Pfeiltaste), nicht durch Ziehen im Bild.
-- Unter etwa 1000 Pixel Fensterbreite stehen Bild und Bearbeitung untereinander.
+- Unter etwa 650 Pixel Fensterbreite stehen Bild und Bearbeitung untereinander; dann ist mehr Blättern nötig.
 - Eine Entscheidung lässt sich ersetzen, aber nicht ersatzlos zurücknehmen; dafür den Arbeitsstand
   zurücksetzen (siehe README).
 

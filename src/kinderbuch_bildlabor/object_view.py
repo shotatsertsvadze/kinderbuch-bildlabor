@@ -182,7 +182,10 @@ def region_editor(cur: Current, region: dict) -> list[int]:
             else None,
             button_label="Rahmen als geprüft bestätigen",
         )
-    with st.expander("Rahmen korrigieren", expanded=sync != ui.CLEAN):
+    # Fester Schlüssel: sonst klappt der Bereich zu, sobald die Eingabe wieder dem Gespeicherten entspricht
+    with st.expander(
+        "Rahmen korrigieren", expanded=sync != ui.CLEAN, key=f"{region_id}-correct"
+    ):
         ui.origin_note(region.get("region_origin_de"))
         shown = region_coordinates(cur, region, keys, sync, width, height)
     st.image(
@@ -201,13 +204,9 @@ def region_coordinates(
 ) -> list[int]:
     region_id = region["id"]
     cols = st.columns(4)
-    for col, key, label, limit in zip(
-        cols,
-        keys,
-        ["x (links)", "y (oben)", "Breite", "Höhe"],
-        [width, height, width, height],
-    ):
-        col.number_input(label, min_value=0, max_value=limit, step=1, key=key)
+    # Ohne Feldgrenzen: Werte außerhalb des Bildes meldet bounds_problems auf Deutsch
+    for col, key, label in zip(cols, keys, ["x (links)", "y (oben)", "Breite", "Höhe"]):
+        col.number_input(label, step=1, key=key)
     xywh = actions.input_xywh(region_id)
     problems = regions.bounds_problems(xywh, width, height)
     for problem in problems:

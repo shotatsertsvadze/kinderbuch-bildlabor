@@ -552,3 +552,15 @@ def test_start_page_shows_finished_example_from_unchanged_export_and_writes_noth
     downloads = app.get("download_button")
     assert len(downloads) == 3
     assert not store.WORK_DIR.exists() and not store.EXPORT_DIR.exists()
+
+
+def test_out_of_range_coordinates_get_german_message_and_cannot_be_saved():
+    """Nachweis vorher: Das Zahlenfeld wies 5000 mit Streamlits englischer Meldung ab."""
+    app = open_app()
+    app.number_input(key=f"{REGION_1}-w").set_value(5000).run()
+    assert not app.exception
+    assert any("außerhalb der Bildbreite" in e for e in texts(app, "error"))
+    assert app.button(key=f"{REGION_1}-save").disabled
+    app.number_input(key=f"{REGION_1}-x").set_value(-5).run()
+    assert any("nicht negativ" in e for e in texts(app, "error"))
+    assert not store.work_path(PILOT).exists()

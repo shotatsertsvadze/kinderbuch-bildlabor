@@ -91,6 +91,8 @@ def write_text(
             # Ohne fsync kann ein Stromausfall nach dem Ersetzen eine leere Datei hinterlassen
             os.fsync(tmp.fileno())
         except BaseException:
+            # Windows löscht keine geöffnete Datei; ohne close bliebe die Temp-Datei liegen
+            tmp.close()
             Path(tmp.name).unlink()
             raise
     Path(tmp.name).replace(path)

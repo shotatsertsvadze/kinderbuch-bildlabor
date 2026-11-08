@@ -1,6 +1,8 @@
 # Lokale Demo: nur auf diesem Rechner erreichbar, keine Nutzungsstatistik an Streamlit
 [server]
 address = "localhost"
+# Ohne diese Zeile wartet der erste Start im Terminal auf eine E-Mail-Eingabe
+showEmailPrompt = false
 
 [browser]
 gatherUsageStats = false

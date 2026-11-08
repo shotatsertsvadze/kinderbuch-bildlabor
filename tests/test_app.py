@@ -564,3 +564,11 @@ def test_out_of_range_coordinates_get_german_message_and_cannot_be_saved():
     app.number_input(key=f"{REGION_1}-x").set_value(-5).run()
     assert any("nicht negativ" in e for e in texts(app, "error"))
     assert not store.work_path(PILOT).exists()
+
+
+def test_first_start_does_not_wait_for_email_prompt():
+    """Nachweis vorher: Ein Start nach README fragte im Terminal nach einer E-Mail und startete nicht."""
+    import tomllib
+
+    config = tomllib.loads((store.ROOT / ".streamlit" / "config.toml").read_text())
+    assert config["server"]["showEmailPrompt"] is False

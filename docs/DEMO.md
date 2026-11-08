@@ -1,8 +1,9 @@
 # Rundgang in drei Minuten
 
 Vorbereitung: `BILDLABOR_DATA_DIR=/tmp/vorfuehrung uv run streamlit run app.py`, Browserfenster ab etwa
-1280 Pixel breit. Der eigene Datenordner lässt die mitgelieferten Arbeitsstände unberührt. Die
-Bildschirmfotos zeigen den Stand vor der menschlichen Prüfung: Entscheidungen sind noch offen.
+1280 Pixel breit. Mit einem frischen Datenordner beginnt jedes Objekt im Quellstand. Die
+Bildschirmfotos zeigen diesen Stand: Entscheidungen sind noch offen. Ein abgeschlossenes Beispiel
+liegt unter [ergebnis/](ergebnis/README.md) und erscheint auf der Startseite.
 
 ## 0:00 – Startseite: die Frage (30 Sekunden)
 
@@ -10,6 +11,8 @@ Bildschirmfotos zeigen den Stand vor der menschlichen Prüfung: Entscheidungen s
 
 - Leitfrage neben der Illustration vorlesen. Colibri führt eine automatische und, wo vorhanden,
   eine manuelle Klasse.
+- Kasten „Abgeschlossenes Beispiel“: meine Entscheidung zu Scan 22 aus dem unveränderten Export,
+  mit Download von JSON, CSV und Erläuterung. Die Begründungen stehen wörtlich darin.
 - Tabelle der Fallstudie: fünf Abbildungen aus „Genovefa“, manuell jeweils „Abbildung“, automatisch
   „Druckermarke“, „Exlibris“ oder „Karte“. Auswahlkriterium nennen: alle Zeilen dieses Buches mit
   manueller Klasse. Keine Aussage über Colibri insgesamt.

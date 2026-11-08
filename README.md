@@ -15,12 +15,16 @@ Rundgang in drei Minuten: [docs/DEMO.md](docs/DEMO.md)
 
 Ich habe die Fragestellung entwickelt, die Quellen ausgewählt und am Pilotobjekt die Lesung der
 Bildunterschriften vorbereitet. Den Rahmen um den Bildtitel habe ich am Scan geprüft und in meiner
-Arbeitskopie bestätigt. Die Umsetzung der App und die Entwürfe für die Genovefa-Beschreibungen und
-Suchbegriffe entstanden mit Unterstützung eines KI-Assistenten. Die Projektübersicht zeigt den
-Begründungsvorschlag für Scan 22 und seinen aktuellen Prüfstand.
+Arbeitskopie bestätigt. Genovefa, Scan 22 habe ich am 08.11.2026 selbst geprüft, entschieden und
+exportiert. Die Umsetzung der App und die Entwürfe für die Genovefa-Beschreibungen und Suchbegriffe
+entstanden mit Unterstützung eines KI-Assistenten.
 
-Im Übergabe-ZIP liegt der dokumentierte Pilotstand unter `ergebnis/`. JSON und CSV lassen sich
-direkt ansehen. Die Anwendung startet mit den Quelldatensätzen für eine eigene Prüfung.
+## Ergebnis ansehen ohne Installation
+
+[docs/ergebnis/](docs/ergebnis/README.md) enthält meinen Export zu Genovefa, Scan 22 und den
+Pilotexport, beide unverändert, mit Prüfsummen und Einschränkungen. Die Anwendung zeigt dasselbe
+Beispiel auf der Startseite mit Download. Sie selbst startet mit dem Quellstand: Dort ist alles
+offen, bis Sie im eigenen Datenordner prüfen. Die übrigen vier Genovefa-Scans sind ungeprüft.
 
 ## Installation
 
@@ -55,7 +59,7 @@ ist nur auf diesem Rechner erreichbar. Beenden mit `Strg+C` im Terminal.
 Begriffe wie *Endbestätigung* und *Ground Truth* erklärt die Startseite und die Stelle, an der sie
 vorkommen; ausführlich in [docs/BEGRIFFE.md](docs/BEGRIFFE.md).
 
-Zum Ausprobieren ohne Änderung der mitgelieferten Arbeitsstände einen eigenen Datenordner verwenden:
+Für eine eigene Prüfung, die von anderen Arbeitsständen getrennt bleibt, einen eigenen Datenordner verwenden:
 
 ```bash
 BILDLABOR_DATA_DIR=/tmp/bildlabor-probe uv run streamlit run app.py

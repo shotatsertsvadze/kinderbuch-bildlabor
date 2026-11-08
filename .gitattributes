@@ -2,3 +2,6 @@
 /.claude export-ignore
 /.gitattributes export-ignore
 /AGENTS.md export-ignore
+# Exporte byte-genau erhalten (BOM, CRLF)
+/docs/ergebnis/*.json -text
+/docs/ergebnis/*.csv -text

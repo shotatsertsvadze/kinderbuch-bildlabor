@@ -35,11 +35,10 @@ Alle Aussagen gelten nur für diese fünf Beispiele; sie sagen nichts über die 
 Gewölbe. Die automatische Klasse lautet „Karte“. Der Unterschied ist am Bild leicht nachvollziehbar.
 Die Entscheidung trifft trotzdem die prüfende Person, nicht die Anwendung.
 
-**Begründungsvorschlag zur Prüfung am Original:** Der Ausschnitt zeigt zwei Figuren in einem
-gewölbten Innenraum mit einer Treppe links. Die szenische Darstellung entspricht der Klasse
-„Abbildung“. Für die Klasse „Karte“ fehlen im Ausschnitt kartografische Merkmale. Der Vorschlag
-entstand mit KI-Unterstützung und wartet auf die Bestätigung durch die prüfende Person. Die beiden
-Colibri-Werte bleiben als Quellenangaben sichtbar.
+**Ergebnis für Scan 22:** Am 08.11.2026 geprüft und exportiert von „Shota“: Klassifikation
+„Manuelle Klasse trifft zu: Abbildung“, Illustrator bleibt unbekannt, Endbestätigung erteilt. Beide
+Colibri-Werte bleiben als Quellenangaben erhalten. Export, Begründungen im Wortlaut und
+Einschränkungen: [ergebnis/](ergebnis/README.md).
 
 ## Was die prüfende Person sieht
 
@@ -77,17 +76,18 @@ Colibri-Werte bleiben als Quellenangaben sichtbar.
 
 ## Stand und Grenzen
 
-- Die Genovefa-Prüfungen stehen noch aus. Die persönliche Prüfung des Titelrahmens am Pilotobjekt
-  ist im separaten Ergebnisexport des Übergabe-ZIP mit Name und Zeitpunkt dokumentiert. Die App
-  öffnet für die eigene Prüfung den jeweiligen Quellstand. Siehe [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md).
+- Geprüft ist Genovefa, Scan 22; die Scans 14, 16, 17 und 85 stehen aus. Am Pilotobjekt ist nur der
+  Titelrahmen bestätigt. Beide Exporte liegen unverändert unter [ergebnis/](ergebnis/README.md). Die
+  App öffnet für eine eigene Prüfung den jeweiligen Quellstand. Siehe [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md).
 - Keine Live-Abfrage von OAI-PMH oder IIIF, keine neue OCR, keine XSD-Validierung, keine GND-Anbindung.
 - Einzelplatzbetrieb: ein Server, gern mehrere Browserfenster.
 
 ## Beitrag
 
 - **Shota Tsertsvadze:** Fragestellung und fachliche Anforderungen, Auswahl der Quellen, erste Lesung
-  der Bildunterschriften des Pilotobjekts und Prüfung der Region „Bildtitel“ in der lokalen
-  Arbeitskopie. Der separate Pilotexport enthält das zugehörige Prüfprotokoll.
+  der Bildunterschriften des Pilotobjekts, Prüfung der Region „Bildtitel“ sowie Prüfung und
+  Entscheidungen zu Genovefa, Scan 22. Beide Exporte mit Prüfprotokoll liegen unter
+  [ergebnis/](ergebnis/README.md).
 - **KI-Programmierassistent (Claude):** Umsetzung von Anwendung und Tests nach diesen Vorgaben sowie die
   als „Entwurf des KI-Assistenten“ gekennzeichneten Beschreibungs- und Suchbegriffsvorschläge.
 - **Quellen:** Digitalisate und Metadaten der Staatsbibliothek zu Berlin (Public Domain Mark 1.0);

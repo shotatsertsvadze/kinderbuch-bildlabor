@@ -3,7 +3,15 @@
 import streamlit as st
 from PIL import Image
 
-from kinderbuch_bildlabor import actions, regions, review, store, ui, validate
+from kinderbuch_bildlabor import (
+    actions,
+    example_view,
+    regions,
+    review,
+    store,
+    ui,
+    validate,
+)
 
 QUESTION = (
     "Wie lassen sich abweichende Bildklassifikationen in digitalisierten Kinderbüchern am "
@@ -45,6 +53,7 @@ def thumbnail(path, xywh: tuple[int, ...]) -> Image.Image:
 def render(collection: list[ui.Current]) -> None:
     by_id = {cur.id: cur for cur in collection}
     hero(by_id[LEAD])
+    example_view.render()
     case_study(collection)
     second_example(by_id[SECOND].record)
     glossary()
@@ -101,7 +110,8 @@ def case_study(collection: list[ui.Current]) -> None:
         "Auswahl: alle fünf Abbildungen aus „Genovefa“ (Augsburg 1810, PPN1772789429), zu denen "
         "Colibri eine manuelle Klasse enthält. Sie lautet jeweils „Abbildung“; die automatische "
         "Klasse weicht in allen fünf ab. Zahlen gelten nur für diese fünf ausgewählten Beispiele, "
-        "nicht für Colibri insgesamt."
+        "nicht für Colibri insgesamt. Die Spalte „Entscheidung am Bild“ zeigt den Stand Ihres "
+        "Datenordners; nach einem frischen Start ist sie überall offen."
     )
     rows = []
     for cur in collection:

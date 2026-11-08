@@ -6,14 +6,16 @@ Die Entwürfe (automatisch ermittelte Regionsgrenzen, Beschreibungen und Suchbeg
 KI-Assistenten, vorläufige Lesungen) sind noch nicht vollständig menschlich geprüft. Was geprüft ist,
 steht mit Name und Zeitpunkt im Prüfprotokoll jedes Objekts und im Export.
 
-| Objekt | Offen |
-|---|---|
-| Genovefa, Scan 22 (Leitbeispiel) | Regionsgrenzen, Klassifikation, Beschreibung, Suchbegriffe, Hinweis Illustrator |
-| Genovefa, Scan 14, 16, 17, 85 | wie Scan 22; bei Scan 85 ist der Gegenstand der Person rechts im Entwurf als unsicher markiert |
-| Die Heimath in Amerika, Scan 6 | Im Quellstand alle Regionen, Beschreibung, beide Transkriptionen (Lesung „I.P.“ oder „L.P.“ Setzer), Hinweise Verlag und Illustrator |
+Beleg ist jeweils der unveränderte Export unter [ergebnis/](ergebnis/README.md). Eine frisch gestartete
+Anwendung zeigt dagegen für jedes Objekt den Quellstand, also alles offen.
 
-Der getrennte Ergebnisexport des Pilotobjekts dokumentiert die persönliche Bestätigung der Region
-„Bildtitel“. Die Annahme der Pilot-Suchbegriffe stammt aus dem Startpaket und hat dort keinen eigenen
+| Objekt | Stand laut Export | Offen |
+|---|---|---|
+| Genovefa, Scan 22 (Leitbeispiel) | alle vier Prüfbereiche bestätigt, Klassifikation und Illustrator entschieden, endbestätigt (08.11.2026) | Die Begründungen sind knapp: zur Klassifikation ohne Beobachtung am Bild, zum Illustrator der Platzhalter „test 2“. Keine Zweitprüfung. |
+| Genovefa, Scan 14, 16, 17, 85 | kein Export, Quellstand | Regionsgrenzen, Klassifikation, Beschreibung, Suchbegriffe, Hinweis Illustrator; bei Scan 85 ist der Gegenstand der Person rechts im Entwurf als unsicher markiert |
+| Die Heimath in Amerika, Scan 6 | Region „Bildtitel“ bestätigt (06.11.2026) | Regionen „Illustration“ und „Verlagsangabe“, Beschreibung, beide Transkriptionen (Lesung „I.P.“ oder „L.P.“ Setzer), Hinweise Verlag und Illustrator |
+
+Der Pilotexport dokumentiert die persönliche Bestätigung der Region „Bildtitel“. Die Annahme der Pilot-Suchbegriffe stammt aus dem Startpaket und hat dort keinen eigenen
 Protokolleintrag mit Name und Zeitpunkt. Zur Seitenzahl bei Genovefa: Die METS-Seitenbezeichnungen (8, 10, 11, 16, 79) entsprechen
 vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer.
 

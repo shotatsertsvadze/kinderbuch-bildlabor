@@ -164,3 +164,37 @@ def test_export_step_counts_as_done_only_after_final_approval():
     draft["final_approval"] = {"by": "Prüferin", "at": "2026-11-07T10:00:00+00:00"}
     assert dict(workflow.steps(draft, export_current=True))["Export"] is True
     assert workflow.next_tab(draft, export_current=True) is None
+
+
+def test_reconfirming_unchanged_decision_records_new_person_and_revokes_final_approval():
+    record = lead_record()
+    decide(record)
+    message = review.classification_message(record)
+    first = dict(review.decision(record, review.CLASSIFICATION, message))
+    record["final_approval"] = {"by": "Person", "at": "2026-01-01T00:00:00+00:00"}
+    record["status"] = review.FINAL_APPROVED
+    log_before = list(record["review_log"])
+    with pytest.raises(review.DecisionInvalid):
+        review.reconfirm_decision(record, review.CLASSIFICATION, message, " ", first)
+    with pytest.raises(review.ContentChanged):
+        stale = {**first, "rationale_de": "Andere Begründung"}
+        review.reconfirm_decision(record, review.CLASSIFICATION, message, "Neu", stale)
+    assert record["review_log"] == log_before and "final_approval" in record
+
+    assert review.reconfirm_decision(
+        record, review.CLASSIFICATION, message, " Neue Person ", first
+    )
+    entry = review.decision(record, review.CLASSIFICATION, message)
+    assert entry["by"] == "Neue Person"
+    assert {k: v for k, v in entry.items() if k not in ("by", "at")} == {
+        k: v for k, v in first.items() if k not in ("by", "at")
+    }
+    assert "final_approval" not in record
+    assert record["status"] != review.FINAL_APPROVED
+    assert record["review_log"][: len(log_before)] == log_before
+    revoked, again = record["review_log"][len(log_before) :]
+    assert revoked["action"] == (
+        "Endbestätigung durch erneute Bestätigung einer Entscheidung aufgehoben"
+    )
+    assert again["by"] == "Neue Person"
+    assert again["action"].startswith("Entscheidung unverändert erneut bestätigt")

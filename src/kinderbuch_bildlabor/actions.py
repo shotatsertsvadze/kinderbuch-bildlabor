@@ -35,7 +35,14 @@ def write_failed(error: OSError) -> None:
     )
 
 
-def apply(object_id: str, area_de: str, change, *args) -> None:
+DRAFT_NEXT_DE = (
+    "Das ist noch keine Prüfung: Der Bereich gilt als ungeprüft, bis Sie ihn mit Häkchen und "
+    "Bestätigungsknopf bestätigen."
+)
+
+
+def apply(object_id: str, area_de: str, change, *args, slot: str | None = None) -> None:
+    """Speichert über die Speichersperre; mit `slot` bleibt das Ergebnis am Knopf sichtbar."""
     src = store.object_source(object_id)
     try:
         changed = store.update_working_copy(
@@ -47,13 +54,22 @@ def apply(object_id: str, area_de: str, change, *args) -> None:
     except OSError as error:
         write_failed(error)
         return
-    if not changed:
-        st.toast(
-            f"Nichts gespeichert: {area_de} entspricht bereits dem gespeicherten Stand.",
-            icon=ui.INFO,
-        )
+    if slot is None:
+        if changed:
+            # Eine Bestätigung überholt den Entwurfshinweis
+            st.session_state.pop("feedback", None)
         return
-    st.toast(f"Gespeichert: {area_de}", icon=ui.OK)
+    if changed:
+        ui.set_feedback(
+            object_id, slot, "draft", f"Entwurf gespeichert: {area_de}. {DRAFT_NEXT_DE}"
+        )
+    else:
+        ui.set_feedback(
+            object_id,
+            slot,
+            "info",
+            f"Nichts gespeichert: {area_de} entspricht bereits dem gespeicherten Stand.",
+        )
 
 
 def xywh_keys(region_id: str) -> list[str]:
@@ -72,6 +88,7 @@ def save_coordinates(object_id: str, region_id: str) -> None:
         region_id,
         input_xywh(region_id),
         ui.seen_values(xywh_keys(region_id)),
+        slot=f"{region_id}-save",
     )
 
 
@@ -103,6 +120,7 @@ def save_keywords(object_id: str, region_id: str) -> None:
         region_id,
         keyword_list(st.session_state[key]),
         keyword_list(ui.seen_values([key])[0]),
+        slot=f"{key}-save",
     )
 
 
@@ -129,6 +147,7 @@ def save_description(object_id: str) -> None:
         review.set_description,
         st.session_state[key].strip(),
         ui.seen_values([key])[0],
+        slot=f"{key}-save",
     )
 
 
@@ -155,6 +174,7 @@ def save_transcription(object_id: str, field: str) -> None:
         field,
         st.session_state[key],
         ui.seen_values([key])[0],
+        slot=f"{key}-save",
     )
 
 
@@ -173,28 +193,44 @@ def export_paths(object_id: str):
     return store.EXPORT_DIR / f"{object_id}.json", store.EXPORT_DIR / f"{object_id}.csv"
 
 
-def run_export(object_id: str) -> None:
+def file_digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def roundtrip_key(object_id: str) -> str:
+    return f"{object_id}-roundtrip-result"
+
+
+def run_export(object_id: str) -> bool:
     json_path, csv_path = export_paths(object_id)
+    previous = st.session_state.get(roundtrip_key(object_id))
     current = store.load_working_copy(store.object_source(object_id))
     try:
         data = export.export_json(current, json_path)
         export.export_csv(current["record"], data["exported_at"], csv_path)
     except OSError as error:
         write_failed(error)
-        return
-    st.session_state.pop(f"{object_id}-roundtrip-result", None)
-    st.toast("Exportiert: JSON und CSV", icon=ui.OK)
+        return False
+    st.session_state.pop(roundtrip_key(object_id), None)
+    # Eine frühere Prüfung galt der alten Datei; das soll sichtbar erklärt werden
+    st.session_state[f"{object_id}-export-replaced"] = (
+        data["exported_at"],
+        previous["exported_at"] if previous else None,
+    )
+    return True
 
 
 def run_roundtrip(object_id: str) -> None:
     json_path, _ = export_paths(object_id)
     exported = store.read_json(json_path)
     current = store.load_working_copy(store.object_source(object_id))["record"]
-    st.session_state[f"{object_id}-roundtrip-result"] = (
-        exported["exported_at"],
-        export.roundtrip_report(current, exported["record"]),
-        export.differing_fields(current, exported["record"]),
-    )
+    st.session_state[roundtrip_key(object_id)] = {
+        "exported_at": exported["exported_at"],
+        "digest": file_digest(json_path),
+        "checked_at": store.now_utc(),
+        "report": export.roundtrip_report(current, exported["record"]),
+        "differing": export.differing_fields(current, exported["record"]),
+    }
 
 
 COLLECTION_CSV = "sammlung.csv"
@@ -247,6 +283,34 @@ def decision_key(object_id: str, code: str, message: str) -> str:
     return f"{object_id}-decision-{code}-{digest}"
 
 
+def reconfirm_decision(object_id: str, code: str, message: str, seen: dict) -> None:
+    key = decision_key(object_id, code, message)
+    try:
+        store.update_working_copy(
+            store.object_source(object_id),
+            lambda record: review.reconfirm_decision(
+                record, code, message, reviewer(), seen
+            ),
+            "Entscheidung erneut bestätigt",
+        )
+    except (review.ContentChanged, review.DecisionInvalid) as error:
+        st.session_state[f"{key}-error"] = str(error)
+        return
+    except OSError as error:
+        write_failed(error)
+        return
+    # Häkchen sichtbar zurücksetzen: jede erneute Bestätigung muss bewusst neu ausgelöst werden
+    st.session_state[f"{key}-reconfirm-check"] = False
+    ui.set_feedback(
+        object_id,
+        key,
+        "info",
+        f"Entscheidung unverändert erneut bestätigt von {reviewer()}. Frühere Einträge bleiben "
+        "im Prüfprotokoll. Eine bisherige Endbestätigung ist aufgehoben und der Export veraltet; "
+        "nächster Schritt: Endbestätigung im Reiter „Prüfung“ neu erteilen, dann exportieren.",
+    )
+
+
 def record_decision(object_id: str, code: str, message: str, seen_basis) -> None:
     key = decision_key(object_id, code, message)
     src = store.object_source(object_id)
@@ -280,9 +344,10 @@ def record_decision(object_id: str, code: str, message: str, seen_basis) -> None
         return
     for suffix in ("outcome", "rationale"):
         st.session_state.pop(f"{key}-{suffix}", None)
-    st.toast(
-        "Gespeichert: Entscheidung"
-        if changed
-        else "Nichts gespeichert: Entscheidung und Begründung sind unverändert.",
-        icon=ui.OK if changed else ui.INFO,
-    )
+    if not changed:
+        ui.set_feedback(
+            object_id,
+            key,
+            "info",
+            "Nichts gespeichert: Entscheidung und Begründung sind unverändert.",
+        )

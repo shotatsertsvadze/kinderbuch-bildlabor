@@ -232,6 +232,8 @@ def region_coordinates(
         args=(keys, region["xywh"]),
         disabled=sync != ui.EDITED,
     )
+    if sync == ui.CLEAN:
+        ui.feedback(cur.id, f"{region_id}-save")
 
     return region["xywh"] if problems else xywh
 
@@ -318,6 +320,8 @@ def description_editor(cur: Current) -> None:
         args=(cur.id,),
         disabled=sync != ui.EDITED,
     )
+    if sync == ui.CLEAN:
+        ui.feedback(cur.id, f"{key}-save")
     if description["observation_de"] != stored:
         with st.expander("Erste Beobachtung (unverändert)"):
             ui.source_text(description["observation_de"])
@@ -357,6 +361,8 @@ def keyword_editor(cur: Current, region: dict) -> None:
         args=(cur.id, region_id),
         disabled=sync != ui.EDITED,
     )
+    if sync == ui.CLEAN:
+        ui.feedback(cur.id, f"{key}-save")
     if region["keyword_review_status"] == review.KEYWORDS_ACCEPTED:
         ui.confirmed_note(cur.record, f"{region_id}/keywords_de")
     else:
@@ -430,6 +436,8 @@ def transcription_editor(cur: Current, region: dict, ocr: dict | None) -> None:
             args=(cur.id, field),
             disabled=sync != ui.EDITED,
         )
+        if sync == ui.CLEAN:
+            ui.feedback(cur.id, f"{key}-save")
     if ocr:
         with columns[1]:
             ocr_block(cur, ocr)

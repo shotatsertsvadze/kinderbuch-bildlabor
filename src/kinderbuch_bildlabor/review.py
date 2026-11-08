@@ -63,6 +63,7 @@ def review_areas(record: dict) -> list[dict]:
             "label_de": f"Regionsgrenzen: {r['label_de']}",
             "status": r["review_status"],
             "tab_de": "Regionen",
+            "log_area": r["id"],
         }
         for r in record["region_annotations"]
     ]
@@ -79,6 +80,7 @@ def review_areas(record: dict) -> list[dict]:
             "label_de": "Bildbeschreibung",
             "status": record["image_description"]["review_status"],
             "tab_de": "Beschreibung",
+            "log_area": "image_description",
         }
     )
     areas += [
@@ -86,6 +88,7 @@ def review_areas(record: dict) -> list[dict]:
             "label_de": f"Suchbegriffe: {r['label_de']}",
             "status": r["keyword_review_status"],
             "tab_de": "Beschreibung",
+            "log_area": f"{r['id']}/keywords_de",
         }
         for r in record["region_annotations"]
         if "keywords_de" in r
@@ -97,13 +100,23 @@ def review_areas(record: dict) -> list[dict]:
                 r["transcription_field"]
             ],
             "tab_de": "Transkription",
+            "log_area": f"transcription/{r['transcription_field']}",
         }
         for r in record["region_annotations"]
         if r.get("transcription_field")
     ]
     for area in areas:
         area["done"] = area["status"] in DONE_STATUSES
+        area["draft"] = not area["done"] and has_saved_draft(
+            record, area.get("log_area")
+        )
     return areas
+
+
+def has_saved_draft(record: dict, log_area: str | None) -> bool:
+    """Letzter Protokolleintrag des Bereichs ist eine Änderung ohne Bestätigung."""
+    entries = [e for e in record.get("review_log", []) if e["area"] == log_area]
+    return bool(entries) and "by" not in entries[-1]
 
 
 def last_confirmation(record: dict, area: str) -> dict | None:
@@ -253,13 +266,13 @@ class ApprovalBlocked(ValueError):
     pass
 
 
-def invalidate_final(record: dict) -> None:
+def invalidate_final(record: dict, cause_de: str = "Inhaltsänderung") -> None:
     if (
         record.pop("final_approval", None) is not None
         or record.get("status") == FINAL_APPROVED
     ):
         record["status"] = "draft_pending_final_review"
-        log(record, "final_review", "Endbestätigung durch Inhaltsänderung aufgehoben")
+        log(record, "final_review", f"Endbestätigung durch {cause_de} aufgehoben")
 
 
 def readiness(record: dict, findings: list) -> str:
@@ -416,6 +429,35 @@ def record_decision(
         record,
         f"decision/{code}",
         f"Entscheidung: {outcome}. Begründung: {rationale.strip()}",
+        by.strip(),
+    )
+    return True
+
+
+def reconfirm_decision(
+    record: dict, code: str, message: str, by: str, seen: dict
+) -> bool:
+    """Bestehende Entscheidung unverändert mit aktueller Person und Zeit erneut bestätigen."""
+    if not by.strip():
+        raise DecisionInvalid(
+            "Tragen Sie im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
+        )
+    old = decision(record, code, message)
+    if old is None:
+        raise DecisionInvalid("Zu diesem Hinweis gibt es keine Entscheidung.")
+    require_seen(old, seen, "Die Entscheidung")
+    # Die Endbestätigung deckte die alte Zuordnung; sie muss bewusst neu erteilt werden
+    invalidate_final(record, "erneute Bestätigung einer Entscheidung")
+    record["decisions"][decision_key(code, message)] = {
+        **old,
+        "by": by.strip(),
+        "at": now_utc(),
+    }
+    log(
+        record,
+        f"decision/{code}",
+        f"Entscheidung unverändert erneut bestätigt: {old['outcome_de']}. "
+        f"Begründung: {old['rationale_de']}",
         by.strip(),
     )
     return True

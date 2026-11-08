@@ -14,6 +14,7 @@ from kinderbuch_bildlabor import (
     check_view,
     collection_view,
     decision_view,
+    export_view,
     library_view,
     object_view,
     review,
@@ -93,7 +94,7 @@ def object_page(cur: ui.Current) -> None:
         f"{biblio['author_display']} · {biblio['publication_place']} {biblio['publication_date']} · "
         f"{source['institution']} · {source['ppn']}"
     )
-    export_current = check_view.export_state(cur)[0] == "current"
+    export_current = export_view.export_state(cur)[0] == "current"
     findings = validate.run_all(cur.working, cur.src, [x.record for x in collection])
     blockers = len(validate.approval_blockers(findings))
     tabs_key = f"{cur.id}-tabs"
@@ -112,7 +113,7 @@ def object_page(cur: ui.Current) -> None:
     views += [
         lambda c: library_view.render(c.record, c.src),
         lambda c: check_view.validation_tab(c, [x.record for x in collection]),
-        check_view.export_tab,
+        export_view.export_tab,
     ]
     # Eigener Schlüssel je Objekt: ein neu geöffnetes Objekt beginnt mit der Übersicht
     for tab, view in zip(st.tabs(names, key=tabs_key, on_change="rerun"), views):

@@ -82,6 +82,36 @@ def local_time(iso: str) -> str:
     return datetime.fromisoformat(iso).astimezone().strftime("%d.%m.%Y, %H:%M Uhr")
 
 
+def local_time_exact(iso: str) -> str:
+    """Mit Sekunden: zwei Aktionen in derselben Minute sollen unterscheidbar bleiben."""
+    return datetime.fromisoformat(iso).astimezone().strftime("%d.%m.%Y, %H:%M:%S Uhr")
+
+
+def set_feedback(object_id: str, slot: str, kind: str, text_de: str) -> None:
+    """Merkt sich das Ergebnis einer Aktion, damit es neben ihrem Knopf stehen bleibt."""
+    st.session_state.feedback = {
+        "object": object_id,
+        "slot": slot,
+        "kind": kind,
+        "text": text_de,
+        "at": store.now_utc(),
+    }
+
+
+def feedback(object_id: str, slot: str) -> None:
+    """Zeigt das Ergebnis der letzten Aktion, aber nur am Knopf und Objekt, zu dem es gehört."""
+    entry = st.session_state.get("feedback")
+    if not entry or entry["object"] != object_id or entry["slot"] != slot:
+        return
+    text = f"{entry['text']} ({local_time_exact(entry['at'])})"
+    if entry["kind"] == "draft":
+        st.info(text, icon=":material/save:")
+    elif entry["kind"] == "error":
+        st.error(text, icon=ERROR)
+    else:
+        st.info(text, icon=INFO)
+
+
 def object_label(record: dict) -> str:
     source = record["source"]
     return f"{record['bibliographic_metadata_from_colibri']['title']}, Scan {source['scan_number']}"
@@ -239,9 +269,13 @@ def conflict_note(keys: list[str], stored: list, shown_de: str) -> None:
 def next_step(record: dict, export_current: bool, blockers: int = 0) -> str:
     open_areas = [a for a in review.review_areas(record) if not a["done"]]
     if open_areas:
-        return (
-            f"{open_areas[0]['label_de']} prüfen (Reiter „{open_areas[0]['tab_de']}“)."
-        )
+        area = open_areas[0]
+        if area["draft"]:
+            return (
+                f"Gespeicherten Entwurf am Bild prüfen und bestätigen: {area['label_de']} "
+                f"(Reiter „{area['tab_de']}“)."
+            )
+        return f"{area['label_de']} prüfen (Reiter „{area['tab_de']}“)."
     if blockers:
         return (
             f"Offene fachliche Hinweise ({blockers}) im Reiter „Prüfung“ begründet entscheiden "

@@ -121,6 +121,21 @@ def evidence(cur: Current, illustration: dict) -> None:
     )
 
 
+def reconfirm(cur: Current, code: str, message: str, entry: dict, key: str) -> None:
+    with st.expander("Unverändert erneut bestätigen"):
+        ui.confirm_controls(
+            f"{key}-reconfirm",
+            "Bestätigt Entscheidung und Begründung wortgleich mit der oben eingetragenen "
+            "prüfenden Person und dem jetzigen Zeitpunkt. Frühere Einträge bleiben im "
+            "Prüfprotokoll. Eine bestehende Endbestätigung wird aufgehoben, der Export gilt "
+            "danach als veraltet.",
+            "Ich habe Entscheidung und Begründung erneut geprüft; sie gelten unverändert.",
+            actions.reconfirm_decision,
+            (cur.id, code, message, entry),
+            button_label="Unverändert mit meinem Namen bestätigen",
+        )
+
+
 def decision_form(cur: Current, code: str, message: str) -> dict | None:
     record = cur.record
     entry = review.decision(record, code, message)
@@ -136,6 +151,8 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
             icon=ui.CONFIRMED if review.resolves(entry) else ui.PENDING,
         )
     key = actions.decision_key(cur.id, code, message)
+    if entry is not None:
+        reconfirm(cur, code, message, entry, key)
     holder = st.container() if entry is None else st.expander("Entscheidung ändern")
     with holder, st.form(key, enter_to_submit=False):
         st.radio(
@@ -165,6 +182,7 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
         )
     if error := st.session_state.pop(f"{key}-error", None):
         st.error(error, icon=ui.ERROR)
+    ui.feedback(cur.id, key)
     st.caption(
         "„Nicht entscheidbar“ hält die Begründung fest, lässt den Hinweis aber offen und "
         "blockierend. Eine Entscheidung ist keine Ground-Truth-Freigabe."

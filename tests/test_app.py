@@ -572,3 +572,156 @@ def test_first_start_does_not_wait_for_email_prompt():
 
     config = tomllib.loads((store.ROOT / ".streamlit" / "config.toml").read_text())
     assert config["server"]["showEmailPrompt"] is False
+
+
+def export_and_verify(app: AppTest) -> None:
+    app.button(key=f"{PILOT}-export").click().run()
+    app.button(key=f"{PILOT}-roundtrip").click().run()
+    assert not app.exception
+
+
+def test_export_panel_names_saved_files_and_offers_separate_downloads():
+    app = open_app()
+    app.button(key=f"{PILOT}-export").click().run()
+    assert any(s.startswith("JSON und CSV gespeichert.") for s in texts(app, "success"))
+    assert any(
+        "`pilot-001.json`" in m and str(store.EXPORT_DIR) in m
+        for m in texts(app, "markdown")
+    )
+    labels = [b.label for b in app.download_button]
+    assert labels == ["JSON herunterladen", "CSV herunterladen"]
+    assert any("Noch nicht geprüft" in c for c in texts(app, "caption"))
+
+
+def test_verification_result_shows_time_and_is_reset_by_new_export():
+    app = open_app()
+    export_and_verify(app)
+    assert any(s.startswith("Export geprüft") for s in texts(app, "success"))
+    assert any("6 von 6 Prüfpunkten" in m for m in texts(app, "markdown"))
+
+    app.button(key=f"{PILOT}-export").click().run()
+    assert not any(s.startswith("Export geprüft") for s in texts(app, "success"))
+    assert any(
+        "Dessen Prüfung galt nur der alten Datei" in i for i in texts(app, "info")
+    )
+
+
+def test_verification_is_hidden_when_json_changes_after_check():
+    app = open_app()
+    export_and_verify(app)
+    path = store.EXPORT_DIR / f"{PILOT}.json"
+    path.write_bytes(path.read_bytes() + b"\n")
+    app.run()
+    assert not any(s.startswith("Export geprüft") for s in texts(app, "success"))
+    assert any("Noch nicht geprüft" in c for c in texts(app, "caption"))
+
+
+def test_csv_from_other_export_blocks_csv_download():
+    app = open_app()
+    app.button(key=f"{PILOT}-export").click().run()
+    path = store.EXPORT_DIR / f"{PILOT}.csv"
+    text = path.read_text(encoding="utf-8-sig")
+    exported_at = store.read_json(store.EXPORT_DIR / f"{PILOT}.json")["exported_at"]
+    path.write_text(text.replace(exported_at, "2000-01-01T00:00:00+00:00"), "utf-8-sig")
+    app.run()
+    assert [b.label for b in app.download_button] == ["JSON herunterladen"]
+    assert any("anderen Export" in w for w in texts(app, "warning"))
+
+
+def test_draft_save_feedback_stays_at_button_until_confirmation():
+    app = open_app()
+    save_description(app, "Ein Kind liest.")
+    drafts = [i for i in texts(app, "info") if i.startswith("Entwurf gespeichert")]
+    assert len(drafts) == 1 and "noch keine Prüfung" in drafts[0]
+
+    app.radio(key="view").set_value("genovefa-scan-014").run()
+    assert not any(i.startswith("Entwurf gespeichert") for i in texts(app, "info"))
+    app.radio(key="view").set_value(PILOT).run()
+    assert any(i.startswith("Entwurf gespeichert") for i in texts(app, "info"))
+
+    confirm(app, DESCRIPTION)
+    assert not any(i.startswith("Entwurf gespeichert") for i in texts(app, "info"))
+
+
+def guide_progress(app: AppTest) -> str:
+    return app.get("progress")[0].proto.text
+
+
+def test_review_guide_counts_required_areas_and_separates_draft_from_confirmation():
+    app = open_app()
+    areas = review.review_areas(
+        store.new_working_copy(store.object_source(PILOT))["record"]
+    )
+    total, done = len(areas), sum(a["done"] for a in areas)
+    fields = [a["label_de"] for a in areas if a["tab_de"] == "Transkription"]
+    assert len(fields) == 2
+    expander = app.expander[0]
+    assert all(f in expander.markdown[0].value for f in fields)
+    assert guide_progress(app) == (
+        f"Prüfbereiche: {done} von {total} bestätigt · 0 als Entwurf gespeichert · "
+        f"{total - done} offen"
+    )
+    assert any(
+        "Endbestätigung:** noch nicht erteilt" in m for m in texts(app, "markdown")
+    )
+    assert any(c.startswith("PRÜFPFAD · SCHRITT 1 VON") for c in texts(app, "caption"))
+
+    save_description(app, "Neue Beschreibung zum Test.")
+    assert "1 als Entwurf gespeichert" in guide_progress(app)
+    assert f"{done} von {total} bestätigt" in guide_progress(app)
+    assert "Bildbeschreibung: Entwurf gespeichert" in app.expander[0].markdown[0].value
+
+    confirm(app, DESCRIPTION)
+    assert guide_progress(app).startswith(f"Prüfbereiche: {done + 1} von {total}")
+    assert "0 als Entwurf gespeichert" in guide_progress(app)
+
+
+def test_review_guide_follows_object_switch_without_transcription_step():
+    app = open_app()
+    app.radio(key="view").set_value("genovefa-scan-014").run()
+    record = store.new_working_copy(store.object_source("genovefa-scan-014"))["record"]
+    total = len(review.review_areas(record))
+    assert f"von {total} bestätigt" in guide_progress(app)
+    assert "Transkription" not in app.expander[0].markdown[0].value
+    assert not any(b.key == "guide-transkription" for b in app.button)
+
+
+def test_unchanged_decision_can_be_reconfirmed_explicitly_and_makes_export_stale():
+    from kinderbuch_bildlabor import actions
+
+    app = open_app(LEAD)
+    app.text_input(key="reviewer").input("ShotaTest").run()
+    message = review.classification_message(
+        store.new_working_copy(store.object_source(LEAD))["record"]
+    )
+    rationale = "Zwei Figuren im Gewölbe; keine Kartenelemente."
+    key = submit_decision(
+        app,
+        review.CLASSIFICATION,
+        message,
+        "Manuelle Klasse trifft zu: Abbildung",
+        rationale,
+    )
+    app.button(key=f"{LEAD}-export").click().run()
+    log_before = saved(LEAD)["record"]["review_log"]
+
+    app.text_input(key="reviewer").input("Testperson Browser").run()
+    assert app.button(key=f"{key}-reconfirm-confirm").disabled
+    assert saved(LEAD)["record"]["review_log"] == log_before
+    app.checkbox(key=f"{key}-reconfirm-check").check().run()
+    app.button(key=f"{key}-reconfirm-confirm").click().run()
+    assert not app.exception
+
+    record = saved(LEAD)["record"]
+    entry = review.decision(record, review.CLASSIFICATION, message)
+    assert entry["by"] == "Testperson Browser" and entry["rationale_de"] == rationale
+    assert record["review_log"][: len(log_before)] == log_before
+    assert record["review_log"][-1]["by"] == "Testperson Browser"
+    assert not app.checkbox(key=f"{key}-reconfirm-check").value
+    assert any(
+        "erneut bestätigt von Testperson Browser" in i for i in texts(app, "info")
+    )
+    from kinderbuch_bildlabor import export
+
+    exported = store.read_json(actions.export_paths(LEAD)[0])
+    assert export.later_changes(saved(LEAD), exported)

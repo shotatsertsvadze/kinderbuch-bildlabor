@@ -67,6 +67,49 @@ def steps(record: dict, export_current: bool) -> list[tuple[str, bool]]:
     ]
 
 
+def area_counts(areas: list[dict]) -> tuple[int, int, int]:
+    """Bestätigt, als Entwurf gespeichert, noch unberührt offen."""
+    confirmed = sum(a["done"] for a in areas)
+    drafts = sum(a["draft"] for a in areas)
+    return confirmed, drafts, len(areas) - confirmed - drafts
+
+
+def current_step(all_steps: list[tuple[str, bool]], pending: str | None) -> str:
+    if pending is None:
+        return f"alle {len(all_steps)} Schritte erledigt"
+    number = [tab for tab, _ in all_steps].index(pending) + 1
+    return f"Schritt {number} von {len(all_steps)} · {STEPS[pending][0]}"
+
+
+def area_state(area: dict) -> str:
+    if area["done"]:
+        return "bestätigt"
+    if area["draft"]:
+        return "Entwurf gespeichert, Bestätigung offen"
+    return f"offen ({review.status_label(area['status'])})"
+
+
+def step_hint(tab: str, done: bool, areas: list[dict]) -> str:
+    in_tab = [a for a in areas if a["tab_de"] == tab]
+    count = (
+        f" {sum(a['done'] for a in in_tab)} von {len(in_tab)} Prüfbereichen bestätigt."
+        if in_tab
+        else ""
+    )
+    return STEPS[tab][1] + count + (" Erledigt." if done else "")
+
+
+def final_line(record: dict, blockers: int) -> str:
+    if approved(record):
+        return "**Endbestätigung:** erteilt (keine Ground-Truth-Freigabe)."
+    if blockers:
+        return (
+            f"**Endbestätigung:** noch nicht erteilt; {blockers} offene fachliche "
+            "Hinweise im Reiter „Prüfung“."
+        )
+    return "**Endbestätigung:** noch nicht erteilt."
+
+
 def open_tab(key: str, tab: str) -> None:
     st.session_state[key] = tab
 
@@ -74,32 +117,44 @@ def open_tab(key: str, tab: str) -> None:
 def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> None:
     pending = next_tab(record, export_current, blockers)
     all_steps = steps(record, export_current)
+    areas = review.review_areas(record)
+    confirmed, drafts, untouched = area_counts(areas)
     with st.container(key="review-guide", border=True):
         text, reviewer = st.columns([3, 2], vertical_alignment="bottom")
         with text:
-            st.caption(
-                f"PRÜFPFAD · {sum(d for _, d in all_steps)} VON {len(all_steps)} SCHRITTEN ERLEDIGT"
-            )
+            st.caption(f"PRÜFPFAD · {current_step(all_steps, pending).upper()}")
             st.markdown(
-                f"**Nächster Schritt:** {ui.next_step(record, export_current, blockers)}"
+                f"**Nächste Handlung:** {ui.next_step(record, export_current, blockers)}"
             )
         with reviewer:
             ui.reviewer_input()
+        st.progress(
+            confirmed / len(areas),
+            text=f"Prüfbereiche: {confirmed} von {len(areas)} bestätigt · "
+            f"{drafts} als Entwurf gespeichert · {untouched} offen",
+        )
+        st.markdown(final_line(record, blockers))
+        with st.expander(f"Prüfbereiche dieses Objekts ({len(areas)})"):
+            st.markdown("\n".join(f"- {a['label_de']}: {area_state(a)}" for a in areas))
+            st.caption(
+                "Ein gespeicherter Entwurf ist noch keine Prüfung. Erst die Bestätigung mit "
+                "Häkchen und Name zählt als bestätigter Bereich."
+            )
         with st.container(horizontal=True, gap="xsmall"):
             for number, (tab, done) in enumerate(all_steps, start=1):
-                label, hint = STEPS[tab]
                 st.button(
-                    f"{number} · {label}",
+                    f"{number} · {STEPS[tab][0]}",
                     key=f"guide-{tab.lower()}",
-                    help=f"{hint} Erledigt." if done else hint,
+                    help=step_hint(tab, done, areas),
                     type="primary" if tab == pending else "secondary",
                     icon=":material/check_circle:" if done else None,
                     on_click=open_tab,
                     args=(tabs_key, tab),
                 )
     st.caption(
-        "Der Prüfpfad führt Schritt für Schritt. Die Reiter darunter zeigen alle Ansichten, "
-        "auch bereits erledigte."
+        "Die Schaltflächen des Prüfpfads führen zu den Arbeitsschritten; ein Schritt gilt erst "
+        "als erledigt, wenn alle seine Prüfbereiche bestätigt sind. Die Reiter darunter zeigen "
+        "alle Ansichten, auch bereits erledigte."
     )
 
 

@@ -18,8 +18,9 @@ und Metadaten ist eine mögliche zukünftige Erweiterung.
    - alternativ mit Homebrew: `brew install uv`
 
    Danach ein neues Terminal öffnen und mit `uv --version` prüfen.
-2. **Projektordner bereitstellen:** Übergabe-ZIP entpacken oder das Repository klonen und im Terminal
-   in den Ordner wechseln, zum Beispiel `cd ~/Downloads/kinderbuch-bildlabor`.
+2. **Projektordner bereitstellen:** das Repository klonen oder auf GitHub über „Code“ → „Download ZIP“
+   herunterladen und entpacken (ein erhaltenes Übergabe-ZIP ebenso), dann im Terminal in den Ordner
+   wechseln, zum Beispiel `cd ~/Downloads/kinderbuch-bildlabor`.
 3. **Einrichten:** `uv sync --locked`. uv lädt dabei Python 3.13 und die Abhängigkeiten in genau den
    Versionen aus `uv.lock` (Streamlit 1.67.0, Pillow 13.0.0). Nur dieser Schritt braucht Internet.
 

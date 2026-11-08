@@ -86,8 +86,10 @@ Entscheidungen zum Aufbau: [docs/adr/](docs/adr/). Bezug zur Stelle: [docs/BEZUG
 ```bash
 uv run --locked ruff check --no-cache .
 uv run --locked ruff format --check --no-cache .
-uv run --locked mypy --cache-dir=/dev/null
+uv run --locked mypy
 uv run --locked python -B -m pytest -p no:cacheprovider -q
 ```
 
-Die Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` nicht.
+Die Befehle gelten für macOS, Linux und Windows. mypy legt seinen Zwischenspeicher in `.mypy_cache/`
+ab; den Ordner markiert mypy selbst als von Git ignoriert, er kann jederzeit gelöscht werden. Die
+Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` nicht.

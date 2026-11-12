@@ -1,0 +1,233 @@
+/* Lesesaal 2: ruhiger Papiergrund, Scans auf neutralem Passepartout, Berliner Blau nur für die nächste Handlung.
+   Alle Farben kommen als CSS-Variablen --bl-* aus theme.inject() (Hell/Dunkel); Quelle: docs/design/DESIGN_SYSTEM.md. */
+
+/* ---------- Typografie ---------------------------------------------------------------------- */
+h1, h2, h3, h4 {
+  letter-spacing: -0.012em;
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+
+[data-testid="stMain"] p,
+[data-testid="stMain"] li {
+  text-wrap: pretty;
+  hyphens: auto;
+}
+
+/* Zahlen in Zählern und Tabellen stehen untereinander */
+[data-testid="stProgress"],
+[data-testid="stDataFrame"],
+[data-testid="stMetricValue"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hinweistexte: feste gedämpfte Tintenfarbe statt Deckkraft (Deckkraft dämpft auch Symbole und Links) */
+[data-testid="stCaptionContainer"] {
+  color: var(--bl-ink-muted);
+  opacity: 1;
+}
+
+/* Kennungen (PPN, DMDLOG_0000, Koordinaten) als ruhige Etiketten */
+[data-testid="stMain"] code {
+  border-radius: 0.3rem;
+  padding: 0.05em 0.35em;
+}
+
+/* ---------- Flächen ------------------------------------------------------------------------- */
+.st-key-collection-hero,
+.st-key-review-guide {
+  background: var(--bl-surface);
+  border: 1px solid var(--bl-border) !important;
+  border-radius: 0.875rem !important;
+  box-shadow: var(--bl-shadow-1);
+}
+
+.st-key-collection-hero {
+  padding: clamp(0.5rem, 2vw, 1.5rem) !important;
+}
+
+.st-key-collection-hero h1 {
+  font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+/* Leitfrage als ruhiges Zitat in der Buchschrift statt eines fetten Absatzes */
+.st-key-collection-hero p:has(> strong:only-child) {
+  font-family: Newsreader, Georgia, serif;
+  font-style: italic;
+  font-size: 1.3rem;
+  line-height: 1.4;
+}
+.st-key-collection-hero p:has(> strong:only-child) strong {
+  font-weight: 500;
+}
+
+/* Gerahmte Container: Karte auf Papier */
+[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="stMain"] [data-testid="stExpander"] details {
+  border-color: var(--bl-border);
+}
+
+[data-testid="stExpander"] details {
+  background: var(--bl-surface);
+  border-radius: 0.625rem;
+}
+
+/* ---------- Eingaben: weißes Feld mit klar sichtbarem Rand (mind. 3:1) ---------------------- */
+[data-testid="stMain"] [data-baseweb="input"],
+[data-testid="stMain"] [data-baseweb="textarea"],
+[data-testid="stMain"] [data-baseweb="select"] > div,
+[data-testid="stSidebar"] [data-baseweb="input"],
+[data-testid="stNumberInputContainer"] {
+  border-color: var(--bl-control) !important;
+  background: var(--bl-surface);
+}
+
+/* ---------- Prüfpfad ------------------------------------------------------------------------ */
+/* Erste Hinweiszeile im Prüfpfad und im Hero: Überzeile */
+.st-key-review-guide [data-testid="stColumn"]:first-child [data-testid="stElementContainer"]:first-child [data-testid="stCaptionContainer"],
+.st-key-collection-hero [data-testid="stColumn"]:first-child [data-testid="stElementContainer"]:first-child [data-testid="stCaptionContainer"] {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--bl-ink-muted);
+}
+
+.st-key-review-guide button {
+  border-radius: 999px;
+  min-height: 2.5rem;
+}
+
+.st-key-review-guide button[data-testid="stBaseButton-secondary"] {
+  background: transparent;
+  border-color: var(--bl-border-strong);
+}
+
+/* Erledigter Schritt: Häkchen in Moosgrün, Beschriftung bleibt Tinte */
+.st-key-review-guide button[data-testid="stBaseButton-secondary"] [data-testid="stIconMaterial"] {
+  color: var(--bl-ok);
+}
+
+[data-testid="stProgress"] > div > div > div {
+  height: 0.5rem;
+  border-radius: 999px;
+}
+
+/* ---------- Reiter: klare aktive Markierung --------------------------------------------------- */
+[data-testid="stTabs"] [role="tab"] {
+  font-weight: 500;
+  padding-inline: 0.25rem;
+}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+  font-weight: 600;
+}
+
+/* ---------- Scans: neutrales Passepartout statt Papierton ----------------------------------- */
+/* Warmer Grund verfälscht die Wahrnehmung des Papiertons im Scan; das Passepartout ist farbneutral. */
+[class*="st-key-pinned-scan-"],
+.st-key-collection-hero [data-testid="stImage"] {
+  background: var(--bl-mat);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+[data-testid="stImageContainer"] {
+  max-width: 100%;
+}
+
+[data-testid="stImage"] img {
+  max-width: 100% !important;
+  height: auto;
+  border-radius: 0.25rem;
+  box-shadow: var(--bl-shadow-scan);
+}
+
+/* Breite Fenster: Scan bleibt beim Blättern neben Häkchen und Schaltflächen */
+@media (min-width: 641px) {
+  [data-testid="stLayoutWrapper"]:has(> [class*="st-key-pinned-scan-"]) {
+    position: sticky;
+    top: 4rem;
+  }
+}
+
+/* Schmale Fenster: Spalten stehen untereinander, Scans dürfen die Bedienung nicht wegschieben */
+@media (max-width: 640px) {
+  [data-testid="stImage"] img {
+    max-height: 50vh;
+    width: auto !important;
+    object-fit: contain;
+  }
+  .st-key-collection-hero h1 {
+    font-size: 2.25rem;
+  }
+}
+
+/* ---------- Meldungen ----------------------------------------------------------------------- */
+[data-testid="stAlert"] > div {
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 0.625rem;
+}
+
+/* ---------- Seitenleiste: Navigation als Liste ---------------------------------------------- */
+[data-testid="stSidebar"] h3 {
+  font-size: 1.35rem;
+  letter-spacing: -0.015em;
+}
+
+[data-testid="stSidebar"] [role="radiogroup"] {
+  gap: 0.125rem;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"] {
+  width: 100%;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:hover {
+  background: color-mix(in srgb, var(--bl-surface) 70%, transparent);
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:has(input:checked) {
+  background: var(--bl-surface);
+  box-shadow: inset 3px 0 0 var(--bl-primary), var(--bl-shadow-1);
+  font-weight: 600;
+}
+
+/* ---------- Fokus und Bewegung -------------------------------------------------------------- */
+button:focus-visible,
+a:focus-visible,
+[role="tab"]:focus-visible,
+[role="radio"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+label:has(input:focus-visible) {
+  outline: 3px solid var(--bl-primary) !important;
+  outline-offset: 2px;
+}
+
+/* Eine kurze Bewegung auf der empfohlenen nächsten Handlung: „Weiter“, sonst der aktuelle Schritt */
+.st-key-lead-open button,
+[class*="-continue"] button,
+.st-key-review-guide button[data-testid="stBaseButton-primary"] {
+  animation: bildlabor-next-step 700ms ease-out 2;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--bl-primary) 28%, transparent);
+}
+
+[data-testid="stMain"]:has([class*="-continue"] button) .st-key-review-guide button {
+  animation: none;
+}
+
+@keyframes bildlabor-next-step {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

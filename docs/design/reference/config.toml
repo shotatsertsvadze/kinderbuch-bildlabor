@@ -1,0 +1,157 @@
+# Lokale Demo: nur auf diesem Rechner erreichbar, keine Nutzungsstatistik an Streamlit
+[server]
+address = "localhost"
+# Ohne diese Zeile wartet der erste Start im Terminal auf eine E-Mail-Eingabe
+showEmailPrompt = false
+# Schriften liegen lokal unter static/fonts/: die Anwendung bleibt offline lauffähig
+enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+
+# Lesesaal 2: Papierton als Grund, dunkle Tinte als Schrift, Berliner Blau nur für die nächste Handlung.
+# Token-Quelle: docs/design/DESIGN_SYSTEM.md. Farben hier und in workflow.css gemeinsam ändern.
+
+# --- Schriften (OFL, lokal) -------------------------------------------------------------------
+[[theme.fontFaces]]
+family = "Newsreader"
+url = "app/static/fonts/newsreader-latin-opsz-normal.woff2"
+weight = "200 800"
+style = "normal"
+unicodeRange = "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+
+[[theme.fontFaces]]
+family = "Newsreader"
+url = "app/static/fonts/newsreader-latin-ext-opsz-normal.woff2"
+weight = "200 800"
+style = "normal"
+unicodeRange = "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF"
+
+[[theme.fontFaces]]
+family = "Newsreader"
+url = "app/static/fonts/newsreader-latin-opsz-italic.woff2"
+weight = "200 800"
+style = "italic"
+unicodeRange = "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-wght-normal.woff2"
+weight = "100 700"
+style = "normal"
+unicodeRange = "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-ext-wght-normal.woff2"
+weight = "100 700"
+style = "normal"
+unicodeRange = "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF"
+
+[[theme.fontFaces]]
+family = "IBM Plex Mono"
+url = "app/static/fonts/ibm-plex-mono-latin-400-normal.woff2"
+weight = "400"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "IBM Plex Mono"
+url = "app/static/fonts/ibm-plex-mono-latin-500-normal.woff2"
+weight = "500"
+style = "normal"
+
+# --- Gemeinsame Gestaltung (beide Modi) -------------------------------------------------------
+[theme]
+font = "IBM Plex Sans, system-ui, sans-serif"
+headingFont = "Newsreader, Georgia, serif"
+codeFont = "IBM Plex Mono, ui-monospace, monospace"
+baseFontSize = 16
+headingFontSizes = ["2.5rem", "1.75rem", "1.375rem", "1.125rem", "1rem", "0.875rem"]
+headingFontWeights = [600, 600, 600, 600, 600, 600]
+codeFontSize = "0.875em"
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+paddingTop = "2.5rem"
+linkUnderline = true
+showSidebarBorder = true
+
+# --- Hell: Lesesaal ---------------------------------------------------------------------------
+[theme.light]
+primaryColor = "#1F4E79"
+backgroundColor = "#F5F0E7"
+secondaryBackgroundColor = "#FFFDF9"
+textColor = "#1D2130"
+borderColor = "#DED4C3"
+linkColor = "#1F4E79"
+codeTextColor = "#3B4252"
+codeBackgroundColor = "#ECE5D7"
+dataframeHeaderBackgroundColor = "#ECE5D7"
+dataframeBorderColor = "#DED4C3"
+greenColor = "#2B6639"
+greenBackgroundColor = "#E5EFE4"
+greenTextColor = "#2B6639"
+yellowColor = "#9A6200"
+yellowBackgroundColor = "#F8ECD3"
+yellowTextColor = "#7D4E00"
+orangeColor = "#9A6200"
+orangeBackgroundColor = "#F8ECD3"
+orangeTextColor = "#7D4E00"
+redColor = "#9B2A1F"
+redBackgroundColor = "#F8E3DE"
+redTextColor = "#9B2A1F"
+blueColor = "#2E5470"
+blueBackgroundColor = "#E5EDF3"
+blueTextColor = "#2E5470"
+violetColor = "#5E4485"
+violetBackgroundColor = "#EEE7F5"
+violetTextColor = "#5E4485"
+grayColor = "#6B6455"
+grayBackgroundColor = "#ECE6DB"
+grayTextColor = "#4F493C"
+
+[theme.light.sidebar]
+backgroundColor = "#ECE5D7"
+secondaryBackgroundColor = "#FFFDF9"
+borderColor = "#D3C7B2"
+
+# --- Dunkel: Nachtlesesaal --------------------------------------------------------------------
+[theme.dark]
+primaryColor = "#8DB4E2"
+backgroundColor = "#1A1917"
+secondaryBackgroundColor = "#24231F"
+textColor = "#ECE6DA"
+borderColor = "#3D3A33"
+linkColor = "#8DB4E2"
+codeTextColor = "#D9D2C4"
+codeBackgroundColor = "#2E2C27"
+dataframeHeaderBackgroundColor = "#2E2C27"
+dataframeBorderColor = "#3D3A33"
+greenColor = "#9FD3A8"
+greenBackgroundColor = "#1F3324"
+greenTextColor = "#9FD3A8"
+yellowColor = "#F0C778"
+yellowBackgroundColor = "#3A2D14"
+yellowTextColor = "#F0C778"
+orangeColor = "#F0C778"
+orangeBackgroundColor = "#3A2D14"
+orangeTextColor = "#F0C778"
+redColor = "#F2A399"
+redBackgroundColor = "#41211C"
+redTextColor = "#F2A399"
+blueColor = "#A9C8E2"
+blueBackgroundColor = "#1D2C38"
+blueTextColor = "#A9C8E2"
+violetColor = "#C9B5EA"
+violetBackgroundColor = "#2E2540"
+violetTextColor = "#C9B5EA"
+grayColor = "#B4AC9C"
+grayBackgroundColor = "#2F2D28"
+grayTextColor = "#CFC6B5"
+
+[theme.dark.sidebar]
+backgroundColor = "#121210"
+secondaryBackgroundColor = "#24231F"
+borderColor = "#3D3A33"

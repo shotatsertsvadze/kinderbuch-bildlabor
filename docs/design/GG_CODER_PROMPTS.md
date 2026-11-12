@@ -5,7 +5,16 @@ phases. Each phase is one commit and leaves the app working.
 
 ## How to use
 
-1. Make sure GG Coder works in a checkout that contains `docs/design/` (this folder).
+1. Make sure GG Coder's checkout contains the whole `docs/design/` folder: two Markdown files plus
+   `reference/` (3 files) and `preview/` (4 images). Copying only the two `.md` files is not enough.
+   This command brings in exactly this folder from the branch and leaves every other file,
+   including uncommitted edits, untouched:
+
+   ```bash
+   git fetch origin claude/elegant-wright-6q7g3i
+   git checkout origin/claude/elegant-wright-6q7g3i -- docs/design
+   ls docs/design/reference   # expect: config.toml  theme.py  workflow.css
+   ```
 2. Paste **Prompt 0** at the start of every new GG Coder session. It sets the rules.
 3. Paste **one** phase prompt. Review the result (screenshots, test output) before the next phase.
 4. If a phase reports a failing test, do not let it "fix" the test by changing assertions unless the
@@ -49,6 +58,10 @@ Hard rules for every task:
 8. Do not commit data/, exports/, backups, credentials, or screenshots containing real review data.
    Do not edit uv.lock. If "uv run --locked" fails because your uv is older than the lockfile,
    update uv instead of re-locking.
+   Before you start, run "git status". Uncommitted changes that already exist are not yours: never
+   stage, commit, revert or reformat them. Stage only the files you changed, by explicit path
+   (no "git add ." or "git commit -a"). If a step needs a file that already has uncommitted
+   changes, skip that step and tell me.
 9. Before you finish any task, run and report the output of:
      uv run --locked ruff check --no-cache .
      uv run --locked ruff format --check --no-cache .
@@ -105,7 +118,8 @@ Steps:
    - workflow.render: wrap st.caption(f"PRÜFPFAD · …") in st.container(key="guide-eyebrow").
    - collection_view.hero: wrap st.caption("BILDARCHIV · FALLSTUDIE") in
      st.container(key="hero-eyebrow").
-8. README.md: in "Weitere Dokumente", add a link "[Gestaltung](docs/design/DESIGN_SYSTEM.md)".
+8. README.md (skip this step if README.md already has uncommitted changes; report it instead):
+   in "Weitere Dokumente", add a link "[Gestaltung](docs/design/DESIGN_SYSTEM.md)".
    Mention in one German sentence under "Daten" or a fitting place that fonts are bundled under
    static/fonts/ (SIL OFL). Keep the README's tone and language.
 

@@ -412,3 +412,8 @@ label:has(input:focus-visible) {
   z-index: 20;
   background: var(--bl-canvas);
 }
+
+/* ---------- Kopfzeile deckend: Inhalt scheint beim Blättern nicht durch --------------------- */
+[data-testid="stHeader"] {
+  background: var(--bl-canvas);
+}

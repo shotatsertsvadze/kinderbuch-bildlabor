@@ -1,6 +1,5 @@
 const NS = "http://www.w3.org/2000/svg";
 const memory = {};
-const COLORS = { illustration: "#1f77b4", text: "#2ca02c" };
 
 function el(name, attrs = {}) {
   const node = document.createElementNS(NS, name);
@@ -13,6 +12,7 @@ const same = (a, b) => a.every((value, index) => value === b[index]);
 export default function (component) {
   const { data, parentElement, setStateValue } = component;
   const W = data.width;
+  const typeColor = (type) => data.colors[type] ?? data.colors.other;
   const H = data.height;
   const mem = (memory[data.instance] ??= { selected: new Set(), mode: "select", focus: null, view: { x: 0, y: 0, w: W }, look: { brightness: 100, contrast: 100, gray: false, invert: false } });
   const rects = data.regions.map((r) => ({ ...r, xywh: r.xywh.slice() }));
@@ -31,24 +31,24 @@ export default function (component) {
     button.type = "button";
     button.textContent = text;
     button.setAttribute("aria-pressed", String(mem.mode === value));
-    button.style.cssText = `padding:4px 8px;cursor:pointer;${mem.mode === value ? "font-weight:bold;outline:2px solid #1f77b4" : ""}`;
+    button.style.cssText = `padding:4px 8px;cursor:pointer;${mem.mode === value ? "font-weight:bold;outline:2px solid var(--bl-primary, #1f77b4)" : ""}`;
     button.onclick = () => {
       mem.mode = value;
       bar.querySelectorAll("button").forEach((b) => {
         const on = b === button;
         b.setAttribute("aria-pressed", String(on));
-        b.style.cssText = `padding:4px 8px;cursor:pointer;${on ? "font-weight:bold;outline:2px solid #1f77b4" : ""}`;
+        b.style.cssText = `padding:4px 8px;cursor:pointer;${on ? "font-weight:bold;outline:2px solid var(--bl-primary, #1f77b4)" : ""}`;
       });
     };
     bar.append(button);
   }
   const hint = document.createElement("span");
-  hint.style.cssText = "align-self:center;color:#555";
+  hint.style.cssText = "align-self:center;color:var(--bl-ink-muted, #555)";
   hint.textContent = "Umschalt+Klick: mehrere wählen. Pfeiltasten verschieben (Umschalt = 10 px), Alt+Pfeil ändert Breite/Höhe.";
   bar.append(hint);
 
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, tabindex: 0, role: "group", "aria-label": "Zeichenfläche mit Regionen auf dem Scan" });
-  svg.style.cssText = "width:100%;max-height:75vh;touch-action:none;background:#eee;display:block";
+  svg.style.cssText = "width:100%;max-height:75vh;touch-action:none;background:var(--bl-mat, #eee);display:block";
   const picture = el("image", { href: data.image, width: W, height: H });
   svg.append(picture);
   const layer = el("g");
@@ -89,7 +89,7 @@ export default function (component) {
   const look = document.createElement("div");
   look.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;font:14px sans-serif;align-items:center";
   const note = document.createElement("span");
-  note.style.color = "#555";
+  note.style.color = "var(--bl-ink-muted, #555)";
   note.textContent = "Ansicht: Mausrad oder +/- zoomt, Ziehen auf leerer Fläche oder Leertaste+Ziehen verschiebt, 0 = Gesamtansicht. Regler ändern nur die Anzeige.";
   look.append(note);
   for (const [key, text, min, max] of [["brightness", "Helligkeit", 30, 250], ["contrast", "Kontrast", 30, 300]]) {
@@ -191,7 +191,7 @@ export default function (component) {
     rects.forEach((r, index) => {
       const [x, y, w, h] = r.xywh;
       const chosen = mem.selected.has(r.id);
-      const color = COLORS[r.type] ?? "#d62728";
+      const color = typeColor(r.type);
       const group = el("g");
       const box = el("rect", {
         x, y, width: w, height: h, fill: color, "fill-opacity": chosen ? 0.25 : 0.1,
@@ -218,7 +218,7 @@ export default function (component) {
     });
     if (created) {
       const [x, y, w, h] = created.xywh;
-      layer.append(el("rect", { x, y, width: w, height: h, fill: "none", stroke: "#d62728", "stroke-width": unit * 0.8, "stroke-dasharray": `${unit * 2} ${unit * 1.5}` }));
+      layer.append(el("rect", { x, y, width: w, height: h, fill: "none", stroke: typeColor(created.type), "stroke-width": unit * 0.8, "stroke-dasharray": `${unit * 2} ${unit * 1.5}` }));
     }
     if (mem.focus) layer.querySelector(`[data-id="${CSS.escape(mem.focus)}"][role="button"]`)?.focus({ preventScroll: true });
   }

@@ -7,7 +7,9 @@ deshalb am Bild in Originalgröße; erst die Anzeige skaliert.
 
 from PIL import Image, ImageDraw, ImageFont
 
-COLORS = ["#d62728", "#1f77b4", "#2ca02c", "#9467bd", "#ff7f0e"]
+# Okabe-Ito: farbenblind-sicher; gleiche Farbe je Regionstyp in Anzeige und Zeichenfläche
+TYPE_COLORS = {"illustration": "#0072B2", "text": "#D55E00"}
+OTHER_COLOR = "#009E73"
 
 
 def bounds_problems(xywh, width: int, height: int) -> list[str]:
@@ -38,7 +40,7 @@ def draw_regions(image: Image.Image, regions: list[dict]) -> Image.Image:
     font = ImageFont.load_default(size=40)
     for number, region in enumerate(regions, start=1):
         x, y, w, h = region["xywh"]
-        color = COLORS[(number - 1) % len(COLORS)]
+        color = TYPE_COLORS.get(region.get("region_type", ""), OTHER_COLOR)
         draw.rectangle((x - 4, y - 4, x + w + 3, y + h + 3), outline="white", width=4)
         draw.rectangle((x, y, x + w - 1, y + h - 1), outline=color, width=6)
         if w > 18 and h > 18:

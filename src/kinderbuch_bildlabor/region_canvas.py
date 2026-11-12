@@ -91,6 +91,7 @@ def render(
             "width": size[0],
             "height": size[1],
             "regions": shown,
+            "colors": {**regions.TYPE_COLORS, "other": regions.OTHER_COLOR},
             "created": created,
         },
         default={"edit": None},

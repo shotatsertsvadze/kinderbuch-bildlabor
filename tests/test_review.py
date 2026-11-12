@@ -198,3 +198,45 @@ def test_reconfirming_unchanged_decision_records_new_person_and_revokes_final_ap
     )
     assert again["by"] == "Neue Person"
     assert again["action"].startswith("Entscheidung unverändert erneut bestätigt")
+
+
+def _imported_record():
+    import io
+
+    from PIL import Image
+
+    from kinderbuch_bildlabor import imports
+
+    out = io.BytesIO()
+    Image.new("RGB", (100, 80), "white").save(out, "PNG")
+    pages = imports.preview_import([("p.png", out.getvalue())])
+    return imports.imported_record("o-1", pages[0], 1, {"title": "T"})
+
+
+def test_batch_region_edit_is_all_or_nothing_and_resets_only_geometry():
+    record = _imported_record()
+    review.add_region(record, "text", "Zeile", [10, 10, 20, 10], 1)
+    first, second = (r["id"] for r in record["region_annotations"])
+    review.confirm_region(record, first, "P", [0, 0, 100, 80])
+    before = [r["xywh"] for r in record["region_annotations"]]
+    seen = {first: before[0], second: before[1]}
+    with pytest.raises(review.InvalidRegion):
+        review.set_regions_xywh(
+            record, {first: [0, 0, 50, 50], second: [90, 10, 20, 10]}, seen
+        )
+    assert [r["xywh"] for r in record["region_annotations"]] == before
+    with pytest.raises(review.ContentChanged):
+        review.set_regions_xywh(record, {first: [0, 0, 50, 50]}, {first: [1, 1, 1, 1]})
+    assert review.set_regions_xywh(record, {first: [0, 0, 50, 50]}, seen)
+    assert not review.set_regions_xywh(record, {first: [0, 0, 50, 50]}, seen)
+
+
+def test_add_region_rejects_replay_and_creates_stable_transcription_field():
+    record = _imported_record()
+    assert review.add_region(record, "text", "Zeile", [1, 1, 5, 5], 1)
+    with pytest.raises(review.ContentChanged):
+        review.add_region(record, "text", "Zeile", [1, 1, 5, 5], 1)
+    region = record["region_annotations"][1]
+    assert region["transcription_field"] == "text_02"
+    assert record["transcription"]["text_02"] == ""
+    assert record["transcription"]["review_status_by_field"]["text_02"] == "provisional"

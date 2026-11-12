@@ -2,7 +2,16 @@
 
 import streamlit as st
 
-from kinderbuch_bildlabor import actions, regions, review, store, ui, workflow
+from kinderbuch_bildlabor import (
+    actions,
+    ocr,
+    region_canvas,
+    regions,
+    review,
+    store,
+    ui,
+    workflow,
+)
 from kinderbuch_bildlabor.ui import Current
 
 
@@ -23,12 +32,15 @@ def overview_tab(cur: Current) -> None:
         ui.section("Buch")
         st.markdown(
             f"**{biblio['title']}**  \n"
-            f"Verfasser: {biblio['author_display']}  \n"
-            f"Erschienen: {biblio['publication_place']}, {biblio['publication_date']}  \n"
-            f"Verlag: {biblio['publisher'] or 'nicht angegeben (weder in Colibri noch im MODS)'}"
+            f"Verfasser: {biblio['author_display'] or 'unbekannt'}  \n"
+            f"Erschienen: {biblio['publication_place'] or 'unbekannt'}, "
+            f"{biblio['publication_date'] or 'unbekannt'}  \n"
+            f"Verlag: {biblio['publisher'] or 'nicht angegeben'}"
         )
         st.caption(
-            "Bibliografische Angaben aus Colibri; Abgleich mit METS/MODS im Reiter „Bibliotheksdaten“."
+            "Metadaten aus dem eigenen Import; unbekannte Angaben wurden nicht ergänzt."
+            if cur.src.profile == "imported"
+            else "Bibliografische Angaben aus Colibri; Abgleich mit METS/MODS im Reiter „Bibliotheksdaten“."
         )
         ui.section("Seite")
         label = source.get("page_label_mets")
@@ -40,20 +52,25 @@ def overview_tab(cur: Current) -> None:
                 else "Gedruckte Seitenzahl unbekannt; Scan-Nummer ist keine Seitenzahl"
             )
         )
-        st.link_button(
-            "Originalansicht der Staatsbibliothek öffnen",
-            source["viewer_url"],
-            icon=":material/open_in_new:",
-        )
+        if source["viewer_url"]:
+            st.link_button(
+                "Originalansicht der Staatsbibliothek öffnen",
+                source["viewer_url"],
+                icon=":material/open_in_new:",
+            )
         ui.section("Bildbeschreibung")
         ui.source_text(record["image_description"]["working_description_de"])
         ui.status_badge(record["image_description"]["review_status"])
         ui.section("Rechte und Herkunft")
-        st.markdown(
-            f"Quellwerk: {biblio['rights_statement']}  \n"
-            f"Colibri-Datensatz: [CC BY 4.0]({source['colibri_dataset_license']}) – "
-            f"{source['colibri_dataset_credit']}"
-        )
+        if cur.src.profile == "imported":
+            st.write("Quelle:", source["institution"] or "unbekannt")
+            st.write("Rechte:", biblio["rights_statement"] or "unbekannt")
+        else:
+            st.markdown(
+                f"Quellwerk: {biblio['rights_statement']}  \n"
+                f"Colibri-Datensatz: [CC BY 4.0]({source['colibri_dataset_license']}) – "
+                f"{source['colibri_dataset_credit']}"
+            )
         if source.get("colibri_groundtruth"):
             st.caption(
                 f"Colibri-Annotation dieser Abbildung: manuell „{source['colibri_groundtruth']}“, "
@@ -133,6 +150,7 @@ def region_tab(cur: Current) -> None:
             horizontal=True,
             key=f"{cur.id}-region-choice",
         )
+    canvas_section(cur)
     left, right = ui.image_and_controls(pinned="regionen")
     with right:
         preview_xywh = region_editor(cur, by_id[choice])
@@ -152,6 +170,122 @@ def region_tab(cur: Current) -> None:
         f"Koordinaten sind Pixel [x, y, Breite, Höhe] im Ausgangsbild {width} × {height}, gezählt ab der "
         "linken oberen Ecke. Die verkleinerte Anzeige ändert sie nicht."
     )
+
+
+CANVAS_TYPES = {"illustration": "Illustration", "text": "Text"}
+
+
+def canvas_section(cur: Current) -> None:
+    object_id = cur.id
+    draft_key = actions.draft_key(object_id)
+    draft = st.session_state.get(draft_key) or {
+        "changes": {},
+        "base": {},
+        "created": None,
+    }
+    revision = st.session_state.get(f"{object_id}-canvas-rev", 0)
+    saved = cur.record["region_annotations"]
+    shown = [
+        {
+            "id": r["id"],
+            "label": r["label_de"],
+            "type": r["region_type"],
+            "saved": r["xywh"],
+            "xywh": draft["changes"].get(r["id"], r["xywh"]),
+        }
+        for r in saved
+    ]
+    ui.section("Auf dem Scan zeichnen und verschieben")
+    st.caption(
+        "Rahmen ziehen oder an den Ecken ändern; Umschalt+Klick wählt mehrere. Nichts wird gespeichert, "
+        "bevor Sie unten ausdrücklich speichern. Alternativ: Zahlenfelder unter „Rahmen korrigieren“."
+    )
+    try:
+        event = region_canvas.render(
+            f"{object_id}-canvas-{revision}",
+            cur.src.page_image,
+            cur.size,
+            shown,
+            draft["created"],
+        )
+    except ValueError as error:
+        st.error(str(error), icon=ui.ERROR)
+        event = None
+    seq_key = f"{object_id}-canvas-seq"
+    if event and event["seq"] != st.session_state.get(seq_key):
+        st.session_state[seq_key] = event["seq"]
+        base = draft["base"] or {r["id"]: r["xywh"] for r in saved}
+        draft = {"changes": event["changes"], "base": base, "created": event["created"]}
+        st.session_state[draft_key] = draft
+        if event["created"]:
+            ui.load_fields(new_region_keys(object_id), event["created"]["xywh"])
+            st.session_state[f"{object_id}-new-type"] = event["created"]["type"]
+    if draft["changes"]:
+        st.dataframe(
+            [
+                {
+                    "Region": r["label_de"],
+                    "Gespeichert": str(r["xywh"]),
+                    "Entwurf": str(draft["changes"][r["id"]]),
+                }
+                for r in saved
+                if r["id"] in draft["changes"]
+            ],
+            hide_index=True,
+        )
+        buttons = st.columns(2)
+        buttons[0].button(
+            "Verschiebungen speichern (Entwurf)",
+            key=f"{object_id}-canvas-save",
+            on_click=actions.save_canvas_draft,
+            args=(object_id,),
+        )
+        buttons[1].button(
+            "Verschiebungen verwerfen",
+            key=f"{object_id}-canvas-discard",
+            on_click=actions.bump_canvas,
+            args=(object_id,),
+        )
+    ui.feedback(object_id, "canvas-save")
+    new_region_form(cur, draft)
+
+
+def new_region_keys(object_id: str) -> list[str]:
+    return [f"{object_id}-new-{k}" for k in "xywh"]
+
+
+def new_region_form(cur: Current, draft: dict) -> None:
+    object_id = cur.id
+    keys = new_region_keys(object_id)
+    width, height = cur.size
+    if keys[0] not in st.session_state:
+        ui.load_fields(keys, [0, 0, min(100, width), min(100, height)])
+    with st.expander("Neue Region anlegen", expanded=bool(draft["created"])):
+        kind = st.radio(
+            "Typ",
+            list(CANVAS_TYPES),
+            format_func=CANVAS_TYPES.get,
+            horizontal=True,
+            key=f"{object_id}-new-type",
+        )
+        label = st.text_input("Bezeichnung", key=f"{object_id}-new-label")
+        cols = st.columns(4)
+        for col, key, name in zip(
+            cols, keys, ["x (links)", "y (oben)", "Breite", "Höhe"]
+        ):
+            col.number_input(name, step=1, key=key)
+        xywh = [int(st.session_state[key]) for key in keys]
+        problems = regions.bounds_problems(xywh, width, height)
+        for problem in problems:
+            st.error(problem, icon=ui.ERROR)
+        st.button(
+            "Neue Region anlegen (Entwurf)",
+            key=f"{object_id}-new-save",
+            on_click=actions.add_region,
+            args=(object_id, kind, label, xywh, len(cur.record["region_annotations"])),
+            disabled=bool(problems) or not label.strip(),
+        )
+        ui.feedback(object_id, "canvas-add")
 
 
 def region_editor(cur: Current, region: dict) -> list[int]:
@@ -441,6 +575,7 @@ def transcription_editor(cur: Current, region: dict, ocr: dict | None) -> None:
     if ocr:
         with columns[1]:
             ocr_block(cur, ocr)
+    second_reading(cur, region, transcription[field], ocr)
     if status == review.TRANSCRIPTION_REVIEWED:
         ui.confirmed_note(cur.record, f"transcription/{field}")
     else:
@@ -455,6 +590,116 @@ def transcription_editor(cur: Current, region: dict, ocr: dict | None) -> None:
             if sync != ui.CLEAN
             else None,
         )
+
+
+def diff_markdown(before: str, after: str) -> str:
+    marks = {"gleich": "{}", "entfernt": "~~{}~~", "hinzugefügt": "**+{}+**"}
+    return " ".join(
+        marks[kind].format(text.replace("\n", "⏎"))
+        for kind, text in ocr.text_diff(before, after)
+    )
+
+
+def second_reading(
+    cur: Current, region: dict, human: str, original: dict | None
+) -> None:
+    region_id, field = region["id"], region["transcription_field"]
+    key = actions.ocr_run_key(cur.id, region_id)
+    with st.expander(
+        "Zweite Lesung mit lokaler OCR (Tesseract)", key=f"{key}-expander"
+    ):
+        st.caption(
+            "Läuft nur auf Ihren Knopfdruck auf diesem Rechner; das Bild verlässt ihn nicht. "
+            "Das Ergebnis ist keine bewertete oder genauere Lesung, nur ein weiterer Vergleichstext."
+        )
+        try:
+            models = ocr.available_models()
+        except ocr.OcrUnavailable as error:
+            st.info(str(error), icon=ui.INFO)
+            return
+        if not models:
+            st.info(
+                "Keine Tesseract-Modelle installiert; die manuelle Transkription bleibt nutzbar."
+            )
+            return
+        model = st.selectbox("Modell", models, key=f"{key}-model")
+        psm = st.radio(
+            "Modus",
+            list(ocr.MODES),
+            format_func=ocr.MODES.get,
+            horizontal=True,
+            key=f"{key}-psm",
+        )
+        st.button(
+            "Lokale OCR jetzt ausführen",
+            key=f"{key}-run",
+            on_click=actions.run_ocr,
+            args=(cur.id, region_id, model, psm),
+        )
+        if message := st.session_state.get(f"{key}-error"):
+            st.error(message, icon=ui.ERROR)
+        run = st.session_state.get(key)
+        if run and run["xywh"] == region["xywh"]:
+            show_candidate(cur, region, human, original, run)
+            st.button(
+                "Lesung als Kandidat speichern",
+                key=f"{key}-save",
+                on_click=actions.save_ocr,
+                args=(cur.id, region_id),
+            )
+            ui.feedback(cur.id, f"{key}-save")
+        saved = [
+            c
+            for c in cur.record.get("ocr_candidates", [])
+            if c["region_id"] == region_id
+        ]
+        if saved:
+            crop_sha = actions.current_crop_sha(cur.src, region)
+            ui.subsection("Gespeicherte zweite Lesungen")
+        for candidate in saved:
+            stale = review.candidate_stale(candidate, region, crop_sha)
+            with st.container(border=True):
+                st.code(candidate["text"], language=None)
+                st.caption(
+                    f"{candidate['engine_version']}, Modell {candidate['model']} "
+                    f"(SHA-256 {str(candidate['model_sha256'])[:12]}), PSM {candidate['psm']}, "
+                    f"{ui.local_time(candidate['created_at'])}"
+                    + (
+                        "; veraltet: der Bildausschnitt wurde seither geändert"
+                        if stale
+                        else ""
+                    )
+                )
+                st.markdown(
+                    "Gegenüber Ihrer Arbeitstranskription: "
+                    + diff_markdown(human, candidate["text"])
+                )
+                st.button(
+                    "Als Entwurf in die Transkription übernehmen",
+                    key=f"{key}-adopt-{candidate['id']}",
+                    on_click=actions.adopt_ocr,
+                    args=(cur.id, region_id, candidate["id"], field),
+                    disabled=stale,
+                    help="Ändert nur das Eingabefeld und speichert als Entwurf; bestätigt wird nichts.",
+                )
+
+
+def show_candidate(
+    cur: Current, region: dict, human: str, original: dict | None, run: dict
+) -> None:
+    ui.subsection("Neue Lesung (noch nicht gespeichert)")
+    st.code(run["text"], language=None)
+    st.markdown(
+        "Gegenüber Ihrer Arbeitstranskription: " + diff_markdown(human, run["text"])
+    )
+    if original:
+        st.markdown(
+            "Gegenüber der unveränderten Quell-OCR: "
+            + diff_markdown(original["raw_text"], run["text"])
+        )
+    st.caption(
+        "Durchgestrichen: nur in der Vergleichsbasis; fett mit +: nur in der neuen Lesung."
+    )
 
 
 def ocr_block(cur: Current, ocr: dict) -> None:

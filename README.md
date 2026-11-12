@@ -4,8 +4,8 @@
 prüfen, begründet entscheiden und mit ihrer Herkunft weitergeben?**
 
 Lokaler Prototyp mit Daten der Staatsbibliothek zu Berlin (Colibri-Datensatz, METS/MODS, IIIF-Scans).
-Die Anwendung arbeitet mit sechs vorbereiteten Beispielen aus zwei Büchern; der Import eigener Bilder
-und Metadaten ist eine mögliche zukünftige Erweiterung.
+Die Anwendung arbeitet mit sechs vorbereiteten Beispielen aus zwei Büchern und kann eigene Bücher
+importieren (siehe „Eigene Bücher und lokale OCR“).
 
 **[Projektüberblick](docs/PROJEKTUEBERSICHT.md)** · **[Geprüftes Beispiel](docs/ergebnis/README.md)** ·
 **[Demo ansehen](docs/DEMO.md)**
@@ -55,6 +55,19 @@ Ein frisch gestarteter Datenordner zeigt alle sechs Beispiele im Quellstand, als
 geprüfte Beispiel steht davon getrennt auf der Startseite und unter
 [docs/ergebnis/](docs/ergebnis/README.md). Begriffe wie *Endbestätigung* und *Ground Truth* erklärt
 [docs/BEGRIFFE.md](docs/BEGRIFFE.md).
+
+## Eigene Bücher und lokale OCR
+
+- **Import:** Startseite → „Eigenes Buch importieren“: JPEG/PNG, PDF oder öffentliche IIIF-Manifest-URL
+  (Presentation 2/3; nur einfache Bildseiten, nur auf ausdrücklichen Knopfdruck aus dem Netz). Importierte
+  Bücher liegen vollständig unter `data/imports/` und funktionieren danach offline. Unbekannte Angaben
+  bleiben unbekannt; OAI/METS-, IIIF-Bildinfo- und Colibri-Prüfungen erscheinen als „nicht ausgeführt“.
+- **PDF** braucht lokal Poppler (`pdfinfo`, `pdftoppm`; macOS: `brew install poppler`).
+- **Regionen zeichnen:** Reiter „Regionen“ → Rahmen auf dem Scan ziehen, verschieben, mit Umschalt mehrere
+  wählen; Pfeiltasten und Zahlenfelder sind gleichwertige Alternativen. Gespeichert wird erst ausdrücklich.
+- **Zweite Lesung:** Textregionen können mit lokalem Tesseract (`brew install tesseract`, Modelle nach
+  Bedarf; optional `BILDLABOR_TESSERACT`, `BILDLABOR_TESSDATA`) erneut gelesen werden. Das Ergebnis
+  ist ein Vergleichstext, keine Bewertung; ohne Tesseract bleibt die manuelle Transkription nutzbar.
 
 **Daten:** Quelldateien in `Kinderbuch_Bildlabor_Start/` und `sammlung/` werden nie verändert.
 Arbeitsstände (`data/work/`) und Exporte (`exports/`) entstehen erst beim Speichern, mit

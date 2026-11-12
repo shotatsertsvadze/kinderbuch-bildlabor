@@ -24,6 +24,13 @@ def target_label(target: str | None) -> str:
 
 
 def render(record: dict, src: store.ObjectSource) -> None:
+    if "oai" not in src.capabilities:
+        st.info(
+            "OAI/METS-Abgleich nicht ausgeführt: Für diesen Import liegt keine OAI/METS-Quelle vor."
+        )
+        st.caption("Metadaten stammen aus dem Import, nicht aus Colibri oder MODS.")
+        st.json(record["metadata_provenance"])
+        return
     st.caption(
         "Ausgewertet wird die gespeicherte OAI-PMH-Antwort zum Buch, ohne Live-Abruf. "
         "Es wird nichts automatisch in den lokalen Datensatz übernommen."

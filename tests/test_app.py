@@ -768,3 +768,42 @@ def test_remaining_examples_open_without_review_or_writes(object_id, temp_data):
     assert app.button(key=f"{object_id}-final-confirm").disabled
     assert list(temp_data.iterdir()) == []
     assert {path: store.sha256(path) for path in hashes} == hashes
+
+
+def test_imported_object_and_import_page_render():
+    import io
+    from PIL import Image
+    from kinderbuch_bildlabor import imports
+
+    output = io.BytesIO()
+    Image.new("RGB", (40, 60), "white").save(output, "PNG")
+    src = imports.commit_import(
+        imports.preview_import([("own.png", output.getvalue())]),
+        {"title": "Eigenes Buch"},
+    )[0]
+    app = open_app(src.id)
+    assert not app.exception
+    assert "Metadaten aus dem eigenen Import" in " ".join(texts(app, "caption"))
+    app.radio(key="view").set_value("import").run()
+    assert not app.exception
+    assert "Eigenes Buch importieren" in texts(app, "title")
+
+
+def test_imported_text_region_renders_regions_and_second_reading_tabs():
+    import io
+
+    from PIL import Image
+
+    from kinderbuch_bildlabor import imports
+
+    output = io.BytesIO()
+    Image.new("RGB", (40, 60), "white").save(output, "PNG")
+    pages = imports.preview_import([("own.png", output.getvalue())])
+    src = imports.commit_import(pages, {"title": "Eigenes Buch"})[0]
+    store.update_working_copy(
+        src, lambda r: review.add_region(r, "text", "Zeile", [1, 1, 20, 10], 1), "t"
+    )
+    app = open_app(src.id)
+    assert not app.exception
+    assert any(t.label == "Transkription" for t in app.tabs)
+    assert f"{src.id}-new-save" in [b.key for b in app.button]

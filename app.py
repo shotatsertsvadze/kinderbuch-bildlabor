@@ -15,6 +15,7 @@ from kinderbuch_bildlabor import (
     collection_view,
     decision_view,
     export_view,
+    import_view,
     library_view,
     object_view,
     review,
@@ -56,6 +57,8 @@ by_id = {cur.id: cur for cur in collection}
 
 
 def view_label(view: str) -> str:
+    if view == "import":
+        return "Eigenes Buch importieren"
     if view == COLLECTION:
         return "Start und Sammlung"
     return f"{list(by_id).index(view) + 1} · {ui.object_label(by_id[view].record)}"
@@ -64,9 +67,9 @@ def view_label(view: str) -> str:
 def sidebar() -> str:
     st.sidebar.markdown("### Kinderbuch-Bildlabor")
     view = st.sidebar.radio(
-        "Ansicht", [COLLECTION, *by_id], format_func=view_label, key="view"
+        "Ansicht", [COLLECTION, "import", *by_id], format_func=view_label, key="view"
     )
-    if view == COLLECTION:
+    if view in {COLLECTION, "import"}:
         with st.sidebar:
             ui.reviewer_input()
     else:
@@ -90,10 +93,13 @@ def object_page(cur: ui.Current) -> None:
     record = cur.record
     biblio, source = record["bibliographic_metadata_from_colibri"], record["source"]
     st.title(f"{biblio['title']} · Scan {source['scan_number']}")
-    st.caption(
-        f"{biblio['author_display']} · {biblio['publication_place']} {biblio['publication_date']} · "
-        f"{source['institution']} · {source['ppn']}"
-    )
+    parts = [
+        biblio["author_display"],
+        f"{biblio['publication_place'] or ''} {biblio['publication_date'] or ''}".strip(),
+        source["institution"],
+        source["ppn"],
+    ]
+    st.caption(" · ".join(p or "unbekannt" for p in parts))
     export_current = export_view.export_state(cur)[0] == "current"
     findings = validate.run_all(cur.working, cur.src, [x.record for x in collection])
     blockers = len(validate.approval_blockers(findings))
@@ -126,6 +132,8 @@ if notice := st.session_state.pop("notice", None):
     st.error(notice, icon=ui.ERROR)
 if view == COLLECTION:
     collection_view.render(collection)
+elif view == "import":
+    import_view.render()
 else:
     object_page(by_id[view])
 if st.session_state.get("shown_view") != view:

@@ -51,3 +51,25 @@ def test_region_frame_has_light_and_dark_edges_on_any_paper():
     assert marked.getpixel((98, 200)) == (255, 255, 255)
     assert marked.getpixel((103, 200)) == ImageColor.getrgb(regions.COLORS[0])
     assert marked.getpixel((107, 200)) == (0, 0, 0)
+
+
+def test_canvas_event_accepts_whole_floats_and_rejects_invalid_geometry():
+    import pytest
+
+    from kinderbuch_bildlabor import region_canvas
+
+    event = {
+        "seq": "a",
+        "changes": [{"id": "r", "xywh": [1.0, 2, 3, 4]}],
+        "created": None,
+    }
+    assert region_canvas.normalize_event(event, {"r"}, 10, 10)["changes"] == {
+        "r": [1, 2, 3, 4]
+    }
+    for bad in ([1.5, 0, 2, 2], [0, 0, 20, 2], [0, 0, 0, 2]):
+        event["changes"][0]["xywh"] = bad
+        with pytest.raises(ValueError):
+            region_canvas.normalize_event(event, {"r"}, 10, 10)
+    event["changes"][0] = {"id": "x", "xywh": [0, 0, 1, 1]}
+    with pytest.raises(ValueError):
+        region_canvas.normalize_event(event, {"r"}, 10, 10)

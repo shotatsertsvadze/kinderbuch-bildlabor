@@ -5,6 +5,10 @@ Status dieses Bereichs zurück, weil die alte Bestätigung den neuen Inhalt nich
 Bestätigungen werden mit Person und Zeitpunkt im review_log festgehalten.
 """
 
+import hashlib
+import json
+
+from kinderbuch_bildlabor import regions
 from kinderbuch_bildlabor.store import now_utc
 
 REGION_DRAFT = "draft_pending_visual_review"
@@ -165,6 +169,67 @@ def set_region_xywh(
     return True
 
 
+class InvalidRegion(ContentChanged):
+    """Ungültige Regionsgeometrie oder veralteter Stand beim Anlegen."""
+
+
+def set_regions_xywh(record: dict, changes: dict, seen: dict) -> bool:
+    """Alle Änderungen oder keine: ein Konflikt oder ein ungültiger Rahmen bricht den Stapel ab."""
+    width, height = record["source"]["image_width"], record["source"]["image_height"]
+    pending = []
+    for region_id, xywh in changes.items():
+        region = find_region(record, region_id)
+        if problems := regions.bounds_problems(xywh, width, height):
+            raise InvalidRegion(f"Region {region_id}: {' '.join(problems)}")
+        if region["xywh"] != xywh:
+            require_seen(region["xywh"], seen[region_id], f"Die Region {region_id}")
+            pending.append((region_id, xywh))
+    for region_id, xywh in pending:
+        set_region_xywh(record, region_id, xywh, find_region(record, region_id)["xywh"])
+    return bool(pending)
+
+
+def add_region(
+    record: dict, region_type: str, label: str, xywh: list[int], seen_count: int
+) -> bool:
+    if len(record["region_annotations"]) != seen_count:
+        raise ContentChanged(
+            "Die Regionen wurden inzwischen geändert. Bitte den aktuellen Stand ansehen."
+        )
+    width, height = record["source"]["image_width"], record["source"]["image_height"]
+    if region_type not in ("illustration", "text") or not label.strip():
+        raise InvalidRegion("Regionstyp und Bezeichnung sind erforderlich.")
+    if problems := regions.bounds_problems(xywh, width, height):
+        raise InvalidRegion(" ".join(problems))
+    number = seen_count + 1
+    region: dict = {
+        "id": f"{record['id']}-region-{number:02d}",
+        "label_de": label.strip(),
+        "region_type": region_type,
+        "xywh": xywh,
+        "coordinate_unit": "pixel",
+        "review_status": REGION_DRAFT,
+        "region_origin_de": "Im Editor gezeichnet oder eingegeben; noch nicht geprüft",
+    }
+    if region_type == "text":
+        field = f"text_{number:02d}"
+        region["transcription_field"] = field
+        transcription = record.setdefault(
+            "transcription",
+            {
+                "review_note_de": "Selbst angelegte Textregionen; die Lesung ist ungeprüft.",
+                "initial_user_transcription": "",
+                "review_status_by_field": {},
+            },
+        )
+        transcription[field] = ""
+        transcription["review_status_by_field"][field] = TRANSCRIPTION_PROVISIONAL
+    invalidate_final(record)
+    record["region_annotations"].append(region)
+    log(record, region["id"], "Region angelegt; Status auf Entwurf gesetzt")
+    return True
+
+
 def confirm_region(record: dict, region_id: str, by: str, seen_xywh: list[int]) -> bool:
     region = find_region(record, region_id)
     require_seen(region["xywh"], seen_xywh, f"Die Region {region_id}")
@@ -244,6 +309,53 @@ def set_transcription(record: dict, field: str, text: str, seen_text: str) -> bo
     )
     drop_stale_decisions(record)
     return True
+
+
+def candidate_id(candidate: dict) -> str:
+    keys = ("text", "engine_version", "model", "model_sha256", "psm", "crop_sha256")
+    return hashlib.sha256(
+        json.dumps([candidate[k] for k in keys], ensure_ascii=False).encode()
+    ).hexdigest()[:12]
+
+
+def candidate_stale(candidate: dict, region: dict, crop_sha256: str) -> bool:
+    return (
+        candidate["xywh"] != region["xywh"] or candidate["crop_sha256"] != crop_sha256
+    )
+
+
+def save_ocr_candidate(
+    record: dict, region_id: str, candidate: dict, current_crop_sha256: str
+) -> bool:
+    region = find_region(record, region_id)
+    if candidate_stale(candidate, region, current_crop_sha256):
+        raise ContentChanged(
+            "Der Bildausschnitt wurde inzwischen geändert; die Lesung gehört nicht mehr dazu."
+        )
+    entry = {**candidate, "region_id": region_id, "id": candidate_id(candidate)}
+    saved = record.setdefault("ocr_candidates", [])
+    if any(c["id"] == entry["id"] for c in saved):
+        return False
+    invalidate_final(record)
+    saved.append(entry)
+    log(record, f"ocr/{region['transcription_field']}", "Zweite OCR-Lesung gespeichert")
+    return True
+
+
+def adopt_ocr_candidate(
+    record: dict, region_id: str, candidate_id_: str, seen_text: str, crop_sha256: str
+) -> bool:
+    region = find_region(record, region_id)
+    candidate = next(
+        c for c in record.get("ocr_candidates", []) if c["id"] == candidate_id_
+    )
+    if candidate_stale(candidate, region, crop_sha256):
+        raise ContentChanged(
+            "Diese Lesung gehört zu einem früheren Bildausschnitt und kann nicht übernommen werden."
+        )
+    return set_transcription(
+        record, region["transcription_field"], candidate["text"], seen_text
+    )
 
 
 def confirm_transcription(record: dict, field: str, by: str, seen_text: str) -> bool:

@@ -75,9 +75,17 @@ def is_missing(value) -> bool:
 
 
 def check_required(record: dict) -> list[Finding]:
+    required = REQUIRED_FIELDS
+    if record.get("source_profile") == "imported":
+        required = [
+            ("id",),
+            ("source", "image_width"),
+            ("source", "image_height"),
+            ("bibliographic_metadata_from_colibri", "title"),
+        ]
     findings = [
         Finding(TECHNICAL, "MISSING_FIELD", f"Pflichtangabe fehlt: {'.'.join(path)}")
-        for path in REQUIRED_FIELDS
+        for path in required
         if is_missing(get_path(record, path))
     ]
     for region in record.get("region_annotations", []):
@@ -340,16 +348,59 @@ def run_all(
             src.record.parent / record["ocr_result"]["result_file"]
         )
         ocr_findings = check_ocr_file(record, ocr_data)
+    image_info = (
+        store.read_json(src.image_info)
+        if "iiif" in src.capabilities
+        else {"width": image_size[0], "height": image_size[1]}
+    )
+    source_findings = (
+        check_oai_source(record, src.oai_record)
+        if "oai" in src.capabilities
+        else [
+            Finding(
+                NOT_RUN,
+                "OAI_UNAVAILABLE",
+                "Keine OAI/METS-Quelle importiert; Abgleich nicht ausgeführt.",
+            ),
+            Finding(
+                NOT_RUN,
+                "IIIF_UNAVAILABLE",
+                "Keine IIIF-Bildinfo importiert; Abgleich nicht ausgeführt.",
+            ),
+            Finding(
+                NOT_RUN,
+                "COLIBRI_UNAVAILABLE",
+                "Keine Colibri-Quelle; Abgleich nicht ausgeführt.",
+            ),
+        ]
+    )
+    if src.profile != record.get("source_profile", "fixture"):
+        source_findings.append(
+            Finding(TECHNICAL, "SOURCE_PROFILE", "Quellprofil widerspricht der Quelle.")
+        )
+    if src.profile == "fixture" and record.get("source_profile") == "imported":
+        source_findings += check_required({**record, "source_profile": "fixture"})
+    if (
+        src.profile == "imported"
+        and not record["image_description"]["working_description_de"].strip()
+    ):
+        source_findings.append(
+            Finding(
+                REVIEW,
+                "DESCRIPTION_EMPTY",
+                "Bildbeschreibung muss geschrieben und bestätigt werden.",
+            )
+        )
     return apply_decisions(
         record,
         check_source_integrity(manifest, file_hashes)
         + check_working_basis(working, store.sha256(src.record))
         + check_required(record)
         + check_duplicate_ids(collection or [record])
-        + check_image_dimensions(record, image_size, store.read_json(src.image_info))
+        + check_image_dimensions(record, image_size, image_info)
         + check_regions(record)
         + ocr_findings
-        + check_oai_source(record, src.oai_record)
+        + source_findings
         + check_open_reviews(record)
         + not_run_checks(record),
     )

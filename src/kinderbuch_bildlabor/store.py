@@ -46,10 +46,28 @@ class ObjectSource:
     image_info: Path
     oai_record: Path
     manifest: Path
+    profile: str = "fixture"
+
+    @property
+    def capabilities(self) -> frozenset[str]:
+        return frozenset(
+            {"image", "oai", "iiif", "colibri"}
+            if self.profile == "fixture"
+            else {"image"}
+        )
+
+    def reference(self) -> str:
+        if self.profile == "fixture":
+            return self.record.relative_to(ROOT).as_posix()
+        return "imports:" + self.record.relative_to(import_root()).as_posix()
+
+
+def import_root() -> Path:
+    return DATA_DIR / "data" / "imports"
 
 
 def catalog() -> list[ObjectSource]:
-    return [
+    fixtures = [
         ObjectSource(
             entry["id"],
             *(
@@ -65,6 +83,35 @@ def catalog() -> list[ObjectSource]:
         )
         for entry in read_json(CATALOG)["objects"]
     ]
+
+    imported = []
+    for bundle in sorted(import_root().glob("book-*")):
+        if not (bundle / "bundle.json").is_file():
+            continue
+        metadata = read_json(bundle / "bundle.json")
+        for entry in metadata["objects"]:
+            paths = [
+                bundle / entry[key]
+                for key in (
+                    "record",
+                    "page_image",
+                    "image_info",
+                    "oai_record",
+                    "manifest",
+                )
+            ]
+            imported.append(
+                ObjectSource(
+                    entry["id"],
+                    paths[0],
+                    paths[1],
+                    paths[2],
+                    paths[3],
+                    paths[4],
+                    profile="imported",
+                )
+            )
+    return fixtures + imported
 
 
 def object_source(object_id: str) -> ObjectSource:
@@ -150,7 +197,7 @@ def new_working_copy(src: ObjectSource) -> dict:
     migrate_record(record)
     return {
         "based_on": {
-            "file": src.record.relative_to(ROOT).as_posix(),
+            "file": src.reference(),
             "sha256": sha256(src.record),
         },
         "change_log": [],

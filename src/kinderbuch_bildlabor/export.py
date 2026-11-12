@@ -56,6 +56,7 @@ CSV_COLUMNS = [
     "colibri_datei",
     "colibri_lizenz",
     "colibri_namensnennung",
+    "metadaten_herkunft",
     "exportiert_am",
 ]
 
@@ -123,6 +124,12 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
         illustration = region["region_type"] == "illustration"
         rows.append(
             {
+                "metadaten_herkunft": "Import: "
+                + str(
+                    record.get("metadata_provenance", {}).get("source") or "unbekannt"
+                )
+                if record.get("source_profile") == "imported"
+                else "Colibri; OAI/METS-Abgleich separat",
                 "objekt_id": record["id"],
                 "objekt_status": record["status"],
                 "endpruefung_person": record.get("final_approval", {}).get("by"),

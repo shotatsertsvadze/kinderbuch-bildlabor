@@ -51,6 +51,11 @@ def thumbnail(path, xywh: tuple[int, ...]) -> Image.Image:
 
 
 def render(collection: list[ui.Current]) -> None:
+    st.button(
+        "Eigenes Buch importieren",
+        key="import-start",
+        on_click=lambda: st.session_state.update(view="import"),
+    )
     by_id = {cur.id: cur for cur in collection}
     hero(by_id[LEAD])
     example_view.render()
@@ -58,7 +63,10 @@ def render(collection: list[ui.Current]) -> None:
     second_example(by_id[SECOND].record)
     glossary()
 
-    books = {cur.record["source"]["ppn"] for cur in collection}
+    books = {
+        cur.record["source"]["ppn"] or cur.record["metadata_provenance"]["title"]
+        for cur in collection
+    }
     ui.section(f"Stichprobe: {len(collection)} Illustrationen aus {len(books)} Büchern")
     columns = st.columns(3)
     records = [cur.record for cur in collection]

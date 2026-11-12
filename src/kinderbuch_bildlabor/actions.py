@@ -9,7 +9,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from kinderbuch_bildlabor import export, review, store, ui, validate
+from kinderbuch_bildlabor import export, ocr, review, store, ui, validate
 
 
 def reviewer() -> str:
@@ -20,6 +20,21 @@ FIELD_LABELS = {
     "working_title": "Bildtitel",
     "working_publisher_statement": "Verlagsangabe auf dem Bildblatt",
 }
+
+
+def field_label(object_id: str, field: str) -> str:
+    if field in FIELD_LABELS:
+        return FIELD_LABELS[field]
+    record = store.read_json(store.object_source(object_id).record)
+    region = next(
+        (
+            r
+            for r in record["region_annotations"]
+            if r.get("transcription_field") == field
+        ),
+        None,
+    )
+    return region["label_de"] if region else field
 
 
 def region_label(object_id: str, region_id: str) -> str:
@@ -90,6 +105,47 @@ def save_coordinates(object_id: str, region_id: str) -> None:
         ui.seen_values(xywh_keys(region_id)),
         slot=f"{region_id}-save",
     )
+
+
+def draft_key(object_id: str) -> str:
+    return f"{object_id}-canvas-draft"
+
+
+def bump_canvas(object_id: str) -> None:
+    key = f"{object_id}-canvas-rev"
+    st.session_state[key] = st.session_state.get(key, 0) + 1
+    st.session_state.pop(draft_key(object_id), None)
+
+
+def save_canvas_draft(object_id: str) -> None:
+    draft = st.session_state[draft_key(object_id)]
+    apply(
+        object_id,
+        "Regionsgrenzen (Zeichenfläche)",
+        review.set_regions_xywh,
+        draft["changes"],
+        draft["base"],
+        slot="canvas-save",
+    )
+    if "notice" not in st.session_state:
+        bump_canvas(object_id)
+
+
+def add_region(
+    object_id: str, region_type: str, label: str, xywh: list[int], count: int
+) -> None:
+    apply(
+        object_id,
+        "Neue Region",
+        review.add_region,
+        region_type,
+        label,
+        xywh,
+        count,
+        slot="canvas-add",
+    )
+    if "notice" not in st.session_state:
+        bump_canvas(object_id)
 
 
 def confirm_region(object_id: str, region_id: str, seen_xywh: list[int]) -> None:
@@ -169,7 +225,7 @@ def save_transcription(object_id: str, field: str) -> None:
     key = transcription_key(object_id, field)
     apply(
         object_id,
-        f"Transkription {FIELD_LABELS[field]}",
+        f"Transkription {field_label(object_id, field)}",
         review.set_transcription,
         field,
         st.session_state[key],
@@ -178,10 +234,84 @@ def save_transcription(object_id: str, field: str) -> None:
     )
 
 
+def ocr_run_key(object_id: str, region_id: str) -> str:
+    return f"{object_id}-{region_id}-ocr-run"
+
+
+def run_ocr(object_id: str, region_id: str, model: str, psm: int) -> None:
+    """Läuft außerhalb der Speichersperre; das Ergebnis bleibt ein ungespeicherter Entwurf der Sitzung."""
+    src = store.object_source(object_id)
+    region = review.find_region(store.load_working_copy(src)["record"], region_id)
+    key = ocr_run_key(object_id, region_id)
+    try:
+        st.session_state[key] = ocr.run_crop_ocr(
+            ui.page_image(src.page_image),
+            store.sha256(src.page_image),
+            region["xywh"],
+            model,
+            psm,
+        )
+        st.session_state.pop(f"{key}-error", None)
+    except (ocr.OcrUnavailable, ValueError) as error:
+        st.session_state.pop(key, None)
+        st.session_state[f"{key}-error"] = str(error)
+
+
+def current_crop_sha(src: store.ObjectSource, region: dict) -> str:
+    return ocr.sha(ocr.crop_png(ui.page_image(src.page_image), region["xywh"]))
+
+
+def save_ocr(object_id: str, region_id: str) -> None:
+    src = store.object_source(object_id)
+    key = ocr_run_key(object_id, region_id)
+    candidate = st.session_state[key]
+
+    def save(record):
+        region = review.find_region(record, region_id)
+        return review.save_ocr_candidate(
+            record, region_id, candidate, current_crop_sha(src, region)
+        )
+
+    try:
+        changed = store.update_working_copy(src, save, "Zweite OCR-Lesung")
+    except review.ContentChanged as error:
+        st.session_state.notice = str(error)
+        return
+    except OSError as error:
+        write_failed(error)
+        return
+    ui.set_feedback(
+        object_id,
+        f"{key}-save",
+        "draft" if changed else "info",
+        "Zweite Lesung gespeichert; die Transkription ist unverändert und unbestätigt."
+        if changed
+        else "Nichts gespeichert: diese Lesung ist bereits gespeichert.",
+    )
+
+
+def adopt_ocr(object_id: str, region_id: str, candidate_id: str, field: str) -> None:
+    src = store.object_source(object_id)
+    key = transcription_key(object_id, field)
+
+    def adopt(record):
+        region = review.find_region(record, region_id)
+        return review.adopt_ocr_candidate(
+            record,
+            region_id,
+            candidate_id,
+            ui.seen_values([key])[0],
+            current_crop_sha(src, region),
+        )
+
+    apply(object_id, f"Transkription {field_label(object_id, field)}", adopt)
+    st.session_state.pop(key, None)
+
+
 def confirm_transcription(object_id: str, field: str, seen_text: str) -> None:
     apply(
         object_id,
-        f"Bestätigung Transkription {FIELD_LABELS[field]}",
+        f"Bestätigung Transkription {field_label(object_id, field)}",
         review.confirm_transcription,
         field,
         reviewer(),

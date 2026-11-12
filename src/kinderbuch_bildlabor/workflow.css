@@ -374,3 +374,15 @@ label:has(input:focus-visible) {
   border-radius: 0.75rem;
   background: var(--bl-surface);
 }
+
+/* ---------- Sammlungskarten: Vorschaubilder begrenzen, damit zwei Kartenreihen nahe beieinander liegen -- */
+[class*="st-key-card-"] [data-testid="stImage"] img {
+  max-height: 11rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+[class*="st-key-card-"] [data-testid="stImage"] {
+  display: flex;
+  justify-content: center;
+}

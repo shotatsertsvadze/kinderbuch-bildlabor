@@ -64,20 +64,10 @@ def view_label(view: str) -> str:
         return "Eigenes Buch importieren"
     if view == COLLECTION:
         return "Start und Sammlung"
-    icon = object_state(by_id[view].record)[0]
+    icon = workflow.object_state(by_id[view].record)[0]
     return (
         f"{icon} {list(by_id).index(view) + 1} · {ui.object_label(by_id[view].record)}"
     )
-
-
-def object_state(record: dict) -> tuple[str, str]:
-    if workflow.approved(record):
-        return ":material/verified:", "endbestätigt"
-    areas = review.review_areas(record)
-    confirmed, drafts, _ = workflow.area_counts(areas)
-    if not confirmed and not drafts:
-        return ":material/radio_button_unchecked:", "offen"
-    return ":material/clock_loader_40:", f"{confirmed} von {len(areas)} bestätigt"
 
 
 def sidebar() -> str:
@@ -86,7 +76,7 @@ def sidebar() -> str:
         "Ansicht",
         [COLLECTION, "import", *by_id],
         format_func=view_label,
-        captions=["", "", *(object_state(c.record)[1] for c in collection)],
+        captions=["", "", *(workflow.object_state(c.record)[1] for c in collection)],
         key="view",
     )
     if view in {COLLECTION, "import"}:

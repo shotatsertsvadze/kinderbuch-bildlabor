@@ -12,6 +12,7 @@ from kinderbuch_bildlabor import (
     store,
     ui,
     validate,
+    workflow,
 )
 
 QUESTION = (
@@ -52,18 +53,8 @@ def thumbnail(path, xywh: tuple[int, ...]) -> Image.Image:
 
 
 def render(collection: list[ui.Current]) -> None:
-    st.button(
-        "Eigenes Buch importieren",
-        key="import-start",
-        on_click=lambda: st.session_state.update(view="import"),
-    )
     by_id = {cur.id: cur for cur in collection}
     hero(by_id[LEAD])
-    example_view.render()
-    case_study(collection)
-    second_example(by_id[SECOND].record)
-    glossary()
-
     books = {
         cur.record["source"]["ppn"] or cur.record["metadata_provenance"]["title"]
         for cur in collection
@@ -72,16 +63,23 @@ def render(collection: list[ui.Current]) -> None:
     columns = st.columns(3)
     records = [cur.record for cur in collection]
     for index, cur in enumerate(collection):
-        with columns[index % 3], st.container(border=True):
+        with columns[index % 3], st.container(border=True, key=f"card-{cur.id}"):
             card(cur, records)
-    collection_export(collection)
-    backup_view.render()
+    case_study(collection)
+    example_view.render()
+    second_example(by_id[SECOND].record)
+    glossary()
+    export_column, backup_column = st.columns(2, gap="large")
+    with export_column, st.container(border=True):
+        collection_export(collection)
+    with backup_column, st.container(border=True):
+        backup_view.render()
 
 
 def hero(cur: ui.Current) -> None:
     illustration = cur.record["region_annotations"][0]
     with st.container(key="collection-hero", border=True):
-        text, picture = st.columns([6, 5], gap="large", vertical_alignment="center")
+        text, picture = st.columns([7, 5], gap="large", vertical_alignment="center")
         with text:
             with st.container(key="hero-eyebrow"):
                 st.caption("BILDARCHIV · FALLSTUDIE")
@@ -93,15 +91,21 @@ def hero(cur: ui.Current) -> None:
                 f"und die automatische Klasse „{automatic}“. Sie prüfen am Bild, welche zutrifft, begründen Ihre "
                 "Entscheidung und exportieren sie mit Herkunft."
             )
-            st.button(
-                "Leitbeispiel öffnen: Genovefa, Scan 22",
-                key="lead-open",
-                help="Hier beginnen. Der Prüfpfad führt vom Bildausschnitt bis zum Export.",
-                on_click=actions.open_object,
-                args=(cur.id,),
-                type="primary",
-                icon=":material/arrow_forward:",
-            )
+            with st.container(horizontal=True):
+                st.button(
+                    "Leitbeispiel öffnen: Genovefa, Scan 22",
+                    key="lead-open",
+                    help="Hier beginnen. Der Prüfpfad führt vom Bildausschnitt bis zum Export.",
+                    on_click=actions.open_object,
+                    args=(cur.id,),
+                    type="primary",
+                    icon=":material/arrow_forward:",
+                )
+                st.button(
+                    "Eigenes Buch importieren",
+                    key="import-start",
+                    on_click=lambda: st.session_state.update(view="import"),
+                )
             st.caption(
                 "Fünf Schritte: Rahmen prüfen → Klassen vergleichen → "
                 "Beschreibung prüfen → Prüfung abschließen → exportieren"
@@ -175,6 +179,8 @@ def card(cur: ui.Current, records: list[dict]) -> None:
     record, source = cur.record, cur.record["source"]
     biblio = record["bibliographic_metadata_from_colibri"]
     illustration = record["region_annotations"][0]
+    icon, _, word, color = workflow.object_state(record)
+    st.badge(word, icon=icon, color=color)
     st.image(
         thumbnail(cur.src.page_image, tuple(illustration["xywh"])),
         width="stretch",
@@ -191,6 +197,11 @@ def card(cur: ui.Current, records: list[dict]) -> None:
     )
     labels = review.classification_labels(record)
     if labels:
+        with st.container(horizontal=True, gap="xsmall"):
+            st.badge(f"manuell: {labels[0]}", color="gray")
+            st.badge(
+                f"maschinell: {labels[1]}", icon=":material/smart_toy:", color="violet"
+            )
         st.caption(f"Colibri: manuell „{labels[0]}“, automatisch „{labels[1]}“")
     areas = review.review_areas(record)
     done = sum(a["done"] for a in areas)

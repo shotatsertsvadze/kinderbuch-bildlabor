@@ -1,6 +1,7 @@
 """Prüfpfad: nummerierte Schritte mit Stand und ein einheitliches „Weiter“ nach dem Speichern."""
 
 from collections.abc import Callable
+from typing import Literal
 
 import streamlit as st
 
@@ -78,6 +79,20 @@ def area_counts(areas: list[dict]) -> tuple[int, int, int]:
     confirmed = sum(a["done"] for a in areas)
     drafts = sum(a["draft"] for a in areas)
     return confirmed, drafts, len(areas) - confirmed - drafts
+
+
+def object_state(
+    record: dict,
+) -> tuple[str, str, str, Literal["green", "orange", "gray"]]:
+    """Symbol, Zustandszeile, Kurzwort und Badge-Farbe eines Objekts für Seitenleiste und Karten."""
+    if approved(record):
+        return ":material/verified:", "endbestätigt", "endbestätigt", "green"
+    areas = review.review_areas(record)
+    confirmed, drafts, _ = area_counts(areas)
+    if not confirmed and not drafts:
+        return ":material/radio_button_unchecked:", "offen", "offen", "gray"
+    line = f"{confirmed} von {len(areas)} bestätigt"
+    return ":material/clock_loader_40:", line, "in Arbeit", "orange"
 
 
 def current_step(all_steps: list[tuple[str, bool]], pending: str | None) -> str:

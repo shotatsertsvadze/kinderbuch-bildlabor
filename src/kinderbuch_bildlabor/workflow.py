@@ -126,7 +126,8 @@ def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> 
     with st.container(key="review-guide", border=True):
         text, reviewer = st.columns([3, 2], vertical_alignment="bottom")
         with text:
-            st.caption(f"PRÜFPFAD · {current_step(all_steps, pending).upper()}")
+            with st.container(key="guide-eyebrow"):
+                st.caption(f"PRÜFPFAD · {current_step(all_steps, pending).upper()}")
             st.markdown(
                 f"**Nächste Handlung:** {ui.next_step(record, export_current, blockers)}"
             )
@@ -144,7 +145,7 @@ def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> 
                 "Ein gespeicherter Entwurf ist noch keine Prüfung. Erst die Bestätigung mit "
                 "Häkchen und Name zählt als bestätigter Bereich."
             )
-        with st.container(horizontal=True, gap="xsmall"):
+        with st.container(horizontal=True, gap="xsmall", key="guide-steps"):
             for number, (tab, done) in enumerate(all_steps, start=1):
                 st.button(
                     f"{number} · {STEPS[tab][0]}",

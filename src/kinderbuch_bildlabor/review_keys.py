@@ -16,7 +16,7 @@ export default function (component) {
   parentElement.replaceChildren();
   const help = document.createElement("p");
   help.tabIndex = -1;
-  help.style.cssText = "margin:0;font:14px sans-serif;color:#555";
+  help.style.cssText = "margin:0;font:inherit;font-size:0.875rem;line-height:1.5;color:var(--bl-ink-muted, #555B62)";
   help.textContent = data.help;
   parentElement.append(help);
   const typing = (t) => t instanceof Element && (t.closest("input,textarea,select,svg,[contenteditable]") !== null);

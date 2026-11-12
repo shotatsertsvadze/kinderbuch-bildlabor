@@ -83,7 +83,8 @@ def hero(cur: ui.Current) -> None:
     with st.container(key="collection-hero", border=True):
         text, picture = st.columns([6, 5], gap="large", vertical_alignment="center")
         with text:
-            st.caption("BILDARCHIV · FALLSTUDIE")
+            with st.container(key="hero-eyebrow"):
+                st.caption("BILDARCHIV · FALLSTUDIE")
             st.title("Kinderbuch-Bildlabor")
             st.markdown(f"**{QUESTION}**")
             manual, automatic = review.classification_labels(cur.record) or ("", "")

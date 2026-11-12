@@ -23,12 +23,14 @@ from kinderbuch_bildlabor import (
     store,
     ui,
     validate,
+    theme,
     workflow,
 )
 
 st.set_page_config(
     page_title="Kinderbuch-Bildlabor", page_icon=":material/menu_book:", layout="wide"
 )
+theme.inject()
 st.html(Path(workflow.__file__).with_name("workflow.css"))
 
 COLLECTION = "sammlung"

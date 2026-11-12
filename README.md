@@ -76,6 +76,8 @@ geprüfte Beispiel steht davon getrennt auf der Startseite und unter
   Bedarf; optional `BILDLABOR_TESSERACT`, `BILDLABOR_TESSDATA`) erneut gelesen werden. Das Ergebnis
   ist ein Vergleichstext, keine Bewertung; ohne Tesseract bleibt die manuelle Transkription nutzbar.
 
+**Schriften:** Bricolage Grotesque, Geist und Geist Mono liegen lokal unter `static/fonts/` (SIL OFL), die Anwendung lädt nichts aus dem Netz.
+
 **Daten:** Quelldateien in `Kinderbuch_Bildlabor_Start/` und `sammlung/` werden nie verändert.
 Arbeitsstände (`data/work/`) und Exporte (`exports/`) entstehen erst beim Speichern, mit
 `BILDLABOR_DATA_DIR` im angegebenen Ordner. Vor jedem Überschreiben bleibt der bisherige Stand unter
@@ -114,4 +116,5 @@ Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` 
 
 [Datensatz und Auswahl](docs/DATENSATZ.md) · [Offene Punkte](docs/OFFENE_PUNKTE.md) ·
 [Architekturentscheidungen](docs/adr/) · [Abnahmebericht](docs/ABNAHME_2026-11-07.md) ·
-[Bezug zur Stelle](docs/BEZUG_ZUR_STELLE.md)
+[Bezug zur Stelle](docs/BEZUG_ZUR_STELLE.md) ·
+[Gestaltung](docs/design/DESIGN_SYSTEM.md)

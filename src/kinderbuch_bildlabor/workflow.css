@@ -263,6 +263,8 @@ button:focus-visible,
 a:focus-visible,
 [role="tab"]:focus-visible,
 [role="radio"]:focus-visible,
+summary:focus-visible,
+canvas:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 label:has(input:focus-visible) {

@@ -8,14 +8,14 @@ color target photographed next to every library scan. The UI language stays Germ
 is written in English for the implementing agent.
 
 - **Implementation prompts:** [GG_CODER_PROMPTS.md](GG_CODER_PROMPTS.md)
-- **Validated reference files:** [reference/](reference/) (`config.toml`, `workflow.css`, `theme.py`)
-- **Before/after previews:** [preview/](preview/)
+- **Implementation:** [`.streamlit/config.toml`](../../.streamlit/config.toml), [`theme.py`](../../src/kinderbuch_bildlabor/theme.py), [`workflow.css`](../../src/kinderbuch_bildlabor/workflow.css), fonts in [`static/fonts/`](../../static/fonts/)
+- **Screenshots:** [docs/screenshots/](../screenshots/)
 
 Phase 1 (tokens, fonts, light and dark themes, base CSS, calibration strip) was prototyped against
 Streamlit 1.67.0 in an isolated copy of the app: all 191 tests passed unchanged, and `ruff check`,
 `ruff format --check` and `mypy` were clean. The fonts loaded from local files with no network access.
 
-![Start page, before and after](preview/01-start.jpg)
+![Start page](../screenshots/01-start.png)
 
 ---
 
@@ -287,9 +287,9 @@ hover color changes. Everything is disabled under `prefers-reduced-motion: reduc
 
 - **Configuration first, CSS second.** Colors, fonts, heading sizes, radius and dark mode are native
   `config.toml` options in 1.67 (`[theme.light]`, `[theme.dark]`, `[[theme.fontFaces]]`,
-  `headingFontSizes`, `greenBackgroundColor`, …). Use [reference/config.toml](reference/config.toml)
-  as is.
-- **Tokens for custom CSS** come from `theme.inject()` ([reference/theme.py](reference/theme.py)),
+  `headingFontSizes`, `greenBackgroundColor`, …). The implementation is
+  [`.streamlit/config.toml`](../../.streamlit/config.toml).
+- **Tokens for custom CSS** come from `theme.inject()` ([`theme.py`](../../src/kinderbuch_bildlabor/theme.py)),
   which writes `--bl-*` CSS variables for the active mode using `st.context.theme.type` and sets
   `lang="de"`. `workflow.css` uses only these variables, never raw hex values.
 - **Selectors:** prefer the `.st-key-<key>` classes Streamlit adds to keyed containers. The design
@@ -310,14 +310,26 @@ hover color changes. Everything is disabled under `prefers-reduced-motion: reduc
   `BILDLABOR_DATA_DIR=$(mktemp -d) uv run streamlit run app.py`.
   Opening the app can migrate and write working copies.
 
-## 13. Previews
+## 13. Implementation status
 
-| | |
-|---|---|
-| Object page with calibration strip (step 1 done, step 2 current) | ![Object page](preview/02-objekt-pruefpfad.jpg) |
-| Classification decision | ![Classification](preview/03-klassifikation.jpg) |
-| Light and dark | ![Light and dark](preview/04-hell-und-dunkel.jpg) |
+All five phases are implemented. The reference files that were used to apply Phase 1 have been
+removed; the live files listed at the top are the source of truth.
 
-The previews show Phase 1 (tokens, fonts, base CSS, calibration strip). Phases 2–5 in the prompt
-file add the remaining structural improvements (compact Prüfpfad, sidebar state, decision option
-rows, overlay colors, start page order).
+| Phase | Content | Status |
+|---|---|---|
+| 1 | Tokens, bundled fonts, light and dark themes, base CSS, calibration strip | Implemented |
+| 2 | Compact Prüfpfad card, sidebar state per object | Implemented |
+| 3 | Status badges and colors, "maschinell" marker, decision option rows, sign-off panel, scan mat | Implemented |
+| 4 | Region overlay colors by type (Okabe-Ito) in overlays and canvas editor | Implemented |
+| 5 | Start page order, import next to the lead action, card badges, side-by-side tools | Implemented |
+
+Known gaps against this document:
+
+- An untouched decision shows the amber `st.warning` "Offen: Antwort wählen, …" instead of gray,
+  because the element type may not change.
+- Section headings (`st.subheader`) render as `h3` below the `h1` title, so axe reports "heading
+  order". Fixing it means changing the element type.
+- The start page shows the first row of object cards after one scroll; the second row needs a
+  further scroll.
+
+Screenshots of the current state are in [docs/screenshots/](../screenshots/).

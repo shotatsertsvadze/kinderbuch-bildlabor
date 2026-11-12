@@ -1,5 +1,7 @@
 """Prüfpfad: nummerierte Schritte mit Stand und ein einheitliches „Weiter“ nach dem Speichern."""
 
+from collections.abc import Callable
+
 import streamlit as st
 
 from kinderbuch_bildlabor import review, ui
@@ -118,7 +120,13 @@ def open_tab(key: str, tab: str) -> None:
     st.session_state[key] = tab
 
 
-def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> None:
+def render(
+    record: dict,
+    tabs_key: str,
+    export_current: bool,
+    blockers: int,
+    footer: Callable[[], None] | None = None,
+) -> None:
     pending = next_tab(record, export_current, blockers)
     all_steps = steps(record, export_current)
     areas = review.review_areas(record)
@@ -145,6 +153,11 @@ def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> 
                 "Ein gespeicherter Entwurf ist noch keine Prüfung. Erst die Bestätigung mit "
                 "Häkchen und Name zählt als bestätigter Bereich."
             )
+            st.caption(
+                "Die Schaltflächen des Prüfpfads führen zu den Arbeitsschritten; ein Schritt gilt erst "
+                "als erledigt, wenn alle seine Prüfbereiche bestätigt sind. Die Reiter darunter zeigen "
+                "alle Ansichten, auch bereits erledigte."
+            )
         with st.container(horizontal=True, gap="xsmall", key="guide-steps"):
             for number, (tab, done) in enumerate(all_steps, start=1):
                 st.button(
@@ -156,11 +169,8 @@ def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> 
                     on_click=open_tab,
                     args=(tabs_key, tab),
                 )
-    st.caption(
-        "Die Schaltflächen des Prüfpfads führen zu den Arbeitsschritten; ein Schritt gilt erst "
-        "als erledigt, wenn alle seine Prüfbereiche bestätigt sind. Die Reiter darunter zeigen "
-        "alle Ansichten, auch bereits erledigte."
-    )
+        if footer:
+            footer()
 
 
 def continue_button(object_id: str, record: dict, key: str) -> None:

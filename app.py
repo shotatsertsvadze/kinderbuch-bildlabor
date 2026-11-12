@@ -64,13 +64,30 @@ def view_label(view: str) -> str:
         return "Eigenes Buch importieren"
     if view == COLLECTION:
         return "Start und Sammlung"
-    return f"{list(by_id).index(view) + 1} · {ui.object_label(by_id[view].record)}"
+    icon = object_state(by_id[view].record)[0]
+    return (
+        f"{icon} {list(by_id).index(view) + 1} · {ui.object_label(by_id[view].record)}"
+    )
+
+
+def object_state(record: dict) -> tuple[str, str]:
+    if workflow.approved(record):
+        return ":material/verified:", "endbestätigt"
+    areas = review.review_areas(record)
+    confirmed, drafts, _ = workflow.area_counts(areas)
+    if not confirmed and not drafts:
+        return ":material/radio_button_unchecked:", "offen"
+    return ":material/clock_loader_40:", f"{confirmed} von {len(areas)} bestätigt"
 
 
 def sidebar() -> str:
     st.sidebar.markdown("### Kinderbuch-Bildlabor")
     view = st.sidebar.radio(
-        "Ansicht", [COLLECTION, "import", *by_id], format_func=view_label, key="view"
+        "Ansicht",
+        [COLLECTION, "import", *by_id],
+        format_func=view_label,
+        captions=["", "", *(object_state(c.record)[1] for c in collection)],
+        key="view",
     )
     if view in {COLLECTION, "import"}:
         with st.sidebar:
@@ -107,8 +124,13 @@ def object_page(cur: ui.Current) -> None:
     findings = validate.run_all(cur.working, cur.src, [x.record for x in collection])
     blockers = len(validate.approval_blockers(findings))
     tabs_key = f"{cur.id}-tabs"
-    workflow.render(record, tabs_key, export_current, blockers)
-    review_keys.render(record, tabs_key, export_current, blockers)
+    workflow.render(
+        record,
+        tabs_key,
+        export_current,
+        blockers,
+        footer=lambda: review_keys.render(record, tabs_key, export_current, blockers),
+    )
     names = ["Übersicht"]
     views: list[Callable[[ui.Current], None]] = [object_view.overview_tab]
     if review.classification_labels(record):

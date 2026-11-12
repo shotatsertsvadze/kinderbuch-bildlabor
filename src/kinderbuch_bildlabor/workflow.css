@@ -291,3 +291,49 @@ label:has(input:focus-visible) {
     transition: none !important;
   }
 }
+
+/* ---------- Prüfpfad-Leiste auf dem Telefon: Zeilen bleiben ein Block, Felder mindestens 44px -- */
+@media (max-width: 640px) {
+  .st-key-guide-steps {
+    gap: 1px !important;
+  }
+  .st-key-guide-steps > [data-testid="stElementContainer"] {
+    flex: 1 1 10rem;
+    min-width: 10rem;
+    width: auto !important;
+  }
+  .st-key-guide-steps {
+    align-items: stretch !important;
+  }
+  .st-key-guide-steps > [data-testid="stElementContainer"],
+  .st-key-guide-steps [data-testid="stButton"],
+  .st-key-guide-steps [data-testid="stTooltipHoverTarget"] {
+    display: flex;
+  }
+  .st-key-guide-steps [data-testid="stButton"],
+  .st-key-guide-steps [data-testid="stTooltipHoverTarget"] {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+  .st-key-guide-steps [data-testid="stButton"] > div:has(> button) {
+    display: flex;
+    width: 100%;
+  }
+  .st-key-guide-steps button {
+    height: auto;
+  }
+  .st-key-guide-steps button {
+    min-height: 3.25rem;
+    height: auto;
+  }
+  [data-testid="stTabs"] [role="tab"] p {
+    hyphens: none;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+  .st-key-guide-steps button p {
+    white-space: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+}

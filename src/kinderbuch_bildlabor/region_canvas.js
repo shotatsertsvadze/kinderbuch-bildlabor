@@ -146,6 +146,8 @@ export default function (component) {
     if (handle) {
       const r = rects.find((t) => t.id === id);
       op = { kind: "resize", r, handle, base: r.xywh.slice() };
+    } else if (mem.mode !== "select") {
+      op = { kind: "draw", type: mem.mode, start };
     } else if (id) {
       if (event.shiftKey) {
         mem.selected.has(id) ? mem.selected.delete(id) : mem.selected.add(id);
@@ -154,8 +156,6 @@ export default function (component) {
       }
       mem.focus = id;
       op = mem.selected.has(id) ? { kind: "move", bases: rects.filter((t) => mem.selected.has(t.id)).map((t) => [t, t.xywh.slice()]) } : null;
-    } else if (mem.mode !== "select") {
-      op = { kind: "draw", type: mem.mode, start };
     } else {
       if (!event.shiftKey) mem.selected.clear();
       op = null;

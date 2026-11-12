@@ -127,7 +127,11 @@ def object_page(cur: ui.Current) -> None:
         export_view.export_tab,
     ]
     # Eigener Schlüssel je Objekt: ein neu geöffnetes Objekt beginnt mit der Übersicht
-    for tab, view in zip(st.tabs(names, key=tabs_key, on_change="rerun"), views):
+    # Ändert sich die Reiterliste (neue Textregion), bleibt der gewählte Reiter erhalten
+    chosen = st.session_state.get(tabs_key)
+    default = chosen if chosen in names else None
+    tabs = st.tabs(names, key=tabs_key, on_change="rerun", default=default)
+    for tab, view in zip(tabs, views):
         with tab:
             view(cur)
 

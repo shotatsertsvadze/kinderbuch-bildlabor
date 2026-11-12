@@ -22,10 +22,11 @@ Was das Projekt tatsächlich zeigt, mit Fundstelle. Geplantes steht getrennt dar
   XSD-Validierung. Export erfolgt als JSON und CSV, nicht als MODS.
 - **IIIF:** gespeicherte Image-API-`info.json` und Vollbilder. Regionen nutzen dieselbe Form
   `x,y,w,h` in Originalpixeln wie der IIIF-Regionsparameter; der gespeicherte OCR-Eingabeausschnitt
-  wurde genau so abgerufen (`400,1640,550,80`). Keine Presentation-API-Manifeste, keine Live-Kacheln,
+  wurde genau so abgerufen (`400,1640,550,80`). Presentation-API-Manifeste nur beim ausdrücklich ausgelösten Import eigener Bücher, keine Live-Kacheln,
   kein Annotationsexport im IIIF- oder W3C-Format.
 - **OCR:** ein einzelner, dokumentierter Tesseract-5.5.1-Lauf (Modell `deu`, tessdata_best) auf dem
-  Titelausschnitt. Keine neue OCR in der Anwendung, kein ALTO, keine CER/WER-Bewertung.
+  Titelausschnitt. In der Anwendung nur eine lokale Tesseract-Zweitlesung auf Anforderung (Vergleichstext,
+  keine Bewertung); kein ALTO, keine CER/WER-Bewertung.
 
 ## Nicht gezeigt, als Erweiterung denkbar
 

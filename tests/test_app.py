@@ -944,3 +944,19 @@ def test_imported_overview_does_not_show_none_page_id():
     app = open_app(src.id)
     assert not any("(None)" in m for m in texts(app, "markdown"))
     assert any("im Digitalisat" in m for m in texts(app, "markdown"))
+
+
+def test_selected_tab_survives_new_transcription_tab():
+    src = imported_source()
+    app = open_app(src.id)
+    tabs_key = f"{src.id}-tabs"
+    app.session_state[tabs_key] = "Regionen"
+    app.run()
+    assert not any(t.label == "Transkription" for t in app.tabs)
+    store.update_working_copy(
+        src, lambda r: review.add_region(r, "text", "Zeile", [1, 1, 20, 10], 1), "t"
+    )
+    app.run()
+    assert any(t.label == "Transkription" for t in app.tabs)
+    container = next(c for c in app.main if c.type == "tab_container")
+    assert container.proto.tab_container.default_tab_index == 1

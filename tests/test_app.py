@@ -807,3 +807,58 @@ def test_imported_text_region_renders_regions_and_second_reading_tabs():
     assert not app.exception
     assert any(t.label == "Transkription" for t in app.tabs)
     assert f"{src.id}-new-save" in [b.key for b in app.button]
+
+
+def test_canvas_gets_the_newest_draft_in_the_same_run(monkeypatch):
+    """Regression: die Fläche bekam den Entwurf des vorigen Ereignisses und verlor so Änderungen."""
+    from kinderbuch_bildlabor import region_canvas
+
+    shown_by_run = []
+    monkeypatch.setattr(
+        region_canvas, "render", lambda *args: shown_by_run.append(args[3])
+    )
+    app = open_app()
+    xywh = list(shown_by_run[-1][0]["xywh"])
+    xywh[0] += 3
+    event = {"seq": "1", "changes": [{"id": REGION_1, "xywh": xywh}], "created": None}
+    app.session_state[f"{PILOT}-canvas-0"] = {"edit": event}
+    app.run()
+    assert not app.exception
+    assert shown_by_run[-1][0]["xywh"] == xywh
+
+
+def test_import_shows_new_pages_in_sidebar_at_once(monkeypatch):
+    """Regression: die Seitenleiste wurde vor dem Import aufgebaut und zeigte neue Seiten erst später."""
+    import io
+
+    from PIL import Image
+
+    from kinderbuch_bildlabor import imports
+
+    output = io.BytesIO()
+    Image.new("RGB", (40, 60), "white").save(output, "PNG")
+    pages = imports.preview_import([("own.png", output.getvalue())])
+    app = open_app("import")
+    before = len(app.radio(key="view").options)
+    app.session_state["import-preview"] = pages
+    app.session_state["import-title"] = "Eigenes Buch"
+    app.run()
+    app.button(key="import-commit").click().run()
+    assert not app.exception
+    assert len(app.radio(key="view").options) == before + 1
+    assert any("importiert" in s.value for s in app.success)
+
+
+def test_unreachable_manifest_is_reported_as_fetch_problem(monkeypatch):
+    from kinderbuch_bildlabor import imports
+
+    def offline(url):
+        raise OSError(8, "nodename nor servname provided")
+
+    monkeypatch.setattr(imports, "preview_iiif", offline)
+    app = open_app("import")
+    app.radio(key="import-mode").set_value("IIIF-Manifest").run()
+    app.text_input[0].input("https://example.org/m.json").run()
+    app.button[0].click().run()
+    assert not app.exception
+    assert "Abruf nicht möglich" in app.error[0].value

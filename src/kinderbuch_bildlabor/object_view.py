@@ -184,7 +184,24 @@ def canvas_section(cur: Current) -> None:
         "created": None,
     }
     revision = st.session_state.get(f"{object_id}-canvas-rev", 0)
+    instance = f"{object_id}-canvas-{revision}"
     saved = cur.record["region_annotations"]
+    error = None
+    try:
+        event = region_canvas.pending_event(
+            instance, {r["id"] for r in saved}, *cur.size
+        )
+    except ValueError as exc:
+        error, event = str(exc), None
+    seq_key = f"{object_id}-canvas-seq"
+    if event and event["seq"] != st.session_state.get(seq_key):
+        st.session_state[seq_key] = event["seq"]
+        base = draft["base"] or {r["id"]: r["xywh"] for r in saved}
+        draft = {"changes": event["changes"], "base": base, "created": event["created"]}
+        st.session_state[draft_key] = draft
+        if event["created"]:
+            ui.load_fields(new_region_keys(object_id), event["created"]["xywh"])
+            st.session_state[f"{object_id}-new-type"] = event["created"]["type"]
     shown = [
         {
             "id": r["id"],
@@ -200,26 +217,11 @@ def canvas_section(cur: Current) -> None:
         "Rahmen ziehen oder an den Ecken ändern; Umschalt+Klick wählt mehrere. Nichts wird gespeichert, "
         "bevor Sie unten ausdrücklich speichern. Alternativ: Zahlenfelder unter „Rahmen korrigieren“."
     )
-    try:
-        event = region_canvas.render(
-            f"{object_id}-canvas-{revision}",
-            cur.src.page_image,
-            cur.size,
-            shown,
-            draft["created"],
-        )
-    except ValueError as error:
-        st.error(str(error), icon=ui.ERROR)
-        event = None
-    seq_key = f"{object_id}-canvas-seq"
-    if event and event["seq"] != st.session_state.get(seq_key):
-        st.session_state[seq_key] = event["seq"]
-        base = draft["base"] or {r["id"]: r["xywh"] for r in saved}
-        draft = {"changes": event["changes"], "base": base, "created": event["created"]}
-        st.session_state[draft_key] = draft
-        if event["created"]:
-            ui.load_fields(new_region_keys(object_id), event["created"]["xywh"])
-            st.session_state[f"{object_id}-new-type"] = event["created"]["type"]
+    if error:
+        st.error(error, icon=ui.ERROR)
+    region_canvas.render(
+        instance, cur.src.page_image, cur.size, shown, draft["created"]
+    )
     if draft["changes"]:
         st.dataframe(
             [

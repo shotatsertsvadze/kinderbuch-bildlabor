@@ -64,15 +64,26 @@ def normalize_event(event, known: set[str], width: int, height: int) -> dict:
     return {"seq": event["seq"], "changes": changes, "created": created}
 
 
+def pending_event(
+    instance: str, known: set[str], width: int, height: int
+) -> dict | None:
+    """Das zuletzt gemeldete Ereignis der Fläche, geprüft; vor dem Aufbau der Anzeige zu lesen, damit sie nie einen älteren Stand erhält."""
+    state = st.session_state.get(instance)
+    event = state.get("edit") if state else None
+    if event is None:
+        return None
+    return normalize_event(event, known, width, height)
+
+
 def render(
     instance: str,
     image_path,
     size: tuple[int, int],
     shown: list[dict],
     created: dict | None,
-) -> dict | None:
+) -> None:
     """Zeigt die Fläche; `shown` trägt je Region id, label, type, saved und aktuelles xywh."""
-    result = COMPONENT(
+    COMPONENT(
         key=instance,
         data={
             "instance": instance,
@@ -85,7 +96,3 @@ def render(
         default={"edit": None},
         on_edit_change=lambda: None,
     )
-    event = result.get("edit")
-    if event is None:
-        return None
-    return normalize_event(event, {r["id"] for r in shown}, *size)

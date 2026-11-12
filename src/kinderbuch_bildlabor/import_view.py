@@ -9,6 +9,12 @@ from kinderbuch_bildlabor import imports
 
 def render() -> None:
     st.title("Eigenes Buch importieren")
+    if done := st.session_state.pop("import-done", None):
+        st.success(done)
+        st.button(
+            "Sammlung öffnen",
+            on_click=lambda: st.session_state.update(view="sammlung"),
+        )
     st.caption(
         "Lokal gespeicherte Seiten bleiben offline nutzbar. Unbekannte Herkunft/Rechte bleiben unbekannt. Erst der Importknopf veröffentlicht das Buch."
     )
@@ -34,8 +40,13 @@ def render() -> None:
                 for field in ("title", "source", "rights"):
                     st.session_state[f"import-{field}"] = preview[field]
                 st.session_state.pop("import-selection", None)
-            except (ValueError, OSError) as error:
+            except ValueError as error:
                 st.error(str(error))
+            except OSError as error:
+                st.error(
+                    f"Abruf nicht möglich: Netz oder Dienst nicht erreichbar ({error}). "
+                    "Das sagt nichts über das Manifest selbst; bereits importierte Bücher bleiben offline nutzbar."
+                )
     else:
         if mode == "PDF" and not imports.pdf_available():
             st.info(
@@ -106,12 +117,11 @@ def render() -> None:
             else:
                 chosen = [pages[index] for index in selected]
             sources = imports.commit_import(chosen, metadata)
-            st.success(
-                f"{len(sources)} Seiten importiert oder bereits vorhanden. In der Seitenleiste öffnen; vorhandene Arbeitsstände bleiben unverändert."
+            # Neuer Lauf, damit die Seitenleiste die neuen Seiten schon zeigt
+            st.session_state["import-done"] = (
+                f"{len(sources)} Seiten importiert oder bereits vorhanden. In der Seitenleiste öffnen; "
+                "vorhandene Arbeitsstände bleiben unverändert."
             )
-            st.button(
-                "Sammlung öffnen",
-                on_click=lambda: st.session_state.update(view="sammlung"),
-            )
+            st.rerun()
         except (ValueError, OSError) as error:
             st.error(f"Import fehlgeschlagen: {error}")

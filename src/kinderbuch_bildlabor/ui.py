@@ -16,6 +16,9 @@ ERROR = ":material/error:"
 WARNING = ":material/warning:"
 INFO = ":material/info:"
 PENDING = ":material/pending:"
+DRAFT = ":material/edit_note:"
+OPEN = ":material/radio_button_unchecked:"
+FINAL = ":material/verified:"
 LOCK = ":material/lock:"
 BLOCKED = ":material/block:"
 
@@ -125,17 +128,15 @@ def status_badge(status: str) -> None:
             icon=CONFIRMED,
             color="green",
         )
+    elif status in {review.KEYWORDS_EDITED, review.BIBLIO_EDITED}:
+        st.badge(f"Offen: {review.status_label(status)}", icon=DRAFT, color="orange")
     else:
-        st.badge(
-            f"Offen: {review.status_label(status)}",
-            icon=PENDING,
-            color="orange",
-        )
+        st.badge(f"Offen: {review.status_label(status)}", icon=OPEN, color="gray")
 
 
 def origin_note(text: str | None) -> None:
     if origin := review.origin_label(text):
-        st.caption(f":material/smart_toy: Herkunft: {origin}")
+        st.caption(f":violet[:material/smart_toy: Herkunft: {origin}]")
 
 
 def source_text(text: str) -> None:

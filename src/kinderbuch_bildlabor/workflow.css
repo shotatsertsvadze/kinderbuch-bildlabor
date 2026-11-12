@@ -185,6 +185,7 @@ button[data-testid^="stBaseButton-primary"] p {
 /* ---------- Scans: farbneutrales Passepartout ----------------------------------------------- */
 /* Neutrales Grau als Umfeld (wie am Abmusterungsplatz) verfälscht den Papierton im Scan nicht. */
 [class*="st-key-pinned-scan-"],
+[class*="st-key-scan-"],
 .st-key-collection-hero [data-testid="stImage"] {
   background: var(--bl-mat);
   border-radius: 0.875rem;
@@ -336,4 +337,40 @@ label:has(input:focus-visible) {
     overflow-wrap: break-word;
     hyphens: auto;
   }
+}
+
+/* ---------- Entscheidungsoptionen: ganze Zeilen als Klickfläche ------------------------------ */
+[class*="-outcome"] {
+  width: 100%;
+}
+[class*="-outcome"] [role="radiogroup"] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+[class*="-outcome"] [data-testid="stRadioOption"] {
+  width: 100%;
+  min-height: 2.75rem;
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--bl-border-strong);
+  border-radius: 0.625rem;
+  background: var(--bl-surface);
+}
+[class*="-outcome"] [data-testid="stRadioOption"]:hover {
+  border-color: var(--bl-primary);
+}
+[class*="-outcome"] [data-testid="stRadioOption"]:has(input:checked) {
+  border-color: var(--bl-primary);
+  background: var(--bl-primary-tint);
+  box-shadow: inset 0 0 0 1px var(--bl-primary);
+  font-weight: 500;
+}
+
+/* ---------- Bestätigungsfeld: wie ein Unterschriftsblock ------------------------------------- */
+[class*="-review-box"] {
+  border: 1px solid var(--bl-border-strong);
+  border-radius: 0.75rem;
+  background: var(--bl-surface);
 }

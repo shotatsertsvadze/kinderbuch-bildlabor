@@ -19,7 +19,7 @@ def overview_tab(cur: Current) -> None:
     record, source = cur.record, cur.record["source"]
     biblio = record["bibliographic_metadata_from_colibri"]
     left, right = ui.image_and_controls()
-    with left:
+    with left, st.container(key="scan-overview"):
         st.image(
             regions.draw_regions(
                 ui.page_image(cur.src.page_image), record["region_annotations"]

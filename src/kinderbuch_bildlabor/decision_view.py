@@ -34,22 +34,24 @@ def classification_tab(cur: Current) -> None:
     )
     left, right = ui.image_and_controls()
     with left:
-        st.image(
-            regions.crop(ui.page_image(cur.src.page_image), illustration["xywh"]),
-            width="stretch",
-            caption=f"Markierte Region {illustration['xywh']} (Pixel im Scan {source['scan_number']})",
-            alt="Ausschnitt der markierten Illustration aus der gescannten Seite.",
-        )
+        with st.container(key="scan-classification-crop"):
+            st.image(
+                regions.crop(ui.page_image(cur.src.page_image), illustration["xywh"]),
+                width="stretch",
+                caption=f"Markierte Region {illustration['xywh']} (Pixel im Scan {source['scan_number']})",
+                alt="Ausschnitt der markierten Illustration aus der gescannten Seite.",
+            )
         ui.subsection("Belege am Original")
         evidence(cur, illustration)
-        st.image(
-            regions.draw_regions(
-                ui.page_image(cur.src.page_image), record["region_annotations"]
-            ),
-            width="stretch",
-            caption="Gesamtseite mit der markierten Region",
-            alt="Gescannte Buchseite; die Region der Illustration ist als Rahmen markiert.",
-        )
+        with st.container(key="scan-classification-page"):
+            st.image(
+                regions.draw_regions(
+                    ui.page_image(cur.src.page_image), record["region_annotations"]
+                ),
+                width="stretch",
+                caption="Gesamtseite mit der markierten Region",
+                alt="Gescannte Buchseite; die Region der Illustration ist als Rahmen markiert.",
+            )
     with right:
         ui.section("Welche Klasse trifft zu?")
         st.markdown(
@@ -68,6 +70,7 @@ def classification_tab(cur: Current) -> None:
             help="Automatische Klassifikation (Colibri-Spalte „classification“).",
             border=True,
         )
+        automatic_box.badge("maschinell", icon=":material/smart_toy:", color="violet")
         entry = decision_form(cur, review.CLASSIFICATION, message)
         if review.resolves(entry):
             workflow.continue_button(

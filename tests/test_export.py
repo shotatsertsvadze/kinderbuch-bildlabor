@@ -350,3 +350,29 @@ def test_remaining_examples_preserve_fresh_record_in_exports(tmp_path, object_id
             )
     assert working == before
     assert store.sha256(src.record) == source_hash
+
+
+def test_csv_has_bibliographic_columns_for_imported_book(tmp_path):
+    from kinderbuch_bildlabor import imports
+
+    record = imports.imported_record(
+        "book-x-0001", {"size": (10, 10)}, 1, {"title": "Buch"}
+    )
+    record["bibliographic_metadata_from_colibri"]["author_display"] = "Anna"
+    row = export.csv_rows(record, "jetzt")[0]
+    assert row["verfasser"] == "Anna"
+    assert row["erscheinungsort"] is None
+    assert row["bibliografie_pruefstatus"] == "unreviewed"
+    path = tmp_path / "x.csv"
+    export.export_csv(record, "jetzt", path)
+    assert "verfasser" in path.read_text(encoding="utf-8-sig").splitlines()[0]
+
+
+def test_roundtrip_detects_lost_withdrawn_entries():
+    record = {"region_annotations": [], "withdrawn_regions": [{"reason": "x"}]}
+    damaged = {"region_annotations": []}
+    report = dict(export.roundtrip_report(record, damaged))
+    assert not report["Zurückgezogene Regionen und Entscheidungen unverändert"]
+    assert dict(export.roundtrip_report(record, dict(record)))[
+        "Zurückgezogene Regionen und Entscheidungen unverändert"
+    ]

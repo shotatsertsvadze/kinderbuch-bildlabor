@@ -45,7 +45,9 @@ def overview_tab(cur: Current) -> None:
         ui.section("Seite")
         label = source.get("page_label_mets")
         st.markdown(
-            f"Scan {source['scan_number']} im Digitalisat ({source['physical_page_id']})  \n"
+            f"Scan {source['scan_number']} im Digitalisat"
+            + (f" ({source['physical_page_id']})" if source["physical_page_id"] else "")
+            + "  \n"
             + (
                 f"Seitenbezeichnung im METS: „{label}“; gedruckte Seitenzahl am Scan noch nicht bestätigt"
                 if label
@@ -118,7 +120,10 @@ def imprint_comparison(record: dict) -> None:
     left, right = st.columns(2)
     with left, st.container(border=True):
         ui.subsection("Bibliografische Angabe (Colibri, MODS)")
-        st.text(f"Ort: {biblio['publication_place']}\nVerlag: {biblio['publisher']}")
+        st.text(
+            f"Ort: {biblio['publication_place'] or 'unbekannt'}\n"
+            f"Verlag: {biblio['publisher'] or 'unbekannt'}"
+        )
     with right, st.container(border=True):
         ui.subsection("Aufdruck auf dem Bildblatt (vorläufige Lesung)")
         ui.source_text(record["transcription"]["working_publisher_statement"])
@@ -151,6 +156,7 @@ def region_tab(cur: Current) -> None:
             key=f"{cur.id}-region-choice",
         )
     canvas_section(cur)
+    withdrawn_regions_list(cur)
     left, right = ui.image_and_controls(pinned="regionen")
     with right:
         preview_xywh = region_editor(cur, by_id[choice])
@@ -332,7 +338,44 @@ def region_editor(cur: Current, region: dict) -> list[int]:
         else "Ausschnitt (gespeicherter Stand)",
         alt="Ausschnitt der gewählten Region aus der gescannten Seite.",
     )
+    if review.is_imported(cur.record):
+        withdraw_region_form(cur, region)
     return shown
+
+
+def withdraw_region_form(cur: Current, region: dict) -> None:
+    key = f"{region['id']}-withdraw"
+    only = len(cur.record["region_annotations"]) < 2
+    with st.expander("Region zurückziehen", key=f"{key}-box"):
+        st.caption(
+            "Die Region verschwindet aus der Arbeit, bleibt aber mit Ihrem Namen, der Zeit und dem "
+            "Grund im Datensatz, im Verlauf und im JSON-Export erhalten. Eine zugehörige "
+            "Transkription wird mitgenommen. Die Endbestätigung wird aufgehoben, der Export veraltet."
+        )
+        if only:
+            st.info("Die letzte Region kann nicht zurückgezogen werden.", icon=ui.INFO)
+        st.text_input("Grund", key=f"{key}-reason", disabled=only)
+        st.button(
+            "Region zurückziehen",
+            key=f"{key}-submit",
+            on_click=actions.withdraw_region,
+            args=(cur.id, region["id"], region["xywh"]),
+            disabled=only,
+        )
+        if error := st.session_state.pop(f"{key}-error", None):
+            st.error(error, icon=ui.ERROR)
+
+
+def withdrawn_regions_list(cur: Current) -> None:
+    entries = cur.record.get("withdrawn_regions", [])
+    if not entries:
+        return
+    with st.expander(f"Zurückgezogene Regionen ({len(entries)})"):
+        for e in entries:
+            st.markdown(
+                f"- {e['region']['label_de']} ({e['region']['id']}), {e['region']['xywh']}: "
+                f"{e['reason']} (zurückgezogen von {e['by']}, {ui.local_time(e['at'])})"
+            )
 
 
 def region_coordinates(
@@ -430,14 +473,60 @@ def description_tab(cur: Current) -> None:
         tab_continue(cur, "Beschreibung")
 
 
+def biblio_tab(cur: Current) -> None:
+    record = cur.record
+    stored_values = review.biblio_values(record)
+    ui.section("Bibliografische Angaben")
+    st.badge(
+        review.status_label(record.get("biblio_review_status", review.BIBLIO_OPEN)),
+    )
+    st.caption(
+        "Eigene Eingabe, nicht aus Colibri/MODS. Ein leeres Feld gilt als unbekannt. "
+        "Der Buchtitel bleibt, wie importiert."
+    )
+    keys = actions.biblio_keys(cur.id)
+    stored = [stored_values[name] or "" for name in review.BIBLIO_FIELDS]
+    sync = ui.sync_fields(keys, stored, lambda values: [v.strip() for v in values])
+    for key, (label, _, _) in zip(keys, review.BIBLIO_FIELDS.values()):
+        st.text_input(label, key=key)
+    if sync == ui.CONFLICT:
+        ui.conflict_note(keys, stored, "siehe gespeicherte Angaben")
+    ui.edit_state(sync, "Speichern setzt die Bestätigung der Angaben zurück.")
+    save_key = f"{cur.id}-biblio-save"
+    st.button(
+        "Angaben speichern (Entwurf)",
+        key=save_key,
+        on_click=actions.save_biblio,
+        args=(cur.id,),
+        disabled=sync != ui.EDITED,
+    )
+    if sync == ui.CLEAN:
+        ui.feedback(cur.id, save_key)
+    if record.get("biblio_review_status") == review.BIBLIO_REVIEWED:
+        ui.confirmed_note(record, "bibliographic")
+    else:
+        ui.confirm_controls(
+            f"{cur.id}-biblio-review",
+            "Die gespeicherten Angaben stimmen mit dem Buch überein.",
+            "Ich habe die Angaben am Buch geprüft.",
+            actions.confirm_biblio,
+            (cur.id, stored_values),
+            blocked_de="Erst die Eingabe speichern oder verwerfen."
+            if sync != ui.CLEAN
+            else None,
+        )
+    tab_continue(cur, "Angaben")
+
+
 def description_editor(cur: Current) -> None:
     description = cur.record["image_description"]
     ui.section("Bildbeschreibung")
     ui.status_badge(description["review_status"])
     ui.origin_note(description.get("description_origin_de"))
     st.caption(
-        f"Objektart: {description['object_type']} · Illustrator: unbekannt (bewusst leer; Buchautor und "
-        "Illustrator sind verschiedene Rollen)"
+        f"Objektart: {description['object_type']} · Illustrator: "
+        f"{description['illustrator'] or 'unbekannt'} (Buchautor und Illustrator sind "
+        "verschiedene Rollen)"
     )
     key, stored = actions.description_key(cur.id), description["working_description_de"]
     sync = ui.sync_fields([key], [stored], lambda values: [values[0].strip()])

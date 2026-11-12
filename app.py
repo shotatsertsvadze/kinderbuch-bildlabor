@@ -110,8 +110,13 @@ def object_page(cur: ui.Current) -> None:
     if review.classification_labels(record):
         names.append("Klassifikation")
         views.append(decision_view.classification_tab)
-    names += ["Regionen", "Beschreibung"]
-    views += [object_view.region_tab, object_view.description_tab]
+    names.append("Regionen")
+    views.append(object_view.region_tab)
+    if review.is_imported(record):
+        names.append("Angaben")
+        views.append(object_view.biblio_tab)
+    names.append("Beschreibung")
+    views.append(object_view.description_tab)
     if record.get("transcription"):
         names.append("Transkription")
         views.append(object_view.transcription_tab)

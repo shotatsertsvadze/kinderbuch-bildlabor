@@ -62,9 +62,16 @@ geprüfte Beispiel steht davon getrennt auf der Startseite und unter
   (Presentation 2/3; nur einfache Bildseiten, nur auf ausdrücklichen Knopfdruck aus dem Netz). Importierte
   Bücher liegen vollständig unter `data/imports/` und funktionieren danach offline. Unbekannte Angaben
   bleiben unbekannt; OAI/METS-, IIIF-Bildinfo- und Colibri-Prüfungen erscheinen als „nicht ausgeführt“.
+- **Angaben:** Reiter „Angaben“ (nur importierte Bücher): Verfasser, Ort, Jahr, Verlag, Rechte, Quelle,
+  Seitenzahl und Illustrator eintragen und gesondert bestätigen. Das CSV hat dafür eigene Spalten
+  (`verfasser`, `erscheinungsort`, `erscheinungsjahr`, `verlag`, `bibliografie_pruefstatus`); ältere
+  CSV-Exporte haben diese Spalten nicht.
 - **PDF** braucht lokal Poppler (`pdfinfo`, `pdftoppm`; macOS: `brew install poppler`).
 - **Regionen zeichnen:** Reiter „Regionen“ → Rahmen auf dem Scan ziehen, verschieben, mit Umschalt mehrere
   wählen; Pfeiltasten und Zahlenfelder sind gleichwertige Alternativen. Gespeichert wird erst ausdrücklich.
+- **Zurückziehen:** Bei importierten Büchern lässt sich eine Region im Reiter „Regionen“ mit Grund
+  zurückziehen; bei jedem Objekt eine begründete Entscheidung. Der Inhalt bleibt mit Person, Zeit und
+  Grund im JSON-Export (`withdrawn_regions`, `withdrawn_decisions`) und im Prüfprotokoll.
 - **Zweite Lesung:** Textregionen können mit lokalem Tesseract (`brew install tesseract`, Modelle nach
   Bedarf; optional `BILDLABOR_TESSERACT`, `BILDLABOR_TESSDATA`) erneut gelesen werden. Das Ergebnis
   ist ein Vergleichstext, keine Bewertung; ohne Tesseract bleibt die manuelle Transkription nutzbar.

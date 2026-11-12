@@ -220,6 +220,17 @@ def check_open_reviews(record: dict) -> list[Finding]:
                 "Bildbeschreibung: noch nicht am Bild bestätigt.",
             )
         )
+    if (
+        review.is_imported(record)
+        and record.get("biblio_review_status") != review.BIBLIO_REVIEWED
+    ):
+        findings.append(
+            Finding(
+                REVIEW,
+                "BIBLIO_NOT_REVIEWED",
+                "Bibliografische Angaben: noch nicht bestätigt.",
+            )
+        )
     for region in record["region_annotations"]:
         if region["review_status"] != review.REGION_REVIEWED:
             findings.append(

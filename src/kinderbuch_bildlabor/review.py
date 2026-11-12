@@ -23,6 +23,28 @@ TRANSCRIPTION_REVIEWED = "reviewed"
 CLASSIFICATION_OPEN = "classification_open"
 CLASSIFICATION_UNDECIDABLE = "classification_undecidable"
 CLASSIFICATION_DECIDED = "classification_decided"
+BIBLIO_OPEN = "unreviewed"
+BIBLIO_EDITED = "edited_pending_review"
+BIBLIO_REVIEWED = "biblio_reviewed"
+
+BIBLIO_FIELDS = {
+    "author": ("Verfasser", "bibliographic_metadata_from_colibri", "author_display"),
+    "place": (
+        "Erscheinungsort",
+        "bibliographic_metadata_from_colibri",
+        "publication_place",
+    ),
+    "year": (
+        "Erscheinungsjahr",
+        "bibliographic_metadata_from_colibri",
+        "publication_date",
+    ),
+    "publisher": ("Verlag", "bibliographic_metadata_from_colibri", "publisher"),
+    "rights": ("Rechte", "bibliographic_metadata_from_colibri", "rights_statement"),
+    "source": ("Quelle (Institution)", "source", "institution"),
+    "page": ("Gedruckte Seitenzahl", "source", "printed_page_number"),
+    "illustrator": ("Illustrator", "image_description", "illustrator"),
+}
 
 STATUS_LABELS_DE = {
     REGION_DRAFT: "Entwurf – visuelle Prüfung offen",
@@ -36,6 +58,7 @@ STATUS_LABELS_DE = {
     CLASSIFICATION_OPEN: "Entscheidung am Bild offen",
     CLASSIFICATION_UNDECIDABLE: "begründet als nicht entscheidbar festgehalten",
     CLASSIFICATION_DECIDED: "begründet entschieden",
+    BIBLIO_REVIEWED: "Angaben geprüft",
     "unreviewed": "ungeprüft",
     "draft_pending_final_review": "Entwurf – Endbestätigung offen",
 }
@@ -47,6 +70,7 @@ DONE_STATUSES = {
     TRANSCRIPTION_REVIEWED,
     DESCRIPTION_REVIEWED,
     CLASSIFICATION_DECIDED,
+    BIBLIO_REVIEWED,
 }
 
 
@@ -77,6 +101,15 @@ def review_areas(record: dict) -> list[dict]:
                 "label_de": "Bildklassifikation (Colibri manuell gegen automatisch)",
                 "status": classification_status(record, message),
                 "tab_de": "Klassifikation",
+            }
+        )
+    if is_imported(record):
+        areas.append(
+            {
+                "label_de": "Bibliografische Angaben",
+                "status": record.get("biblio_review_status", BIBLIO_OPEN),
+                "tab_de": "Angaben",
+                "log_area": "bibliographic",
             }
         )
     areas.append(
@@ -115,6 +148,10 @@ def review_areas(record: dict) -> list[dict]:
             record, area.get("log_area")
         )
     return areas
+
+
+def is_imported(record: dict) -> bool:
+    return record.get("source_profile") == "imported"
 
 
 def has_saved_draft(record: dict, log_area: str | None) -> bool:
@@ -189,6 +226,58 @@ def set_regions_xywh(record: dict, changes: dict, seen: dict) -> bool:
     return bool(pending)
 
 
+def region_number(region_id: str) -> int:
+    tail = region_id.rsplit("-", 1)[-1]
+    return int(tail) if tail.isdigit() else 0
+
+
+def next_region_number(record: dict) -> int:
+    """Höchste vergebene Nummer plus eins; zurückgezogene Regionen behalten ihre Nummer."""
+    ids = [r["id"] for r in record["region_annotations"]]
+    ids += [e["region"]["id"] for e in record.get("withdrawn_regions", [])]
+    return max([region_number(i) for i in ids], default=0) + 1
+
+
+def withdraw_region(
+    record: dict, region_id: str, reason: str, by: str, seen_xywh: list[int]
+) -> bool:
+    """Region samt Transkription ins Archiv verschieben; nichts wird gelöscht."""
+    if not is_imported(record):
+        raise NotAllowed(
+            "Regionen der Beispielobjekte können nicht zurückgezogen werden."
+        )
+    if not by.strip():
+        raise DecisionInvalid(
+            "Tragen Sie im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
+        )
+    if not reason.strip():
+        raise DecisionInvalid("Bitte den Grund für das Zurückziehen angeben.")
+    region = find_region(record, region_id)
+    if len(record["region_annotations"]) < 2:
+        raise NotAllowed("Die letzte Region kann nicht zurückgezogen werden.")
+    require_seen(region["xywh"], seen_xywh, f"Die Region {region_id}")
+    invalidate_final(record)
+    entry: dict = {"region": region}
+    if field := region.get("transcription_field"):
+        transcription = record["transcription"]
+        entry["transcription"] = {
+            "field": field,
+            "text": transcription.pop(field),
+            "status": transcription["review_status_by_field"].pop(field),
+        }
+    entry |= {"by": by.strip(), "at": now_utc(), "reason": reason.strip()}
+    record.setdefault("withdrawn_regions", []).append(entry)
+    record["region_annotations"].remove(region)
+    log(
+        record,
+        region_id,
+        f"Region „{region['label_de']}“ zurückgezogen. Grund: {reason.strip()}",
+        by.strip(),
+    )
+    drop_stale_decisions(record)
+    return True
+
+
 def add_region(
     record: dict, region_type: str, label: str, xywh: list[int], seen_count: int
 ) -> bool:
@@ -201,7 +290,7 @@ def add_region(
         raise InvalidRegion("Regionstyp und Bezeichnung sind erforderlich.")
     if problems := regions.bounds_problems(xywh, width, height):
         raise InvalidRegion(" ".join(problems))
-    number = seen_count + 1
+    number = next_region_number(record)
     region: dict = {
         "id": f"{record['id']}-region-{number:02d}",
         "label_de": label.strip(),
@@ -227,6 +316,49 @@ def add_region(
     invalidate_final(record)
     record["region_annotations"].append(region)
     log(record, region["id"], "Region angelegt; Status auf Entwurf gesetzt")
+    return True
+
+
+class NotAllowed(ContentChanged):
+    """Die Änderung ist für dieses Objekt nicht vorgesehen."""
+
+
+def biblio_values(record: dict) -> dict:
+    return {
+        name: record[section][key] for name, (_, section, key) in BIBLIO_FIELDS.items()
+    }
+
+
+def set_biblio(record: dict, values: dict, seen: dict) -> bool:
+    """Alles oder nichts; leerer Text bedeutet unbekannt (None)."""
+    if not is_imported(record):
+        raise NotAllowed("Angaben der Beispielobjekte sind unveränderlich.")
+    current = biblio_values(record)
+    new = {k: (values[k] or "").strip() or None for k in BIBLIO_FIELDS}
+    changed = [k for k in BIBLIO_FIELDS if new[k] != current[k]]
+    if not changed:
+        return False
+    for name in changed:
+        require_seen(current[name], seen[name], f"Die Angabe {BIBLIO_FIELDS[name][0]}")
+    invalidate_final(record)
+    for name in changed:
+        _, section, key = BIBLIO_FIELDS[name]
+        record[section][key] = new[name]
+    record["biblio_review_status"] = BIBLIO_EDITED
+    names = ", ".join(BIBLIO_FIELDS[n][0] for n in changed)
+    log(record, "bibliographic", f"Angaben geändert ({names}); Prüfung zurückgesetzt")
+    drop_stale_decisions(record)
+    return True
+
+
+def confirm_biblio(record: dict, by: str, seen: dict) -> bool:
+    if not is_imported(record):
+        raise NotAllowed("Angaben der Beispielobjekte sind unveränderlich.")
+    current = biblio_values(record)
+    for name in BIBLIO_FIELDS:
+        require_seen(current[name], seen[name], f"Die Angabe {BIBLIO_FIELDS[name][0]}")
+    record["biblio_review_status"] = BIBLIO_REVIEWED
+    log(record, "bibliographic", "Bibliografische Angaben am Bild bestätigt", by)
     return True
 
 
@@ -587,3 +719,37 @@ def drop_stale_decisions(record: dict) -> None:
                 "Entscheidung durch Inhaltsänderung aufgehoben "
                 f"(war: {entry['outcome_de']}; von {entry['by']})",
             )
+
+
+def withdraw_decision(
+    record: dict, code: str, message: str, reason: str, by: str, seen: dict
+) -> bool:
+    """Entscheidung zurücknehmen: Der Hinweis wird wieder offen, die Entscheidung bleibt archiviert."""
+    if not by.strip():
+        raise DecisionInvalid(
+            "Tragen Sie im Prüfpfad unter „Prüfende Person“ Ihren Namen ein."
+        )
+    if not reason.strip():
+        raise DecisionInvalid("Bitte den Grund für das Zurückziehen angeben.")
+    old = decision(record, code, message)
+    if old is None:
+        raise DecisionInvalid("Zu diesem Hinweis gibt es keine Entscheidung.")
+    require_seen(old, seen, "Die Entscheidung")
+    invalidate_final(record, "Zurückziehen einer Entscheidung")
+    del record["decisions"][decision_key(code, message)]
+    record.setdefault("withdrawn_decisions", []).append(
+        {
+            "decision": old,
+            "withdrawn_by": by.strip(),
+            "withdrawn_at": now_utc(),
+            "reason": reason.strip(),
+        }
+    )
+    log(
+        record,
+        f"decision/{code}",
+        f"Entscheidung zurückgezogen (war: {old['outcome_de']}; von {old['by']}). "
+        f"Grund: {reason.strip()}",
+        by.strip(),
+    )
+    return True

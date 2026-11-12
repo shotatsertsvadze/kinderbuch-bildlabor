@@ -240,3 +240,135 @@ def test_add_region_rejects_replay_and_creates_stable_transcription_field():
     assert region["transcription_field"] == "text_02"
     assert record["transcription"]["text_02"] == ""
     assert record["transcription"]["review_status_by_field"]["text_02"] == "provisional"
+
+
+def imported_record():
+    from kinderbuch_bildlabor import imports
+
+    page = {"size": (100, 80)}
+    return imports.imported_record("book-x-0001", page, 1, {"title": "Buch"})
+
+
+def biblio_input(record, **changes):
+    values = review.biblio_values(record)
+    return {**values, **changes}, values
+
+
+def test_set_biblio_changes_resets_and_noop():
+    record = imported_record()
+    values, seen = biblio_input(record, author=" Anna ", year="")
+    assert review.set_biblio(record, values, seen)
+    assert record["bibliographic_metadata_from_colibri"]["author_display"] == "Anna"
+    assert record["biblio_review_status"] == review.BIBLIO_EDITED
+    log_len = len(record["review_log"])
+    values, seen = biblio_input(record)
+    assert not review.set_biblio(record, values, seen)
+    assert len(record["review_log"]) == log_len
+    assert review.review_areas(record)[1]["label_de"] == "Bibliografische Angaben"
+    assert not next(a for a in review.review_areas(record) if a["tab_de"] == "Angaben")[
+        "done"
+    ]
+    review.confirm_biblio(record, "Person", seen)
+    area = next(a for a in review.review_areas(record) if a["tab_de"] == "Angaben")
+    assert area["done"]
+
+
+def test_set_biblio_conflict_and_invalidation():
+    record = imported_record()
+    record["final_approval"] = {"by": "P", "at": "x"}
+    record["status"] = review.FINAL_APPROVED
+    values, seen = biblio_input(record, publisher="V")
+    seen["publisher"] = "anders"
+    with pytest.raises(review.ContentChanged):
+        review.set_biblio(record, values, seen)
+    assert record["bibliographic_metadata_from_colibri"]["publisher"] is None
+    assert "final_approval" in record
+    values, seen = biblio_input(record, publisher="V")
+    review.set_biblio(record, values, seen)
+    assert "final_approval" not in record
+
+
+def test_set_biblio_rejects_fixture():
+    record = ready_record()
+    values, seen = biblio_input(record, author="X")
+    with pytest.raises(review.NotAllowed):
+        review.set_biblio(record, values, seen)
+    assert all(a["tab_de"] != "Angaben" for a in review.review_areas(record))
+
+
+def record_with_text_region():
+    record = imported_record()
+    review.add_region(record, "text", "Zeile", [1, 1, 20, 10], 1)
+    return record
+
+
+def test_withdraw_region_archives_and_keeps_ids_unique():
+    record = record_with_text_region()
+    text_region = record["region_annotations"][1]
+    field = text_region["transcription_field"]
+    record["transcription"][field] = "Hallo"
+    record["ocr_candidates"] = [{"id": "c", "region_id": text_region["id"]}]
+    record["final_approval"] = {"by": "P", "at": "x"}
+    review.withdraw_region(
+        record, text_region["id"], " Fehler ", "Person", text_region["xywh"]
+    )
+    assert [r["id"] for r in record["region_annotations"]] == ["book-x-0001-region-01"]
+    entry = record["withdrawn_regions"][0]
+    assert entry["region"]["id"] == text_region["id"]
+    assert entry["transcription"]["text"] == "Hallo"
+    assert entry["reason"] == "Fehler" and entry["by"] == "Person"
+    assert field not in record["transcription"]
+    assert field not in record["transcription"]["review_status_by_field"]
+    assert record["ocr_candidates"]
+    assert "final_approval" not in record
+    review.add_region(record, "illustration", "Neu", [0, 0, 5, 5], 1)
+    ids = [r["id"] for r in record["region_annotations"]]
+    assert ids[-1] == "book-x-0001-region-03"
+
+
+def test_withdraw_region_guards():
+    record = imported_record()
+    only = record["region_annotations"][0]
+    with pytest.raises(review.NotAllowed):
+        review.withdraw_region(record, only["id"], "x", "P", only["xywh"])
+    record = record_with_text_region()
+    second = record["region_annotations"][1]
+    with pytest.raises(review.DecisionInvalid):
+        review.withdraw_region(record, second["id"], " ", "P", second["xywh"])
+    with pytest.raises(review.ContentChanged):
+        review.withdraw_region(record, second["id"], "x", "P", [9, 9, 9, 9])
+    assert len(record["region_annotations"]) == 2
+    fixture = ready_record()
+    first = fixture["region_annotations"][0]
+    with pytest.raises(review.NotAllowed):
+        review.withdraw_region(fixture, first["id"], "x", "P", first["xywh"])
+
+
+def test_withdraw_decision_reopens_finding_and_archives():
+    record = lead_record()
+    decide(record)
+    message = review.classification_message(record)
+    entry = dict(review.decision(record, review.CLASSIFICATION, message))
+    record["final_approval"] = {"by": "P", "at": "x"}
+    record["status"] = review.FINAL_APPROVED
+    with pytest.raises(review.DecisionInvalid):
+        review.withdraw_decision(
+            record, review.CLASSIFICATION, message, " ", "P", entry
+        )
+    with pytest.raises(review.ContentChanged):
+        review.withdraw_decision(
+            record, review.CLASSIFICATION, message, "Irrtum", "P", {**entry, "by": "X"}
+        )
+    assert review.decision(record, review.CLASSIFICATION, message)
+    assert review.withdraw_decision(
+        record, review.CLASSIFICATION, message, " Irrtum ", " Neu ", entry
+    )
+    assert review.decision(record, review.CLASSIFICATION, message) is None
+    assert review.classification_status(record, message) == review.CLASSIFICATION_OPEN
+    archived = record["withdrawn_decisions"][0]
+    assert archived["decision"] == entry
+    assert archived["reason"] == "Irrtum" and archived["withdrawn_by"] == "Neu"
+    assert "final_approval" not in record
+    last = record["review_log"][-1]
+    assert last["by"] == "Neu" and "zurückgezogen" in last["action"]
+    assert any("Entscheidung:" in e["action"] for e in record["review_log"])

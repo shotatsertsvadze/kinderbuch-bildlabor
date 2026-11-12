@@ -13,6 +13,10 @@ STEPS = {
         "Klassen vergleichen",
         "Vergleichen Sie beide Colibri-Klassen mit dem Bild und begründen Sie Ihre Wahl.",
     ),
+    "Angaben": (
+        "Angaben ergänzen",
+        "Ergänzen Sie Verfasser, Ort, Jahr, Verlag, Rechte und Quelle des Buches.",
+    ),
     "Beschreibung": (
         "Bild beschreiben",
         "Prüfen Sie Beschreibung und Suchbegriffe an den sichtbaren Motiven.",

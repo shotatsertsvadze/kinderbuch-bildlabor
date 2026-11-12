@@ -178,7 +178,7 @@ def card(cur: ui.Current, records: list[dict]) -> None:
         alt=f"Illustration aus {biblio['title']}, Scan {source['scan_number']}",
     )
     st.markdown(
-        f"**{biblio['title']}** ({biblio['publication_place']} {biblio['publication_date']})  \n"
+        f"**{biblio['title']}** ({biblio['publication_place'] or 'Ort unbekannt'}, {biblio['publication_date'] or 'Jahr unbekannt'})  \n"
         f"Scan {source['scan_number']}"
         + (
             f", Seite {source['page_label_mets']} laut METS"

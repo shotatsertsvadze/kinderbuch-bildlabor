@@ -320,3 +320,19 @@ def test_remaining_examples_validate_without_changing_fresh_state(object_id):
     assert working["change_log"] == []
     assert working == before
     assert store.sha256(src.record) == source_hash
+
+
+def test_biblio_finding_only_for_imported():
+    from kinderbuch_bildlabor import imports, review
+
+    imported = imports.imported_record(
+        "book-x-0001", {"size": (10, 10)}, 1, {"title": "B"}
+    )
+    codes = [f.code for f in validate.check_open_reviews(imported)]
+    assert "BIBLIO_NOT_REVIEWED" in codes
+    imported["biblio_review_status"] = review.BIBLIO_REVIEWED
+    codes = [f.code for f in validate.check_open_reviews(imported)]
+    assert "BIBLIO_NOT_REVIEWED" not in codes
+    fixture = store.new_working_copy(store.object_source("pilot-001"))["record"]
+    codes = [f.code for f in validate.check_open_reviews(fixture)]
+    assert "BIBLIO_NOT_REVIEWED" not in codes

@@ -150,7 +150,7 @@ def test_export_becomes_stale_after_confirmation_and_current_after_new_export():
     app.button(key=f"{PILOT}-export").click().run()
     app.button(key=f"{PILOT}-roundtrip").click().run()
     messages = roundtrip_messages(app)
-    assert len(messages) == 6 and all(m.startswith("Erhalten:") for m in messages)
+    assert len(messages) == 7 and all(m.startswith("Erhalten:") for m in messages)
 
 
 def test_real_content_difference_in_current_export_is_reported():
@@ -503,7 +503,7 @@ def test_lead_case_reaches_final_approval_with_reasoned_decisions_and_export():
     app.button(key=f"{LEAD}-export").click().run()
     app.button(key=f"{LEAD}-roundtrip").click().run()
     messages = roundtrip_messages(app)
-    assert len(messages) == 6 and all(m.startswith("Erhalten:") for m in messages)
+    assert len(messages) == 7 and all(m.startswith("Erhalten:") for m in messages)
     exported = store.read_json(store.EXPORT_DIR / f"{LEAD}.json")["record"]
     assert len(exported["decisions"]) == 2
 
@@ -617,7 +617,7 @@ def test_verification_result_shows_time_and_is_reset_by_new_export():
     app = open_app()
     export_and_verify(app)
     assert any(s.startswith("Export geprüft") for s in texts(app, "success"))
-    assert any("6 von 6 Prüfpunkten" in m for m in texts(app, "markdown"))
+    assert any("7 von 7 Prüfpunkten" in m for m in texts(app, "markdown"))
 
     app.button(key=f"{PILOT}-export").click().run()
     assert not any(s.startswith("Export geprüft") for s in texts(app, "success"))
@@ -862,3 +862,85 @@ def test_unreachable_manifest_is_reported_as_fetch_problem(monkeypatch):
     app.button[0].click().run()
     assert not app.exception
     assert "Abruf nicht möglich" in app.error[0].value
+
+
+def imported_source():
+    import io
+
+    from PIL import Image
+
+    from kinderbuch_bildlabor import imports
+
+    output = io.BytesIO()
+    Image.new("RGB", (40, 60), "white").save(output, "PNG")
+    pages = imports.preview_import([("own.png", output.getvalue())])
+    return imports.commit_import(pages, {"title": "Eigenes Buch"})[0]
+
+
+def test_biblio_tab_only_for_imported_and_saves_and_confirms():
+    assert not any(t.label == "Angaben" for t in open_app(PILOT).tabs)
+    src = imported_source()
+    app = open_app(src.id)
+    assert any(t.label == "Angaben" for t in app.tabs)
+    app.text_input(key=f"{src.id}-biblio-author").input("Anna Autorin").run()
+    app.button(key=f"{src.id}-biblio-save").click().run()
+    assert not app.exception
+    record = saved(src.id)["record"]
+    assert (
+        record["bibliographic_metadata_from_colibri"]["author_display"]
+        == "Anna Autorin"
+    )
+    assert record["biblio_review_status"] == review.BIBLIO_EDITED
+    app.text_input(key="reviewer").input("Testperson").run()
+    app.checkbox(key=f"{src.id}-biblio-review-check").check().run()
+    app.button(key=f"{src.id}-biblio-review-confirm").click().run()
+    assert saved(src.id)["record"]["biblio_review_status"] == review.BIBLIO_REVIEWED
+
+
+def test_withdraw_decision_from_ui_keeps_archive():
+    from kinderbuch_bildlabor import actions
+
+    app = open_app(LEAD)
+    app.text_input(key="reviewer").input("Testperson").run()
+    message = review.classification_message(
+        store.new_working_copy(store.object_source(LEAD))["record"]
+    )
+    key = submit_decision(
+        app,
+        review.CLASSIFICATION,
+        message,
+        "Manuelle Klasse trifft zu: Abbildung",
+        "Grund.",
+    )
+    app.text_input(key=f"{key}-withdraw-reason").input("Irrtum").run()
+    app.button(key=f"{key}-withdraw").click().run()
+    assert not app.exception
+    record = saved(LEAD)["record"]
+    assert record["decisions"] == {}
+    assert record["withdrawn_decisions"][0]["reason"] == "Irrtum"
+    assert actions.decision_key(LEAD, review.CLASSIFICATION, message) == key
+
+
+def test_withdraw_region_only_offered_for_imported_and_archives():
+    assert not any(b.key.endswith("-withdraw-submit") for b in open_app(PILOT).button)
+    src = imported_source()
+    store.update_working_copy(
+        src, lambda r: review.add_region(r, "text", "Zeile", [1, 1, 20, 10], 1), "t"
+    )
+    app = open_app(src.id)
+    region_id = f"{src.id}-region-01"
+    assert f"{region_id}-withdraw-submit" in [b.key for b in app.button]
+    app.text_input(key="reviewer").input("Testperson").run()
+    app.text_input(key=f"{region_id}-withdraw-reason").input("Falscher Rahmen").run()
+    app.button(key=f"{region_id}-withdraw-submit").click().run()
+    assert not app.exception
+    record = saved(src.id)["record"]
+    assert [r["id"] for r in record["region_annotations"]] == [f"{src.id}-region-02"]
+    assert record["withdrawn_regions"][0]["reason"] == "Falscher Rahmen"
+
+
+def test_imported_overview_does_not_show_none_page_id():
+    src = imported_source()
+    app = open_app(src.id)
+    assert not any("(None)" in m for m in texts(app, "markdown"))
+    assert any("im Digitalisat" in m for m in texts(app, "markdown"))

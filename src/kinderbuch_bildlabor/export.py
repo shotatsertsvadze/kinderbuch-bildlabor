@@ -57,6 +57,11 @@ CSV_COLUMNS = [
     "colibri_lizenz",
     "colibri_namensnennung",
     "metadaten_herkunft",
+    "verfasser",
+    "erscheinungsort",
+    "erscheinungsjahr",
+    "verlag",
+    "bibliografie_pruefstatus",
     "exportiert_am",
 ]
 
@@ -189,6 +194,15 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
                 "colibri_datei": source["colibri_file_reference"],
                 "colibri_lizenz": source["colibri_dataset_license"],
                 "colibri_namensnennung": source["colibri_dataset_credit"],
+                "verfasser": biblio["author_display"],
+                "erscheinungsort": biblio["publication_place"],
+                "erscheinungsjahr": biblio["publication_date"],
+                "verlag": biblio["publisher"],
+                "bibliografie_pruefstatus": record.get(
+                    "biblio_review_status", review.BIBLIO_OPEN
+                )
+                if review.is_imported(record)
+                else None,
                 "exportiert_am": exported_at,
             }
         )
@@ -304,6 +318,12 @@ def roundtrip_report(original: dict, reloaded: dict) -> list[tuple[str, bool]]:
         (
             "Entscheidungen mit Begründung unverändert",
             original.get("decisions") == reloaded.get("decisions"),
+        ),
+        (
+            "Zurückgezogene Regionen und Entscheidungen unverändert",
+            original.get("withdrawn_regions") == reloaded.get("withdrawn_regions")
+            and original.get("withdrawn_decisions")
+            == reloaded.get("withdrawn_decisions"),
         ),
         ("Gesamter Datensatz identisch", original == reloaded),
     ]

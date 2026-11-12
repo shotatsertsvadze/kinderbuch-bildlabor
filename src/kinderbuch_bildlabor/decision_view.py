@@ -136,6 +136,37 @@ def reconfirm(cur: Current, code: str, message: str, entry: dict, key: str) -> N
         )
 
 
+def withdraw(cur: Current, code: str, message: str, entry: dict, key: str) -> None:
+    with st.expander("Entscheidung zurückziehen"):
+        st.caption(
+            "Der Hinweis wird wieder offen. Die Entscheidung bleibt mit Grund, Person und Zeit im "
+            "Datensatz und im Prüfprotokoll. Eine bestehende Endbestätigung wird aufgehoben, der "
+            "Export gilt danach als veraltet."
+        )
+        st.text_input("Grund", key=f"{key}-withdraw-reason")
+        st.button(
+            "Entscheidung zurückziehen",
+            key=f"{key}-withdraw",
+            on_click=actions.withdraw_decision,
+            args=(cur.id, code, message, entry),
+        )
+
+
+def withdrawn_list(record: dict, code: str, message: str) -> None:
+    entries = [
+        e
+        for e in record.get("withdrawn_decisions", [])
+        if e["decision"]["code"] == code and e["decision"]["finding_de"] == message
+    ]
+    if entries:
+        with st.expander(f"Zurückgezogene Entscheidungen ({len(entries)})"):
+            for e in entries:
+                st.markdown(
+                    f"- {e['decision']['outcome_de']} (von {e['decision']['by']}) zurückgezogen "
+                    f"von {e['withdrawn_by']}, {ui.local_time(e['withdrawn_at'])}: {e['reason']}"
+                )
+
+
 def decision_form(cur: Current, code: str, message: str) -> dict | None:
     record = cur.record
     entry = review.decision(record, code, message)
@@ -153,6 +184,7 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
     key = actions.decision_key(cur.id, code, message)
     if entry is not None:
         reconfirm(cur, code, message, entry, key)
+        withdraw(cur, code, message, entry, key)
     holder = st.container() if entry is None else st.expander("Entscheidung ändern")
     with holder, st.form(key, enter_to_submit=False):
         st.radio(
@@ -183,6 +215,7 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
     if error := st.session_state.pop(f"{key}-error", None):
         st.error(error, icon=ui.ERROR)
     ui.feedback(cur.id, key)
+    withdrawn_list(record, code, message)
     st.caption(
         "„Nicht entscheidbar“ hält die Begründung fest, lässt den Hinweis aber offen und "
         "blockierend. Eine Entscheidung ist keine Ground-Truth-Freigabe."

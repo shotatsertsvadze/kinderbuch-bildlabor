@@ -148,6 +148,31 @@ def add_region(
         bump_canvas(object_id)
 
 
+def withdraw_region(object_id: str, region_id: str, seen_xywh: list[int]) -> None:
+    key = f"{region_id}-withdraw"
+    try:
+        store.update_working_copy(
+            store.object_source(object_id),
+            lambda record: review.withdraw_region(
+                record,
+                region_id,
+                st.session_state.get(f"{key}-reason", ""),
+                reviewer(),
+                seen_xywh,
+            ),
+            "Region zurückgezogen",
+        )
+    except (review.ContentChanged, review.DecisionInvalid) as error:
+        st.session_state[f"{key}-error"] = str(error)
+        return
+    except OSError as error:
+        write_failed(error)
+        return
+    for stale in (f"{key}-reason", f"{key}-check", f"{object_id}-region-choice"):
+        st.session_state.pop(stale, None)
+    bump_canvas(object_id)
+
+
 def confirm_region(object_id: str, region_id: str, seen_xywh: list[int]) -> None:
     apply(
         object_id,
@@ -214,6 +239,39 @@ def confirm_description(object_id: str, seen_text: str) -> None:
         review.confirm_description,
         reviewer(),
         seen_text,
+    )
+
+
+def biblio_keys(object_id: str) -> list[str]:
+    return [f"{object_id}-biblio-{name}" for name in review.BIBLIO_FIELDS]
+
+
+def biblio_dict(values: list) -> dict:
+    return {
+        name: (value or "").strip() or None
+        for name, value in zip(review.BIBLIO_FIELDS, values)
+    }
+
+
+def save_biblio(object_id: str) -> None:
+    keys = biblio_keys(object_id)
+    apply(
+        object_id,
+        "Bibliografische Angaben",
+        review.set_biblio,
+        biblio_dict([st.session_state[k] for k in keys]),
+        biblio_dict(ui.seen_values(keys)),
+        slot=f"{object_id}-biblio-save",
+    )
+
+
+def confirm_biblio(object_id: str, seen: dict) -> None:
+    apply(
+        object_id,
+        "Bestätigung Bibliografische Angaben",
+        review.confirm_biblio,
+        reviewer(),
+        seen,
     )
 
 
@@ -438,6 +496,38 @@ def reconfirm_decision(object_id: str, code: str, message: str, seen: dict) -> N
         f"Entscheidung unverändert erneut bestätigt von {reviewer()}. Frühere Einträge bleiben "
         "im Prüfprotokoll. Eine bisherige Endbestätigung ist aufgehoben und der Export veraltet; "
         "nächster Schritt: Endbestätigung im Reiter „Prüfung“ neu erteilen, dann exportieren.",
+    )
+
+
+def withdraw_decision(object_id: str, code: str, message: str, seen: dict) -> None:
+    key = decision_key(object_id, code, message)
+    try:
+        store.update_working_copy(
+            store.object_source(object_id),
+            lambda record: review.withdraw_decision(
+                record,
+                code,
+                message,
+                st.session_state.get(f"{key}-withdraw-reason", ""),
+                reviewer(),
+                seen,
+            ),
+            "Entscheidung zurückgezogen",
+        )
+    except (review.ContentChanged, review.DecisionInvalid) as error:
+        st.session_state[f"{key}-error"] = str(error)
+        return
+    except OSError as error:
+        write_failed(error)
+        return
+    st.session_state.pop(f"{key}-withdraw-reason", None)
+    ui.set_feedback(
+        object_id,
+        key,
+        "info",
+        "Entscheidung zurückgezogen; sie bleibt mit Grund im Datensatz und im Prüfprotokoll. "
+        "Der Hinweis ist wieder offen, eine bisherige Endbestätigung ist aufgehoben und der "
+        "Export veraltet.",
     )
 
 

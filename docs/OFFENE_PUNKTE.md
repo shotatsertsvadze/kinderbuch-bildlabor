@@ -22,11 +22,11 @@ vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer
 ## Bekannte Einschränkungen
 
 - Mehrere Browserfenster an einem Server sind abgesichert, mehrere Server auf einem Datenordner nicht.
-- Gedruckte Seitenzahl und Illustrator lassen sich in der Oberfläche nicht bearbeiten.
-- Koordinaten werden über Zahlenfelder bearbeitet (auch per Pfeiltaste), nicht durch Ziehen im Bild.
+- Gedruckte Seitenzahl und Illustrator lassen sich nur bei importierten Büchern bearbeiten (Reiter „Angaben“), nicht bei den Beispielobjekten.
+- Koordinaten lassen sich im Bild ziehen oder über Zahlenfelder bearbeiten.
+- Regionen lassen sich nur bei importierten Büchern zurückziehen; ein Wiederherstellen ist nicht vorgesehen.
 - Unter etwa 650 Pixel Fensterbreite stehen Bild und Bearbeitung untereinander; dann ist mehr Blättern nötig.
-- Eine Entscheidung lässt sich ersetzen oder unverändert erneut bestätigen, aber nicht ersatzlos zurücknehmen; dafür den Arbeitsstand
-  zurücksetzen (siehe README).
+- Eine Entscheidung lässt sich ersetzen, unverändert erneut bestätigen oder mit Grund zurückziehen; sie bleibt dann im Datensatz archiviert.
 
 ## Nicht umgesetzt (mögliche Erweiterungen)
 

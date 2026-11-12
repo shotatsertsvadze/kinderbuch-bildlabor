@@ -69,6 +69,9 @@ geprüfte Beispiel steht davon getrennt auf der Startseite und unter
 - **PDF** braucht lokal Poppler (`pdfinfo`, `pdftoppm`; macOS: `brew install poppler`).
 - **Regionen zeichnen:** Reiter „Regionen“ → Rahmen auf dem Scan ziehen, verschieben, mit Umschalt mehrere
   wählen; Pfeiltasten und Zahlenfelder sind gleichwertige Alternativen. Gespeichert wird erst ausdrücklich.
+  Mausrad oder +/- zoomt, Ziehen oder Leertaste+Ziehen verschiebt, 0 zeigt die Gesamtansicht; die Regler für
+  Helligkeit und Kontrast ändern nur die Anzeige. Taste n springt zum nächsten offenen Reiter, b fokussiert
+  die Bestätigung, ? liest die Hilfe vor; Tasten bestätigen nie etwas.
 - **Zurückziehen:** Bei importierten Büchern lässt sich eine Region im Reiter „Regionen“ mit Grund
   zurückziehen; bei jedem Objekt eine begründete Entscheidung. Der Inhalt bleibt mit Person, Zeit und
   Grund im JSON-Export (`withdrawn_regions`, `withdrawn_decisions`) und im Prüfprotokoll.

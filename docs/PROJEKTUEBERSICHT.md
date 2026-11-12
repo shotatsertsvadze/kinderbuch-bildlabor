@@ -97,7 +97,7 @@ Einschränkungen: [ergebnis/](ergebnis/README.md).
 | Stand | Wo | Inhalt |
 |---|---|---|
 | Geprüftes Beispiel | [ergebnis/](ergebnis/README.md) | Genovefa, Scan 22: von mir geprüft, entschieden und endbestätigt; unveränderter Export als JSON und CSV |
-| Weitere Beispiele | in der Anwendung; [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md) | Genovefa, Scans 14, 16, 17 und 85 ungeprüft; „Die Heimath in Amerika“: nur der Titelrahmen bestätigt (Pilotexport unter [ergebnis/](ergebnis/README.md)) |
+| Weitere Beispiele | in der Anwendung; [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md) | „Die Heimath in Amerika“ und Genovefa, Scans 14, 16, 17 und 85 sind am 12.11.2026 endbestätigt; die Exporte liegen nur lokal im Datenordner. Der Pilotexport unter [ergebnis/](ergebnis/README.md) ist der ältere Stand |
 | Frischer Arbeitsstand der App | eigener Datenordner nach dem Start | alle sechs Objekte im Quellstand, alle Prüfbereiche offen |
 
 Die Anwendung zeigt das geprüfte Beispiel auf der Startseite aus den Dateien unter `docs/ergebnis/`.

@@ -8,7 +8,7 @@ Drei Stände sind zu unterscheiden:
 | Stand | Wo | Inhalt |
 |---|---|---|
 | Geprüftes Beispiel | diese Seite, Dateien in diesem Ordner | Genovefa, Scan 22: von Shota Tsertsvadze geprüft, entschieden und endbestätigt |
-| Weitere Beispiele | in der Anwendung, Liste in [OFFENE_PUNKTE.md](../OFFENE_PUNKTE.md) | Genovefa, Scans 14, 16, 17 und 85 ungeprüft; „Die Heimath in Amerika“ nur der Titelrahmen bestätigt (Pilotexport unten) |
+| Weitere Beispiele | in der Anwendung, Liste in [OFFENE_PUNKTE.md](../OFFENE_PUNKTE.md) | „Die Heimath in Amerika“ und Genovefa, Scans 14, 16, 17 und 85 sind am 12.11.2026 endbestätigt; die Exporte liegen nur lokal im Datenordner und nicht in diesem Ordner. Der Pilotexport unten ist der ältere Stand. |
 | Frischer Arbeitsstand der App | eigener Datenordner nach dem Start | alle sechs Objekte im Quellstand, alle Prüfbereiche offen, bis jemand selbst prüft |
 
 ## Auf einen Blick
@@ -86,7 +86,7 @@ Das Beispiel zeigt, wie eine Entscheidung weitergegeben wird:
 - Zum Illustrator wurden nach eigener Angabe nur der Bildausschnitt, keine weiteren Quellen geprüft.
 - Die Bestätigungen von Rahmen, Beschreibung und Suchbegriffe tragen im Protokoll den Namen „shota“.
   Sie wurden nicht erneut bestätigt.
-- Geprüft ist nur Scan 22. Die Scans 14, 16, 17 und 85 sind offen (siehe [OFFENE_PUNKTE.md](../OFFENE_PUNKTE.md)).
+- Die Dateien in diesem Ordner belegen nur Scan 22 (und den älteren Pilotstand unten). Die Scans 14, 16, 17 und 85 sind später endbestätigt worden; deren Exporte liegen nur lokal im Datenordner (siehe [OFFENE_PUNKTE.md](../OFFENE_PUNKTE.md)).
 - Im JSON stehen die Herkunftsfelder in ihrem überlieferten Wortlaut, einschließlich „ungeprüft“. Der
   Prüfstand steht in den eigenen Statusfeldern; die CSV zeigt beides getrennt.
 - Das frühere Beispiel (Export vom 08.11.2026, 12:27 Uhr, aus einem anderen Arbeitsordner) ist durch
@@ -99,3 +99,7 @@ Der Pilotexport (07.11.2026, 23:05 Uhr) stammt aus dem vorigen Übergabe-ZIP und
 einzelne Bestätigung: den Rahmen um den Bildtitel, von Shota Tsertsvadze am 06.11.2026 um 15:50 Uhr. Die
 übrigen Regionen, die Beschreibung und beide Transkriptionen sind offen. Die Suchbegriffe tragen den
 Status „vom Nutzer akzeptiert“ aus dem Startpaket, ohne Protokolleintrag mit Name und Zeitpunkt.
+
+Dieser Stand ist überholt: Das Pilotobjekt ist am 12.11.2026 endbestätigt worden. Der spätere Export liegt nur
+lokal im Datenordner und nicht in diesem Ordner; die Datei `pilot-001.json` hier und ihre Prüfsumme bleiben
+unverändert (siehe [OFFENE_PUNKTE.md](../OFFENE_PUNKTE.md)).

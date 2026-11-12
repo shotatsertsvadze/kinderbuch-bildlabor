@@ -4,19 +4,25 @@
 <!-- gg:init:start -->
 # Kinderbuch-Bildlabor
 
-Local German-language Streamlit workbench for reviewing historical children's-book illustrations against saved images and OAI/METS/MODS metadata; it does not fetch live sources or run OCR.
+Local German-language Streamlit workbench for reviewing historical children's-book illustrations against saved images and OAI/METS/MODS metadata; no live fetching or OCR execution.
 
-## Data and review invariants
-- `sammlung/katalog.json` selects the source bundle for each object. Source fixtures stay immutable; edits belong to working copies with source checksums and change history.
-- Loading an existing working copy can WRITE: legacy description/transcription status migrations are persisted and logged. Even opening the collection loads every object. Use an isolated data directory for demonstrations and UI verification, not real working records.
-- `BILDLABOR_DATA_DIR` is read at import and relocates only working copies (`data/work/`) and exports (`exports/`), not catalog or source fixtures.
-- Persistence uses atomic replacement and a reentrant thread lock around load/change/save. This supports multiple browser sessions in ONE server process, not multiple servers sharing a data directory.
-- Preserve independent confirmations for region geometry, keywords, description, and each transcription field. Actual content edits invalidate the affected area and active final approval; no-op edits must not invalidate anything. Historical confirmations remain in `review_log`.
-- Final object approval is not Ground Truth. It requires a named reviewer, acknowledgment, all areas confirmed, and current validation under the store lock. Only the circular `RECORD_FINAL_REVIEW` finding is excluded from substantive blockers; optional NOT_RUN checks are visible but nonblocking. Do not dismiss existing review items or MODS differences to enable approval.
-- Session edits use three-way comparison (input/baseline/saved): untouched fields follow newer saved content, edited conflicts retain input but cannot overwrite it. Final approval compares the entire displayed record with the latest saved record.
-- Export freshness is change-log ancestry, not timestamp comparison: an empty suffix is current, a nonempty suffix is stale, and no common prefix is foreign history. Round-trip checks only describe current exports.
-- Book-level MODS comes from the logical METS root's DMDID, not a fixed section ID. Publication and digitization publishers, and book metadata versus printed illustration text, are different contexts. Metadata comparison deliberately preserves literal typographic differences rather than normalizing them away.
+## Review and persistence traps
+- Opening the collection loads every object; loading legacy working copies can persist migrations. Set `BILDLABOR_DATA_DIR` BEFORE importing app/store for UI checks or demos. It relocates only working copies and exports, never catalog/source fixtures; AppTest isolation patches `DATA_DIR`, `WORK_DIR`, and `EXPORT_DIR` together.
+- Load/change/save is one transaction under a reentrant thread lock: multiple browser sessions in one process are supported, multiple servers sharing a data directory are not.
+- Before overwriting a working copy (including migrations), preserve its exact previous bytes in content-addressed `.history` snapshots. A mismatched existing snapshot must block replacement, not be treated as a usable backup.
+- Region geometry, keywords, description, and each transcription field have independent confirmations. Content edits invalidate the affected confirmation and active final approval; no-op saves must preserve both and write nothing. Historical confirmations remain in `review_log`.
+- UI synchronization compares input/baseline/saved: untouched input follows newer saved content; edited conflicts retain input but cannot overwrite it. Keep store-side seen-value checks too; final approval compares the entire displayed record with the latest saved record.
+- Final approval is not Ground Truth: require name, acknowledgment, completed areas, and fresh validation under the store lock. Only `RECORD_FINAL_REVIEW` is excluded from technical/review blockers; optional NOT_RUN checks stay visible but nonblocking.
+- Reasoned decisions convert eligible findings to DOCUMENTED, not erase evidence. Identity includes exact code/message; classification depends on illustration geometry, imprint context on publisher transcription. Basis edits invalidate decisions while retaining history. “Nicht entscheidbar” still blocks. Explicit unchanged reconfirmation records person/time, revokes approval and stales exports; ordinary no-op decision saves do not.
+- Export freshness follows change-log ancestry, not timestamps or text equality: empty suffix=current, nonempty=stale, mismatched prefix=foreign history. Round-trip results describe current exports only. CSV formula neutralization is serialization-only; never alter JSON or records to match it.
+- Book MODS is selected through the logical METS root's DMDID, not a fixed section. Keep publication versus digitization publishers and book metadata versus printed imprint separate; literal typographic differences are intentional comparison evidence, not normalization targets.
 
-## Local workflow
-- Isolated demo: `BILDLABOR_DATA_DIR=/tmp/bildlabor-demo uv run streamlit run app.py`. Choose a fresh directory when the demo must start clean. Streamlit is configured for localhost only.
+## Isolated local launch
+`BILDLABOR_DATA_DIR=/tmp/bildlabor-fresh uv run streamlit run app.py` from the checkout; choose a new directory for a clean source state. The checked-in launcher does not isolate data. Streamlit binds localhost; a package build alone does not supply checkout-relative catalog/source assets.
 <!-- gg:init:end -->
+
+<!-- gg-safe:blocked-packages:start -->
+## Blocked packages
+GG Coder's safety checks blocked these. Never install or run them; use another version or package.
+- PyPI `python`: lookalike of "cython"
+<!-- gg-safe:blocked-packages:end -->

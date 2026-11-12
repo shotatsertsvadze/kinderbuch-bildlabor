@@ -19,6 +19,7 @@ from kinderbuch_bildlabor import (
     library_view,
     object_view,
     review,
+    review_keys,
     store,
     ui,
     validate,
@@ -105,6 +106,7 @@ def object_page(cur: ui.Current) -> None:
     blockers = len(validate.approval_blockers(findings))
     tabs_key = f"{cur.id}-tabs"
     workflow.render(record, tabs_key, export_current, blockers)
+    review_keys.render(record, tabs_key, export_current, blockers)
     names = ["Übersicht"]
     views: list[Callable[[ui.Current], None]] = [object_view.overview_tab]
     if review.classification_labels(record):

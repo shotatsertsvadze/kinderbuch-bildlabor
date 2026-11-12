@@ -14,7 +14,7 @@ export default function (component) {
   const { data, parentElement, setStateValue } = component;
   const W = data.width;
   const H = data.height;
-  const mem = (memory[data.instance] ??= { selected: new Set(), mode: "select", focus: null });
+  const mem = (memory[data.instance] ??= { selected: new Set(), mode: "select", focus: null, view: { x: 0, y: 0, w: W }, look: { brightness: 100, contrast: 100, gray: false, invert: false } });
   const rects = data.regions.map((r) => ({ ...r, xywh: r.xywh.slice() }));
   let created = data.created ? { type: data.created.type, xywh: data.created.xywh.slice() } : null;
 
@@ -47,21 +47,132 @@ export default function (component) {
   hint.textContent = "Umschalt+Klick: mehrere wählen. Pfeiltasten verschieben (Umschalt = 10 px), Alt+Pfeil ändert Breite/Höhe.";
   bar.append(hint);
 
-  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "group", "aria-label": "Zeichenfläche mit Regionen auf dem Scan" });
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, tabindex: 0, role: "group", "aria-label": "Zeichenfläche mit Regionen auf dem Scan" });
   svg.style.cssText = "width:100%;max-height:75vh;touch-action:none;background:#eee;display:block";
-  svg.append(el("image", { href: data.image, width: W, height: H }));
+  const picture = el("image", { href: data.image, width: W, height: H });
+  svg.append(picture);
   const layer = el("g");
   svg.append(layer);
   parentElement.append(bar, svg);
 
-  const unit = Math.max(W, H) / 200;
+  const view = mem.view;
+  const unitNow = () => (Math.max(W, H) / 200) * (view.w / W);
 
-  function point(event) {
+  function clampView() {
+    view.w = Math.min(W, Math.max(W / 20, view.w));
+    view.x = Math.min(Math.max(view.x, 0), W - view.w);
+    view.y = Math.min(Math.max(view.y, 0), H - (view.w * H) / W);
+  }
+
+  function applyView() {
+    clampView();
+    svg.setAttribute("viewBox", `${view.x} ${view.y} ${view.w} ${(view.w * H) / W}`);
+  }
+
+  function zoomAt(factor, cx, cy) {
+    const next = Math.min(W, Math.max(W / 20, view.w / factor));
+    const k = next / view.w;
+    view.x = cx - (cx - view.x) * k;
+    view.y = cy - (cy - view.y) * k;
+    view.w = next;
+    applyView();
+    draw();
+  }
+
+  const centre = () => [view.x + view.w / 2, view.y + (view.w * H) / W / 2];
+
+  function applyLook() {
+    const l = mem.look;
+    picture.style.filter = `brightness(${l.brightness}%) contrast(${l.contrast}%) grayscale(${l.gray ? 1 : 0}) invert(${l.invert ? 1 : 0})`;
+  }
+
+  const look = document.createElement("div");
+  look.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;font:14px sans-serif;align-items:center";
+  const note = document.createElement("span");
+  note.style.color = "#555";
+  note.textContent = "Ansicht: Mausrad oder +/- zoomt, Ziehen auf leerer Fläche oder Leertaste+Ziehen verschiebt, 0 = Gesamtansicht. Regler ändern nur die Anzeige.";
+  look.append(note);
+  for (const [key, text, min, max] of [["brightness", "Helligkeit", 30, 250], ["contrast", "Kontrast", 30, 300]]) {
+    const label = document.createElement("label");
+    label.textContent = `${text} `;
+    const input = document.createElement("input");
+    Object.assign(input, { type: "range", min, max, value: mem.look[key] });
+    input.oninput = () => {
+      mem.look[key] = Number(input.value);
+      applyLook();
+    };
+    label.append(input);
+    look.append(label);
+  }
+  for (const [key, text] of [["gray", "Graustufen"], ["invert", "Invertieren"]]) {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    Object.assign(input, { type: "checkbox", checked: mem.look[key] });
+    input.onchange = () => {
+      mem.look[key] = input.checked;
+      applyLook();
+    };
+    label.append(input, ` ${text}`);
+    look.append(label);
+  }
+  const reset = document.createElement("button");
+  reset.type = "button";
+  reset.textContent = "Ansicht zurücksetzen";
+  reset.onclick = () => {
+    Object.assign(view, { x: 0, y: 0, w: W });
+    Object.assign(mem.look, { brightness: 100, contrast: 100, gray: false, invert: false });
+    applyView();
+    applyLook();
+    look.querySelectorAll("input").forEach((i) => {
+      if (i.type === "range") i.value = 100;
+      else i.checked = false;
+    });
+    draw();
+  };
+  look.append(reset);
+  parentElement.insertBefore(look, svg);
+  applyView();
+  applyLook();
+
+  svg.addEventListener(
+    "wheel",
+    (event) => {
+      event.preventDefault();
+      const q = pointFloat(event);
+      zoomAt(event.deltaY < 0 ? 1.25 : 0.8, q[0], q[1]);
+    },
+    { passive: false },
+  );
+  let space = false;
+  svg.addEventListener("keydown", (event) => {
+    if (event.target === svg && event.key === " ") {
+      space = true;
+      event.preventDefault();
+    } else if (event.key === "+" || event.key === "=") {
+      zoomAt(1.25, ...centre());
+    } else if (event.key === "-") {
+      zoomAt(0.8, ...centre());
+    } else if (event.key === "0") {
+      Object.assign(view, { x: 0, y: 0, w: W });
+      applyView();
+      draw();
+    }
+  });
+  svg.addEventListener("keyup", (event) => {
+    if (event.key === " ") space = false;
+  });
+
+  function pointFloat(event) {
     const p = svg.createSVGPoint();
     p.x = event.clientX;
     p.y = event.clientY;
     const q = p.matrixTransform(svg.getScreenCTM().inverse());
-    return [Math.round(q.x), Math.round(q.y)];
+    return [q.x, q.y];
+  }
+
+  function point(event) {
+    const q = pointFloat(event);
+    return [Math.round(q[0]), Math.round(q[1])];
   }
 
   function emit() {
@@ -75,6 +186,7 @@ export default function (component) {
   }
 
   function draw() {
+    const unit = unitNow();
     layer.replaceChildren();
     rects.forEach((r, index) => {
       const [x, y, w, h] = r.xywh;
@@ -143,6 +255,14 @@ export default function (component) {
     const start = point(event);
     const id = event.target.getAttribute("data-id");
     const handle = event.target.getAttribute("data-handle");
+    if (!handle && (space || (mem.mode === "select" && !id))) {
+      if (!event.shiftKey && !space) mem.selected.clear();
+      op = { kind: "pan", client: [event.clientX, event.clientY], base: { x: view.x, y: view.y } };
+      svg.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      draw();
+      return;
+    }
     if (handle) {
       const r = rects.find((t) => t.id === id);
       op = { kind: "resize", r, handle, base: r.xywh.slice() };
@@ -168,6 +288,13 @@ export default function (component) {
 
   svg.addEventListener("pointermove", (event) => {
     if (!op) return;
+    if (op.kind === "pan") {
+      const scale = svg.getScreenCTM().a;
+      view.x = op.base.x - (event.clientX - op.client[0]) / scale;
+      view.y = op.base.y - (event.clientY - op.client[1]) / scale;
+      applyView();
+      return;
+    }
     const [px, py] = point(event);
     const [sx, sy] = op.start;
     if (op.kind === "move") {
@@ -195,6 +322,10 @@ export default function (component) {
 
   const finish = () => {
     if (!op) return;
+    if (op.kind === "pan") {
+      op = null;
+      return;
+    }
     const changed = op.kind !== "move" || op.bases.some(([t, b]) => !same(t.xywh, b));
     op = null;
     if (changed) emit();

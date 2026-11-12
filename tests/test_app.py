@@ -972,3 +972,33 @@ def test_backup_section_verifies_without_writing(temp_data):
     assert "Sicherungspaket herunterladen" in [
         b.label for b in app.get("download_button")
     ]
+
+
+def test_imprint_comparison_shows_character_diff_without_normalizing(temp_data):
+    app = open_app()
+    shown = " ".join(texts(app, "markdown"))
+    assert "Zeichen für Zeichen" in shown
+    assert "~~" in shown and "**+" in shown
+    assert not (temp_data / "work").exists()
+
+
+def test_review_key_n_opens_next_tab_and_ignores_repeats(monkeypatch):
+    from kinderbuch_bildlabor import review_keys, workflow
+
+    opened = []
+    monkeypatch.setattr(workflow, "next_tab", lambda *a: "Regionen")
+    monkeypatch.setattr(
+        workflow, "open_tab", lambda key, tab: opened.append((key, tab))
+    )
+    state = {"press": {"seq": "1", "key": "n"}}
+    assert review_keys.handle(state, None, {}, "t", False, 0) == "1"
+    assert review_keys.handle(state, "1", {}, "t", False, 0) == "1"
+    assert opened == [("t", "Regionen")]
+
+
+def test_review_keys_reject_unknown_keys():
+    from kinderbuch_bildlabor import review_keys
+
+    assert review_keys.normalize_press({"press": {"seq": "1", "key": "x"}}) is None
+    assert review_keys.normalize_press({"press": {"seq": 1, "key": "n"}}) is None
+    assert review_keys.normalize_press({"press": None}) is None

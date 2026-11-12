@@ -9,7 +9,7 @@ from PIL import Image
 
 from kinderbuch_bildlabor import regions
 
-PREVIEW_EDGE = 1600
+PREVIEW_EDGE = 2400
 COMPONENT = st.components.v2.component(
     "bildlabor_region_canvas",
     html="<div></div>",

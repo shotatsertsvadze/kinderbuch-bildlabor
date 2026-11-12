@@ -81,7 +81,7 @@ def overview_tab(cur: Current) -> None:
 
     progress_table(record)
     if "working_publisher_statement" in (record.get("transcription") or {}):
-        imprint_comparison(record)
+        imprint_comparison(cur)
     ui.section("Fachliche Hinweise")
     with st.container(border=True):
         for item in record["review_items"]:
@@ -114,7 +114,8 @@ def progress_table(record: dict) -> None:
     )
 
 
-def imprint_comparison(record: dict) -> None:
+def imprint_comparison(cur: Current) -> None:
+    record = cur.record
     biblio = record["bibliographic_metadata_from_colibri"]
     ui.section("Verlagsangaben im Vergleich")
     left, right = st.columns(2)
@@ -126,11 +127,36 @@ def imprint_comparison(record: dict) -> None:
         )
     with right, st.container(border=True):
         ui.subsection("Aufdruck auf dem Bildblatt (vorläufige Lesung)")
+        region = next(
+            (
+                r
+                for r in record["region_annotations"]
+                if r.get("transcription_field") == "working_publisher_statement"
+            ),
+            None,
+        )
+        if region:
+            st.image(
+                regions.crop(ui.page_image(cur.src.page_image), region["xywh"]),
+                width=ui.crop_width(region["xywh"]),
+                caption="Vorlage: Ausschnitt mit dem Aufdruck",
+                alt="Ausschnitt aus dem Scan mit dem Verlagsaufdruck.",
+            )
         ui.source_text(record["transcription"]["working_publisher_statement"])
         ui.status_badge(
             record["transcription"]["review_status_by_field"][
                 "working_publisher_statement"
             ]
+        )
+    if biblio["publisher"]:
+        reading = record["transcription"]["working_publisher_statement"]
+        st.markdown(
+            "**Zeichen für Zeichen (Colibri-Verlag gegenüber Lesung):** "
+            + diff_markdown(biblio["publisher"], reading)
+        )
+        st.caption(
+            "Unterschiede sind Beleg, kein Fehlerurteil: Es wird nichts angeglichen, "
+            "auch lange s und Ligaturen bleiben, wie sie sind."
         )
     st.caption(
         "Beide Angaben bleiben mit ihrem Bezug erhalten. Die Abweichung wird zur Prüfung angezeigt, "

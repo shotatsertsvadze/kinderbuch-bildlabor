@@ -83,6 +83,20 @@ Arbeitsstände (`data/work/`) und Exporte (`exports/`) entstehen erst beim Speic
 Quellstand: Server stoppen, die Arbeitsdatei in einen Archivordner verschieben (nicht löschen), neu
 starten.
 
+**Sicherung:** Die Startseite bietet ein Sicherungspaket (ZIP mit Prüfsummen; Arbeitsstände,
+Importe, Exporte) zum Herunterladen und prüft hochgeladene Pakete. Das Paket enthält Prüfarbeit
+und Namen: nicht ins Git, nicht öffentlich teilen. Kommandozeile:
+
+```
+uv run python -m kinderbuch_bildlabor.backup create PAKET.zip
+uv run python -m kinderbuch_bildlabor.backup verify PAKET.zip
+uv run python -m kinderbuch_bildlabor.backup restore PAKET.zip NEUER_ORDNER
+BILDLABOR_DATA_DIR=NEUER_ORDNER uv run streamlit run app.py
+```
+
+Zurückspielen schreibt nur in einen neuen oder leeren Ordner und nur nach bestandener Prüfung;
+bestehende Daten werden nie überschrieben.
+
 ## Qualitätsprüfungen
 
 ```bash

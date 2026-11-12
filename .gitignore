@@ -27,3 +27,6 @@ CLAUDE.md
 .streamlit/secrets.toml
 backup*/
 *.bak
+
+# Sicherungspakete
+bildlabor-sicherung*.zip

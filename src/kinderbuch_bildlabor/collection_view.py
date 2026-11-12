@@ -5,6 +5,7 @@ from PIL import Image
 
 from kinderbuch_bildlabor import (
     actions,
+    backup_view,
     example_view,
     regions,
     review,
@@ -74,6 +75,7 @@ def render(collection: list[ui.Current]) -> None:
         with columns[index % 3], st.container(border=True):
             card(cur, records)
     collection_export(collection)
+    backup_view.render()
 
 
 def hero(cur: ui.Current) -> None:

@@ -31,7 +31,9 @@ Aufwand: S = Tage, M = ein bis zwei Wochen, L = mehr. Risiko bezieht sich auf di
 - **Aufwand:** M.
 - **Risiko:** niedrig, wenn der Export wie das CSV nur serialisiert: Datensatz und JSON-Export bleiben unverändert, keine neuen Bestätigungen. Zu klären: Wie werden Prüfstände und Herkunft abgebildet, ohne Bestätigungen zu überhöhen? Export-Aktualität gilt auch für die neue Datei.
 
-## 5. Sicherung und Wiederherstellung des Arbeitsstands
+## 5. Sicherung und Wiederherstellung des Arbeitsstands (umgesetzt)
+
+Umgesetzt in `backup.py`: Paket mit Prüfsummen, Prüfen, Zurückspielen nur in neuen oder leeren Ordner.
 
 - **Nutzen:** `.history` ist keine Sicherung auf einem anderen Gerät. Ein Sicherungspaket (Arbeitsstände, Importe, Prüfsummen) und ein geprüftes Zurückspielen schützen die einzige Kopie der Prüfarbeit. Hilft auch beim Umzug auf einen anderen Rechner.
 - **Aufwand:** M.

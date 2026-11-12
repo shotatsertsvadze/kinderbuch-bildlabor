@@ -550,7 +550,7 @@ def test_start_page_shows_finished_example_from_unchanged_export_and_writes_noth
     app = open_app("sammlung")
     assert any(entry["rationale_de"] in m for m in texts(app, "markdown"))
     downloads = app.get("download_button")
-    assert len(downloads) == 3
+    assert len(downloads) == 4
     assert not store.WORK_DIR.exists() and not store.EXPORT_DIR.exists()
 
 
@@ -960,3 +960,15 @@ def test_selected_tab_survives_new_transcription_tab():
     assert any(t.label == "Transkription" for t in app.tabs)
     container = next(c for c in app.main if c.type == "tab_container")
     assert container.proto.tab_container.default_tab_index == 1
+
+
+def test_backup_section_verifies_without_writing(temp_data):
+    app = open_app("sammlung")
+    before = sorted(p for p in temp_data.rglob("*") if p.is_file())
+    from kinderbuch_bildlabor import backup_view
+
+    assert backup_view.package()[:2] == b"PK"
+    assert sorted(p for p in temp_data.rglob("*") if p.is_file()) == before
+    assert "Sicherungspaket herunterladen" in [
+        b.label for b in app.get("download_button")
+    ]

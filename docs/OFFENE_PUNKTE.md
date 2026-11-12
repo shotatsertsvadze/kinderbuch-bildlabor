@@ -21,6 +21,7 @@ vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer
 
 ## Bekannte Einschränkungen
 
+- Das Sicherungspaket entsteht unter der Datensperre eines Servers; es gilt wie die übrige Speicherung nicht für mehrere Server auf einem Datenordner. Zurückspielen geht nur per Kommandozeile in einen neuen Ordner.
 - Mehrere Browserfenster an einem Server sind abgesichert, mehrere Server auf einem Datenordner nicht.
 - Gedruckte Seitenzahl und Illustrator lassen sich nur bei importierten Büchern bearbeiten (Reiter „Angaben“), nicht bei den Beispielobjekten.
 - Koordinaten lassen sich im Bild ziehen oder über Zahlenfelder bearbeiten.

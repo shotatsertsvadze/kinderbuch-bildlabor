@@ -1,17 +1,19 @@
-# Design System: Lesesaal 2
+# Design System: Studio
 
-Design specification for the Kinderbuch-Bildlabor user interface. It refines the existing "Lesesaal"
-(reading room) concept rather than replacing it: paper-toned ground, ink-dark text, Berlin blue
-reserved for the next action. The UI language stays German; this document is written in English
-for the implementing agent.
+Design specification for the Kinderbuch-Bildlabor user interface. The concept is the
+**digitization studio** where these scans are made: neutral studio gray (the standard surround for
+judging color), crisp contemporary type, a vivid cobalt version of *Berliner Blau* reserved for the
+next action, and one signature element: the review path drawn as a **calibration strip**, like the
+color target photographed next to every library scan. The UI language stays German; this document
+is written in English for the implementing agent.
 
 - **Implementation prompts:** [GG_CODER_PROMPTS.md](GG_CODER_PROMPTS.md)
 - **Validated reference files:** [reference/](reference/) (`config.toml`, `workflow.css`, `theme.py`)
 - **Before/after previews:** [preview/](preview/)
 
-Phase 1 of this system (tokens, fonts, light and dark themes, base CSS) was prototyped against
-Streamlit 1.67.0 in an isolated copy of the app. All 191 tests passed unchanged, `ruff check`
-passed, and fonts loaded from local files with no network access.
+Phase 1 (tokens, fonts, light and dark themes, base CSS, calibration strip) was prototyped against
+Streamlit 1.67.0 in an isolated copy of the app: all 191 tests passed unchanged, and `ruff check`,
+`ruff format --check` and `mypy` were clean. The fonts loaded from local files with no network access.
 
 ![Start page, before and after](preview/01-start.jpg)
 
@@ -26,11 +28,31 @@ the result with provenance. Sessions are long, the work needs care, and every de
 with a name. The interface has to support **careful, repeated looking at old images** and make
 **review state readable at a glance**.
 
-## 2. Design principles
+## 2. Direction
+
+**Why not the reading-room look.** The first proposal ("Lesesaal": cream paper, serif headings)
+read as old-fashioned. Cream plus a high-contrast serif is also one of the most common default
+looks right now, so it does not give the tool its own identity. It also works against the task:
+a warm surround shifts how sepia scans are perceived.
+
+**Studio.** The tool's real-world counterpart is the digitization workstation: neutral gray
+surfaces, calibrated light, rulers and color targets, labels on scan slips. That gives a modern,
+precise look that is specific to this subject, and it helps the scans look right.
+
+| Element | Choice | Why |
+|---|---|---|
+| Surfaces | Neutral studio gray `#F4F5F3`, white cards | Neutral surround for judging scans; calm and contemporary |
+| Action color | Cobalt `#2448C9` ("Berliner Blau, digital") | Keeps the Berlin connection (Prussian blue was first made in Berlin) in a modern, vivid form |
+| Display type | Bricolage Grotesque | Contemporary grotesque with ink traps and a hint of print warmth that suits children's books, used only for headings and large values |
+| Text type | Geist | Crisp, neutral, highly legible UI face |
+| Utility type | Geist Mono | Labels and identifiers, like the slip that travels with a scan |
+| Signature | Prüfpfad as calibration strip | The steps really are a sequence; the strip shows each step's state as a patch |
+
+## 3. Design principles
 
 1. **The scan is the subject.** The image gets the most space and a neutral surround. No UI chrome
    competes with it, and it is never cropped by layout.
-2. **One next action.** In any area of the screen there is at most one primary (Berlin blue) button,
+2. **One next action.** In any area of the screen there is at most one primary (cobalt) button,
    and it is the step the Prüfpfad recommends. Everything else is secondary or tertiary.
 3. **State is always readable.** Every review state is shown as icon + word + color, never color
    alone, and the same state looks the same everywhere (sidebar, Prüfpfad, tab content, cards).
@@ -41,68 +63,75 @@ with a name. The interface has to support **careful, repeated looking at old ima
 6. **Offline and accessible by default.** No runtime CDN. WCAG 2.2 AA contrast, keyboard operable,
    reduced motion respected, German page language for screen readers.
 
-## 3. What works today and what to improve
+## 4. What changes compared with today
 
 | Area | Today | Change |
 |---|---|---|
-| Concept | Coherent "Lesesaal" idea, serif headings, accessible focus ring, reduced motion | Keep the concept; formalize it as tokens |
-| Typography | Streamlit defaults (Source Sans/Serif); keyboard hint renders in Arial | Bundled Newsreader + IBM Plex Sans + IBM Plex Mono; every text uses the theme fonts |
-| Language | `<html lang="en">` on a German UI: screen readers mispronounce, no hyphenation | Set `lang="de"`; enable `hyphens: auto` for long German compounds |
-| Inputs | Beige fields on beige page read as disabled; border contrast about 1.3:1 | Near-white fields with a 3.4:1+ border (WCAG 1.4.11) |
-| Captions | Muted with `opacity: 0.7` (also fades icons and links) | Fixed muted ink color, 6:1 or better |
-| Status colors | Streamlit default yellow/blue/orange; "Offen" shown in orange, so a fresh object looks alarming | Harmonized semantic palette; untouched = neutral gray, amber only for saved-but-unconfirmed |
-| Scan display | Warm paper surround biases how sepia scans look | Neutral gray mat ("Passepartout") behind every scan |
+| Overall look | Beige paper, serif headings, left accent bars: reads as old-fashioned | Neutral studio gray, white cards, grotesque type, no accent bars |
+| Typography | Streamlit defaults (Source Sans/Serif); keyboard hint renders in Arial | Bundled Bricolage Grotesque + Geist + Geist Mono; every text uses the theme fonts |
+| Language | `<html lang="en">` on a German UI: screen readers mispronounce, no hyphenation | `lang="de"`; hyphenation of long compounds on phones |
+| Inputs | Beige fields on beige page read as disabled; border contrast about 1.3:1 | White fields with a 3:1+ border (WCAG 1.4.11) |
+| Captions | Muted with `opacity: 0.7` (also fades icons and links) | Fixed muted ink color, 5.8:1 or better |
+| Status colors | Streamlit default yellow/blue/orange; "Offen" in orange, so a fresh object looks alarming | Harmonized semantic palette; untouched = neutral gray, amber only for saved-but-unconfirmed |
+| Prüfpfad steps | Row of round pills, hard to tell done from upcoming | Calibration strip: equal segments, gray/green/cobalt state edge, check icon |
+| Scan display | Warm paper surround | Neutral gray mat ("Passepartout") behind every scan |
 | Region overlays | Same region is red on overview tabs (colored by number) and blue in the editor (colored by type) | One color per region type everywhere, color-blind-safe (Okabe-Ito) |
-| Object page | Header, Prüfpfad card, two explanatory captions and keyboard hint push the scan below the fold at 1440×900 | Compact Prüfpfad; explanations folded in; work area starts higher |
-| Navigation | Three navigation systems (sidebar radio, step pills, tabs) with no shared state display | Sidebar shows per-object status; steps and tabs share the same state vocabulary |
-| Accent bars | 4px left border on cards (a common template look) | Plain bordered surfaces with soft elevation |
-| Dark mode | None | "Nachtlesesaal" dark theme follows the OS setting |
+| Object page | Header, Prüfpfad card, two captions and the keyboard hint push the scan below the fold at 1440×900 | Compact Prüfpfad; explanations folded in; work area starts higher |
+| Navigation | Sidebar radio list with no state | Sidebar list rows with active highlight and per-object state |
+| Dark mode | None | "Studio bei Nacht" follows the OS setting |
 
-## 4. Color
+## 5. Color
 
-### 4.1 Core tokens
+### 5.1 Core tokens
 
-All text/background pairs below were checked against WCAG 2.2 (ratios in brackets).
+All text/background pairs were checked against WCAG 2.2 (ratios in brackets).
 
 | Token | Role | Light | Dark |
 |---|---|---|---|
-| `canvas` | App background (Streamlit `backgroundColor`) | `#F5F0E7` | `#1A1917` |
-| `surface` | Cards, inputs, expanders (Streamlit `secondaryBackgroundColor`) | `#FFFDF9` | `#24231F` |
-| `sunken` | Sidebar, table header, inline code | `#ECE5D7` | `#2E2C27` |
-| `border` | Decorative borders, dividers | `#DED4C3` | `#3D3A33` |
-| `border-strong` | Secondary button outlines | `#C4B79F` | `#57534A` |
-| `control` | Input field borders (needs 3:1) | `#8C8170` (3.4–3.8:1) | `#857D6E` (3.9–4.3:1) |
-| `ink` | Body text | `#1D2130` (14.1:1) | `#ECE6DA` (14.1:1) |
-| `ink-muted` | Captions, labels, metadata | `#5A5446` (6.0–7.4:1) | `#B4AC9C` (6.2–7.8:1) |
-| `ink-subtle` | Placeholders only | `#776F60` (4.4–4.9:1) | `#978F80` (4.9–5.5:1) |
-| `primary` | Berliner Blau: next action, focus, links | `#1F4E79` (7.6:1; white label 8.7:1) | `#8DB4E2` (8.2:1; label `#10233A` 7.4:1) |
-| `mat` | Neutral surround behind scans | `#E3E2DF` | `#121211` |
+| `canvas` | App background (Streamlit `backgroundColor`) | `#F4F5F3` | `#111315` |
+| `surface` | Cards, inputs, expanders (Streamlit `secondaryBackgroundColor`) | `#FFFFFF` | `#1A1D20` |
+| `sunken` | Sidebar, table header, inline code | `#EBEDEA` | `#23272B` |
+| `border` | Decorative borders, dividers | `#DCDFDA` | `#30353A` |
+| `border-strong` | Secondary button outlines | `#C3C8C1` | `#454B52` |
+| `control` | Input field borders (needs 3:1) | `#878D86` (3.1–3.4:1) | `#7C838B` (4.4–4.9:1) |
+| `ink` | Body text | `#15181C` (15.1–17.8:1) | `#E8EBED` (12.6–15.6:1) |
+| `ink-muted` | Captions, labels, metadata | `#555B62` (5.8–6.9:1) | `#A2A9B1` (6.3–7.8:1) |
+| `ink-subtle` | Placeholders, on `surface` only | `#6E747B` (4.7:1) | `#8A9199` (5.3:1) |
+| `primary` | Cobalt: next action, focus, links | `#2448C9` (6.3–7.4:1) | `#94AAFF` (6.8–8.4:1) |
+| `on-primary` | Label on primary buttons | `#FFFFFF` (7.4:1) | `#0B1640` (7.9:1) |
+| `primary-tint` | Hover/selected background | `#E9EDFB` | `#1D2547` |
+| `ok` | Done edge and icon | `#146C3A` | `#86D6A2` |
+| `open` | Upcoming edge in the strip | `#C9CDC7` | `#3A4047` |
+| `mat` | Neutral surround behind scans | `#E2E3E1` | `#0B0C0D` |
 
-### 4.2 Semantic status colors
+Streamlit derives the label color of primary buttons itself and puts white on the light dark-mode
+cobalt (2.3:1). `workflow.css` therefore sets primary button labels to `on-primary`.
 
-One vocabulary for every review state. These map onto Streamlit's named colors in
-`config.toml`, so `st.success`, `st.warning`, `st.error`, `st.info` and `st.badge(color=…)` pick
-them up without code changes.
+### 5.2 Semantic status colors
+
+One vocabulary for every review state. These map onto Streamlit's named colors in `config.toml`,
+so `st.success`, `st.warning`, `st.error`, `st.info` and `st.badge(color=…)` pick them up without
+code changes.
 
 | State (UI wording stays as is) | Meaning | Streamlit color | Icon | Light text / bg | Dark text / bg |
 |---|---|---|---|---|---|
-| **Offen** (untouched, proposed, provisional) | Nobody has worked on this yet | `gray` | `:material/radio_button_unchecked:` | `#4F493C` / `#ECE6DB` (7.2:1) | `#CFC6B5` / `#2F2D28` |
-| **Entwurf / ungespeicherte Änderung** | Saved or typed, not yet confirmed | `yellow` and `orange` (same amber) | `:material/edit_note:` | `#7D4E00` / `#F8ECD3` (6.1:1) | `#F0C778` / `#3A2D14` |
-| **Bestätigt** | Named person confirmed this area | `green` | `:material/check_circle:` | `#2B6639` / `#E5EFE4` (5.8:1) | `#9FD3A8` / `#1F3324` |
+| **Offen** (untouched, proposed, provisional) | Nobody has worked on this yet | `gray` | `:material/radio_button_unchecked:` | `#4A5058` / `#ECEEEB` (7.0:1) | `#C9CED4` / `#2A2E33` (8.6:1) |
+| **Entwurf / ungespeicherte Änderung** | Saved or typed, not yet confirmed | `yellow` and `orange` (same amber) | `:material/edit_note:` | `#8A5300` / `#FDF0D5` (5.6:1) | `#F5C26B` / `#3A2A10` (8.4:1) |
+| **Bestätigt** | Named person confirmed this area | `green` | `:material/check_circle:` | `#146C3A` / `#E3F3E8` (5.6:1) | `#86D6A2` / `#16301F` (8.2:1) |
 | **Endbestätigt** | Final approval given (not Ground Truth) | `green` | `:material/verified:` | as Bestätigt | as Bestätigt |
-| **Blocker, Konflikt, Fehler** | Must be resolved; blocks approval | `red` | `:material/block:` / `sync_problem` / `error` | `#9B2A1F` / `#F8E3DE` (6.2:1) | `#F2A399` / `#41211C` |
-| **Hinweis, nicht ausgeführt** | Neutral system information | `blue` (slate, not Berlin blue) | `:material/info:` | `#2E5470` / `#E5EDF3` (6.8:1) | `#A9C8E2` / `#1D2C38` |
-| **Maschinell** (Colibri automatisch, OCR, KI-Entwurf) | Provenance marker | `violet` | `:material/smart_toy:` | `#5E4485` / `#EEE7F5` (6.6:1) | `#C9B5EA` / `#2E2540` |
-| **Nächste Handlung** | Call to action | `primary` button | `:material/arrow_forward:` | white on `#1F4E79` | `#10233A` on `#8DB4E2` |
+| **Blocker, Konflikt, Fehler** | Must be resolved; blocks approval | `red` | `:material/block:` / `sync_problem` / `error` | `#B3261E` / `#FCE8E6` (5.6:1) | `#FFA59C` / `#3F1C19` (8.0:1) |
+| **Hinweis, nicht ausgeführt** | Neutral system information | `blue` (slate, not cobalt) | `:material/info:` | `#3B5268` / `#E8EEF3` (6.9:1) | `#A9C3DB` / `#1C2A37` (8.0:1) |
+| **Maschinell** (Colibri automatisch, OCR, KI-Entwurf) | Provenance marker | `violet` | `:material/smart_toy:` | `#6A3DB8` / `#F1EAFD` (6.0:1) | `#C7B0FF` / `#2A2142` (8.0:1) |
+| **Nächste Handlung** | Call to action | `primary` button | `:material/arrow_forward:` | white on `#2448C9` | `#0B1640` on `#94AAFF` |
 
 Rules:
 
-- Amber means "you or someone has done work here that still needs a named confirmation". It is not
-  used for untouched items. A fresh object should look calm (gray), not alarming.
+- Amber means "work was done here that still needs a named confirmation". It is not used for
+  untouched items. A fresh object should look calm (gray), not alarming.
 - Red is reserved for things that block approval or need intervention.
-- Berlin blue is never used for status; it only marks the action to take.
+- Cobalt is never used for status; it only marks the action to take.
 
-### 4.3 Region overlay colors (on scans)
+### 5.3 Region overlay colors (on scans)
 
 Overlays sit on warm, high-texture woodcuts, so they use the color-blind-safe Okabe-Ito hues plus
 the existing white outer halo and dark inner line (keep that technique from `regions.py`).
@@ -118,172 +147,177 @@ the existing white outer halo and dark inner line (keep that technique from `reg
 Color by **type**, not by region number, in both the server-rendered crops (`regions.py`) and the
 canvas editor (`region_canvas.js`). The number label stays as the identifier.
 
-## 5. Typography
+## 6. Typography
 
-### 5.1 Families (all SIL Open Font License, bundled locally)
+### 6.1 Families (all SIL Open Font License, bundled locally)
 
-| Role | Family | Why | Files (Fontsource 5.3.x) |
+| Role | Family | Use | Files (Fontsource 5.3.0) |
 |---|---|---|---|
-| Headings, research question, large values | **Newsreader** (variable, optical size) | Bookish serif built for screens; optical sizing keeps display sizes elegant and small sizes sturdy; complete German glyphs, true italics | `newsreader-latin-opsz-normal.woff2`, `…-latin-ext-opsz-normal.woff2`, `…-latin-opsz-italic.woff2` |
-| UI and body text | **IBM Plex Sans** (variable) | Institutional, highly legible, distinct `Il1`, good umlauts, tabular figures | `ibm-plex-sans-latin-wght-normal.woff2`, `…-latin-ext-wght-normal.woff2` |
-| Identifiers | **IBM Plex Mono** 400/500 | PPN, `DMDLOG_0000`, coordinates `[229, 299, 924, 617]`, checksums, paths | `ibm-plex-mono-latin-400-normal.woff2`, `…-500-normal.woff2` |
+| Display | **Bricolage Grotesque** (variable, weight + optical size) | Headings, hero title, large comparison values. Nothing else. | `bricolage-grotesque-latin-opsz-normal.woff2`, `…-latin-ext-opsz-normal.woff2` |
+| Text and UI | **Geist** (variable weight) | Body, labels, buttons, captions, research question | `geist-latin-wght-normal.woff2`, `…-latin-ext-wght-normal.woff2` |
+| Utility | **Geist Mono** (variable weight) | Eyebrow labels, PPN, `DMDLOG_0000`, coordinates `[229, 299, 924, 617]`, checksums, paths | `geist-mono-latin-wght-normal.woff2`, `…-latin-ext-wght-normal.woff2` |
 
-Total payload is about 600 KB, served from `static/fonts/` via `server.enableStaticServing`.
-Include each package's `LICENSE` file next to the fonts (`static/fonts/OFL-<family>.txt`).
+Total payload is about 200 KB, served from `static/fonts/` via `server.enableStaticServing`.
+Include each package's `LICENSE` next to the fonts (`static/fonts/OFL-<family>.txt`). Geist has no
+italic; do not use italics for emphasis (use weight 500–600).
 
-### 5.2 Scale
+### 6.2 Scale
 
-| Use | Font | Size / line height | Weight |
+| Use | Font | Size / line height | Weight / tracking |
 |---|---|---|---|
-| Hero title (start page only) | Newsreader | `clamp(2.25rem, 4.5vw, 3.5rem)` / 1.02, tracking −0.02em | 600 |
-| h1 object title | Newsreader | 2.5rem / 1.1 | 600 |
-| h2 section | Newsreader | 1.75rem / 1.2 | 600 |
-| h3 subsection | Newsreader | 1.375rem / 1.25 | 600 |
-| Research question (Leitfrage) | Newsreader italic | 1.3rem / 1.4 | 500 |
-| Body | Plex Sans | 1rem (16px) / 1.6 | 400 |
-| Label, button | Plex Sans | 0.875–1rem | 500 |
-| Caption | Plex Sans | 0.875rem / 1.5, color `ink-muted` | 400 |
-| Eyebrow (PRÜFPFAD · SCHRITT 1 VON 5) | Plex Sans | 0.75rem, uppercase, tracking 0.08em | 600 |
-| Identifier | Plex Mono | 0.875em | 400 |
+| Hero title (start page only) | Bricolage | `clamp(2.5rem, 5vw, 4rem)` / 0.98 | 700 / −0.035em |
+| h1 object title | Bricolage | 2.5rem / 1.1 | 650 / −0.022em |
+| h2 section | Bricolage | 1.625rem / 1.2 | 600 / −0.022em |
+| h3 subsection | Bricolage | 1.25rem / 1.25 | 600 |
+| Comparison value (st.metric) | Bricolage | 2.25rem (Streamlit default size) | 600 / −0.02em |
+| Research question (Leitfrage) | Geist | 1.25rem / 1.45, max 40ch | 500 |
+| Body | Geist | 1rem (16px) / 1.6 | 400 |
+| Label, button | Geist | 0.875–1rem | 500 (current step 600) |
+| Caption | Geist | 0.875rem / 1.5, color `ink-muted` | 400 |
+| Eyebrow (PRÜFPFAD · SCHRITT 1 VON 5) | Geist Mono | 0.75rem, uppercase (from the copy) | 500 / 0.04em |
+| Identifier | Geist Mono | 0.875em | 400 |
 
-### 5.3 German typography rules
+### 6.3 German typography rules
 
-- `lang="de"` on `<html>` (Streamlit ships `lang="en"`); `hyphens: auto` on paragraphs and list
-  items so compounds such as *Endbestätigung* and *Regionsgrenzen* break cleanly on narrow screens.
+- `lang="de"` on `<html>` (Streamlit ships `lang="en"`). Hyphenation (`hyphens: auto`) only below
+  641px width, where long compounds such as *Endbestätigung* would otherwise overflow; on wide
+  screens words stay whole, so quoted class names like „Abbildung“ are never split.
 - Keep German quotation marks „…“ exactly as written in the copy.
 - `font-variant-numeric: tabular-nums` for counters ("0 von 4 bestätigt"), progress text and tables.
 - `text-wrap: balance` on headings, `text-wrap: pretty` on paragraphs.
-- Line length for running text: aim for 60–80 characters; do not stretch paragraphs across the full
-  wide layout.
+- Line length for running text: 60–80 characters; do not stretch paragraphs across the full layout.
 
-## 6. Spacing, shape, elevation
+## 7. Spacing, shape, elevation
 
 - **Spacing scale (rem):** 0.25 · 0.5 · 0.75 · 1 · 1.5 · 2 · 3 · 4. Use 1.5rem between related
   blocks, 3rem between page sections.
-- **Radius:** controls and buttons 0.5rem; cards and expanders 0.625–0.875rem; step chips 999px;
-  scan images 0.25rem (paper has nearly square corners).
-- **Elevation:** `shadow-1` = `0 1px 2px rgba(29,33,48,.06)` for cards; scans use
-  `shadow-scan` (two-layer soft lift). No other shadows. Prefer borders over shadows.
-- **Touch targets:** at least 40px high on desktop, 44px on phones.
+- **Radius:** inputs and buttons 0.625rem; strip and expanders 0.75rem; scan mat 0.875rem; cards
+  1rem; scan images 0.25rem (paper has nearly square corners).
+- **Elevation:** `shadow-1` (a 1–2px soft shadow) for cards; scans use `shadow-scan`. No other
+  shadows. Prefer borders over shadows.
+- **Touch targets:** at least 40px high on desktop, 44px on phones (strip segments are 52px).
 
-## 7. Layout and information architecture
+## 8. Layout and information architecture
 
-### 7.1 App shell
+### 8.1 App shell
 
 ```
 ┌ Sidebar (sunken) ─────────┐ ┌ Main (canvas) ─────────────────────────────────────────────┐
-│ Kinderbuch-Bildlabor       │ │ eyebrow · H1 · metadata line                                │
-│                            │ │ ┌ Prüfpfad (surface card) ─────────────────────────────────┐ │
-│ ÜBERSICHT                  │ │ │ PRÜFPFAD · SCHRITT 1 VON 5          Prüfende Person [___] │ │
-│   Start und Sammlung       │ │ │ Nächste Handlung: …                                       │ │
-│   Eigenes Buch importieren │ │ │ (1 Bild prüfen)(2 Klassen)(3 Beschreibung)(4 …)(5 Export) │ │
-│ OBJEKTE                    │ │ │ ▓▓▓░░░░░ 0 von 4 bestätigt · 0 Entwurf · 4 offen  ⌄ Details│ │
-│   ○ 1 · Heimath, Scan 6    │ │ └───────────────────────────────────────────────────────────┘ │
-│   ◐ 2 · Genovefa, Scan 14  │ │ Übersicht | Klassifikation | Regionen | … | Prüfung | Export│
-│ ▌ ✓ 5 · Genovefa, Scan 22  │ │ ┌ Scan stage (mat, sticky) ─┐ ┌ Work panel ───────────────┐ │
-│                            │ │ │                            │ │ H2 question               │ │
-│ Eingaben werden erst mit … │ │ │        [ scan ]            │ │ evidence · form · sign-off │ │
-└────────────────────────────┘ │ └────────────────────────────┘ └───────────────────────────┘ │
+│ Kinderbuch-Bildlabor       │ │ Genovefa · Scan 22                                          │
+│                            │ │ Schmid, Christoph, von · Augsburg 1810 · … · PPN1772789429  │
+│ Start und Sammlung         │ │ ┌ Prüfpfad (white card) ────────────────────────────────────┐ │
+│ Eigenes Buch importieren   │ │ │ PRÜFPFAD · SCHRITT 2 VON 5 · …     Prüfende Person [____]  │ │
+│ 1 · Heimath, Scan 6        │ │ │ Nächste Handlung: …                                        │ │
+│   offen                    │ │ │ ▬▬▬▬▬▬░░░░░░░░ 1 von 4 bestätigt · 0 Entwurf · 3 offen    │ │
+│ 2 · Genovefa, Scan 14      │ │ │ ┌──────────┬──────────┬──────────┬──────────┬──────────┐  │ │
+│   1 von 4 bestätigt        │ │ │ │▀▀green▀▀▀│██cobalt██│▀▀gray▀▀▀▀│▀▀gray▀▀▀▀│▀▀gray▀▀▀▀│  │ │
+│▌5 · Genovefa, Scan 22      │ │ │ │✓ 1 Bild  │2 Klassen │3 Beschr. │4 Abschl. │5 Export  │  │ │
+│   1 von 4 bestätigt        │ │ │ └──────────┴──────────┴──────────┴──────────┴──────────┘  │ │
+│                            │ │ └────────────────────────────────────────────────────────────┘ │
+│ Eingaben werden erst mit … │ │ Übersicht | Klassifikation | Regionen | … | Prüfung | Export │
+└────────────────────────────┘ │ ┌ Scan on gray mat (sticky) ┐ ┌ Work panel ───────────────┐  │
+                               │ │        [ scan ]            │ │ question · form · sign-off│  │
+                               │ └────────────────────────────┘ └───────────────────────────┘  │
                                └─────────────────────────────────────────────────────────────┘
 ```
 
-- **Sidebar:** brand wordmark in Newsreader; navigation as a list (not visible radio circles);
-  active item on `surface` with a 3px inset Berlin-blue edge; each object shows its review state
-  icon (○ offen, ◐ in Arbeit, ✓ endbestätigt). Group headers "Übersicht" and "Objekte".
-- **Object header:** eyebrow with book and place/year, H1 "Genovefa · Scan 22", metadata line with
-  PPN in mono. An object status chip may sit to the right of the title.
-- **Prüfpfad:** one compact card. The two captions that currently sit below it (step explanation
+- **Sidebar:** wordmark in Bricolage; navigation as list rows; the active row sits on `surface`
+  with a 3px inset cobalt edge; under each object a short state line (Phase 2).
+- **Object header:** H1 "Genovefa · Scan 22" in Bricolage, metadata line in `ink-muted`.
+- **Prüfpfad:** one white card. The two captions that currently sit below it (step explanation
   and keyboard hint) move inside the card, into its footer or the "Prüfbereiche dieses Objekts"
   expander. Goal at 1440×900: the tab bar and the top of the scan are visible without scrolling.
 - **Work area:** two columns, scan left (2) and controls right (3), as today (`ui.SPLIT`). The scan
   column stays sticky on wide screens.
 
-### 7.2 Start page order
+### 8.2 Start page order
 
 Keep the demo narrative but bring the collection closer to the top:
 
-1. Hero: eyebrow, title, research question (serif italic), short intro, primary "Leitbeispiel
-   öffnen", and "Eigenes Buch importieren" as a secondary button next to it (move it out of the
-   floating position above the hero).
-2. Stichprobe grid: the six objects as cards with status chip, progress and Colibri classes
-   (manual as neutral chip, automatic as violet "maschinell" chip).
+1. Hero: mono eyebrow, Bricolage title, research question, short intro, primary "Leitbeispiel
+   öffnen" and "Eigenes Buch importieren" as a secondary button next to it (move it out of the
+   floating position above the hero); illustration on the gray mat.
+2. Stichprobe grid: six object cards with status badge, progress and Colibri classes (manual as
+   gray badge, automatic as violet "maschinell" badge).
 3. Fallstudie table.
 4. Abgeschlossenes Beispiel.
 5. Zweites Beispiel.
 6. Begriffe kurz erklärt.
 7. Werkzeuge: CSV export and Sicherung side by side.
 
-## 8. Components
+## 9. Components
 
 | Component | Spec |
 |---|---|
-| **Primary button** | Berlin blue fill, white label, radius 0.5rem, optional leading arrow icon. One per area. Keep the existing two-bounce "next step" animation; disabled by `prefers-reduced-motion`. |
-| **Secondary button** | Transparent or `surface`, 1px `border-strong`, ink label. |
+| **Calibration strip** (signature; Prüfpfad step buttons in `st.container(key="guide-steps")`) | One continuous strip, 1px `border`, radius 0.75rem, segments of equal width (min 8.5rem, wraps on phones), 52px high, no gaps. Each segment has a 4px top edge: `open` gray for upcoming, `ok` green plus check icon for done, and the current step is a solid cobalt segment with `on-primary` label. Hover on other segments: `primary-tint`. No bounce animation inside the strip. Keep keys and `help=` texts. |
+| **Primary button** | Cobalt fill, `on-primary` label, radius 0.625rem, optional leading arrow icon. One per area. The two-bounce "next step" nudge stays on "Leitbeispiel öffnen" and "Weiter"; off under reduced motion. |
+| **Secondary button** | White, 1px `border-strong`, ink label. |
 | **Tertiary / link** | "Scan in der Originalansicht öffnen": link style with external-link icon. |
-| **Step chip (Prüfpfad)** | Pill, 40px high. Current = primary fill. Done = secondary with green `check_circle` icon. Upcoming = outlined. Keep the `help=` text. |
-| **Status badge** | `st.badge` with the semantic color and icon from 4.2. Wording unchanged. |
-| **Sign-off panel** (`ui.confirm_controls`, key `…-review-box`) | Reads as a signature block: `surface`, 1px `border-strong`, radius 0.75rem, title "Prüfung mit Ihrem Namen bestätigen", statement checkbox, primary confirm button, lock icon + reason in `ink-muted` when disabled. After confirmation the green `st.success` note replaces the visual weight. |
-| **Decision options** (classification and Hinweise radios) | Each option as a full-width row: 44px min height, 1px border, radius 0.5rem; hover border `primary`; selected = `primary` border + light primary tint. Scope with a keyed container so the sidebar radio is not affected. |
-| **Comparison cards** ("Colibri manuell" vs "Colibri automatisch") | Two equal cards; value in Newsreader 2rem; automatic card carries a violet "maschinell" badge. |
-| **Scan stage** | `mat` background, 0.75rem padding, radius 0.75rem; image radius 0.25rem with `shadow-scan`; caption below in `ink-muted`, coordinates in mono. |
-| **Alerts** | Theme colors from 4.2 plus a 1px border at 22% of the text color, radius 0.625rem. Avoid stacking more than one alert per area. |
-| **Tabs** | Weight 500, active 600 with primary underline. Optional: sticky tab bar under the header (adjust the sticky scan offset if you do this). |
+| **Eyebrow** | Geist Mono 0.75rem, `ink-muted`, in keyed containers `guide-eyebrow` and `hero-eyebrow`. |
+| **Status badge** | `st.badge` with the semantic color and icon from 5.2. Wording unchanged. |
+| **Sign-off panel** (`ui.confirm_controls`, key `…-review-box`) | Reads as a signature block: `surface`, 1px `border-strong`, radius 0.75rem; statement checkbox; primary confirm button; lock icon + reason in `ink-muted` when disabled. |
+| **Decision options** (radios with keys ending `-outcome`) | Each option a full-width row: 44px min height, 1px border, radius 0.625rem; hover border `primary`; selected = `primary` border + `primary-tint`. The sidebar radio is not affected. |
+| **Comparison cards** ("Colibri manuell" vs "Colibri automatisch") | Two equal `st.metric` cards; value in Bricolage; the automatic card gets a violet "maschinell" badge. |
+| **Scan stage** | `mat` background, 0.875rem padding and radius; image radius 0.25rem with `shadow-scan`; caption below in `ink-muted`. |
+| **Alerts** | Theme colors from 5.2 plus a 1px border at 20% of the text color, radius 0.75rem. Avoid stacking more than one alert per area. |
+| **Tabs** | Weight 500, active 600 with cobalt underline. Optional: sticky tab bar (adjust the sticky scan offset). |
 | **Tables** | Header on `sunken`, tabular numbers, 1px `border`. |
-| **Expander** | `surface` background, `border`, radius 0.625rem. |
-| **Keyboard hint** (`review_keys.py`) | Inherit the theme font; 0.875rem; color `var(--bl-ink-muted)`. Optional: render keys as `<kbd>` chips. |
-| **Focus** | 3px `primary` outline, 2px offset, on every interactive element (keep existing rule). |
+| **Keyboard hint** (`review_keys.py`) | Inherit the theme font; 0.875rem; color `var(--bl-ink-muted)`. |
+| **Focus** | 3px `primary` outline, 2px offset (inside the strip: −3px), on every interactive element. |
 
-## 9. Motion
+## 10. Motion
 
-Only two motions: the existing "next step" nudge (700ms, twice) and hover/focus color transitions
-(120ms). Everything is disabled under `prefers-reduced-motion: reduce` (existing rule stays).
+Only two motions: the "next step" nudge (700ms, twice) on "Leitbeispiel öffnen" and "Weiter", and
+hover color changes. Everything is disabled under `prefers-reduced-motion: reduce`.
 
-## 10. Accessibility checklist
+## 11. Accessibility checklist
 
-- [ ] Text contrast ≥ 4.5:1, large text ≥ 3:1, input borders and focus ring ≥ 3:1 (values in §4
+- [ ] Text contrast ≥ 4.5:1, large text ≥ 3:1, input borders and focus ring ≥ 3:1 (values in §5
   already pass in both modes).
-- [ ] No state conveyed by color alone (icon + word always present).
+- [ ] Primary button labels use `on-primary` in both modes.
+- [ ] No state conveyed by color alone (icon + word always present; the strip's done segments carry
+  a check icon).
 - [ ] `lang="de"` set on the document.
 - [ ] All actions reachable by keyboard; visible focus ring everywhere; keyboard hint readable.
 - [ ] Usable at 200% browser zoom and at 390px width without horizontal scrolling.
 - [ ] Images keep their `alt` texts.
 - [ ] Reduced motion respected.
 
-## 11. Implementation notes for Streamlit 1.67
+## 12. Implementation notes for Streamlit 1.67
 
 - **Configuration first, CSS second.** Colors, fonts, heading sizes, radius and dark mode are native
   `config.toml` options in 1.67 (`[theme.light]`, `[theme.dark]`, `[[theme.fontFaces]]`,
   `headingFontSizes`, `greenBackgroundColor`, …). Use [reference/config.toml](reference/config.toml)
   as is.
 - **Tokens for custom CSS** come from `theme.inject()` ([reference/theme.py](reference/theme.py)),
-  which writes `--bl-*` CSS variables for the active mode using `st.context.theme.type`.
-  `workflow.css` uses only these variables, never raw hex values.
-- **Selectors:** prefer the `.st-key-<key>` classes Streamlit adds to keyed containers. If you need
-  a new hook, wrap the element in `st.container(key="…")`. Use `data-testid` selectors sparingly,
-  never `:nth-child`, and never `:first-child` on generic elements (in the prototype a
-  `:first-child` caption rule leaked onto unrelated captions).
+  which writes `--bl-*` CSS variables for the active mode using `st.context.theme.type` and sets
+  `lang="de"`. `workflow.css` uses only these variables, never raw hex values.
+- **Selectors:** prefer the `.st-key-<key>` classes Streamlit adds to keyed containers. The design
+  needs three new hooks: `guide-steps` (strip), `guide-eyebrow`, `hero-eyebrow`. Use `data-testid`
+  selectors sparingly, never `:nth-child`, and never `:first-child` on generic elements (in the
+  prototype a `:first-child` caption rule leaked onto unrelated captions).
 - **Do not change** widget keys, tab labels, session-state keys, German copy, or the element type of
   any text (`st.caption`, `st.markdown`, `st.info`, `st.success`, `st.warning`, `st.error`,
   `st.subheader`, `st.title`). The tests assert exact texts per element type. Restyle through the
   theme instead.
-- **Offline:** no Google Fonts or CDN URLs. Fonts live in `static/fonts/`.
-- **Fonts download** (one time, needs internet; or copy from `npm pack`):
-  `https://cdn.jsdelivr.net/npm/@fontsource-variable/newsreader@5.3.0/files/<file>`,
-  `https://cdn.jsdelivr.net/npm/@fontsource-variable/ibm-plex-sans@5.3.0/files/<file>`,
-  `https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5.3.0/files/<file>`;
+- **Offline:** no Google Fonts or CDN URLs at runtime. Fonts live in `static/fonts/`.
+- **Font download** (one time; or copy from `npm pack`):
+  `https://cdn.jsdelivr.net/npm/@fontsource-variable/bricolage-grotesque@5.3.0/files/<file>`,
+  `https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5.3.0/files/<file>`,
+  `https://cdn.jsdelivr.net/npm/@fontsource-variable/geist-mono@5.3.0/files/<file>`;
   license files at `…/<package>@5.3.0/LICENSE`.
 - **Verify visually** only with an isolated data directory:
   `BILDLABOR_DATA_DIR=$(mktemp -d) uv run streamlit run app.py`.
   Opening the app can migrate and write working copies.
 
-## 12. Previews
+## 13. Previews
 
 | | |
 |---|---|
-| Object page and Prüfpfad | ![Object page](preview/02-objekt-pruefpfad.jpg) |
+| Object page with calibration strip (step 1 done, step 2 current) | ![Object page](preview/02-objekt-pruefpfad.jpg) |
 | Classification decision | ![Classification](preview/03-klassifikation.jpg) |
 | Light and dark | ![Light and dark](preview/04-hell-und-dunkel.jpg) |
 
-The previews show Phase 1 only (tokens, fonts, base CSS). Phases 2–5 in the prompt file add the
-structural improvements (compact Prüfpfad, sidebar status, decision option cards, overlay colors,
-start page order).
+The previews show Phase 1 (tokens, fonts, base CSS, calibration strip). Phases 2–5 in the prompt
+file add the remaining structural improvements (compact Prüfpfad, sidebar state, decision option
+rows, overlay colors, start page order).

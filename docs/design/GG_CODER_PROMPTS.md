@@ -13,8 +13,8 @@ phases. Each phase is one commit and leaves the app working.
 
 | Phase | What changes | Risk | Effort |
 |---|---|---|---|
-| 1 Foundation | Fonts, colors, light/dark theme, base CSS | Low (validated: 191/191 tests pass) | S |
-| 2 Orientation | Compact Prüfpfad, sidebar status, eyebrows | Low–medium | M |
+| 1 Foundation | Fonts, colors, light/dark theme, base CSS, calibration strip | Low (validated: 191/191 tests pass) | S |
+| 2 Orientation | Compact Prüfpfad, sidebar status | Low–medium | M |
 | 3 Review workspace | Status colors, sign-off panel, decision options, comparison cards | Medium | M |
 | 4 Region overlays | One color per region type in crops and editor | Medium (one test changes) | S |
 | 5 Start page | Section order, collection cards, tools section | Low–medium | M |
@@ -67,26 +67,26 @@ Reply "Ready" when you have read DESIGN_SYSTEM.md and AGENTS.md.
 
 ---
 
-## Prompt 1: Foundation (fonts, colors, light and dark theme)
+## Prompt 1: Foundation (fonts, colors, light and dark theme, calibration strip)
 
 ```text
-Task: Phase 1 of docs/design/DESIGN_SYSTEM.md. Install the design tokens, bundled fonts, light and
-dark themes, and the base stylesheet. The reference files in docs/design/reference/ were already
-validated against this codebase (all tests pass); apply them rather than reinventing them.
+Task: Phase 1 of docs/design/DESIGN_SYSTEM.md ("Studio"). Install the design tokens, bundled fonts,
+light and dark themes, the base stylesheet and the calibration-strip Prüfpfad. The reference files
+in docs/design/reference/ were already validated against this codebase (all tests, ruff and mypy
+pass); apply them rather than reinventing them.
 
 Steps:
 1. Fonts. Create static/fonts/ at the repository root (next to app.py) with exactly these files,
    version 5.3.0 from Fontsource (download from https://cdn.jsdelivr.net/npm/<package>@5.3.0/files/<file>,
    or run "npm pack <package>@5.3.0" and copy from package/files/):
-     @fontsource-variable/newsreader:   newsreader-latin-opsz-normal.woff2,
-                                        newsreader-latin-ext-opsz-normal.woff2,
-                                        newsreader-latin-opsz-italic.woff2
-     @fontsource-variable/ibm-plex-sans: ibm-plex-sans-latin-wght-normal.woff2,
-                                        ibm-plex-sans-latin-ext-wght-normal.woff2
-     @fontsource/ibm-plex-mono:         ibm-plex-mono-latin-400-normal.woff2,
-                                        ibm-plex-mono-latin-500-normal.woff2
-   Also save each package's LICENSE as static/fonts/OFL-Newsreader.txt, OFL-IBM-Plex-Sans.txt,
-   OFL-IBM-Plex-Mono.txt (SIL Open Font License; required when redistributing).
+     @fontsource-variable/bricolage-grotesque: bricolage-grotesque-latin-opsz-normal.woff2,
+                                              bricolage-grotesque-latin-ext-opsz-normal.woff2
+     @fontsource-variable/geist:              geist-latin-wght-normal.woff2,
+                                              geist-latin-ext-wght-normal.woff2
+     @fontsource-variable/geist-mono:         geist-mono-latin-wght-normal.woff2,
+                                              geist-mono-latin-ext-wght-normal.woff2
+   Also save each package's LICENSE as static/fonts/OFL-Bricolage-Grotesque.txt, OFL-Geist.txt,
+   OFL-Geist-Mono.txt (SIL Open Font License; required when redistributing).
 2. Replace .streamlit/config.toml with docs/design/reference/config.toml. Keep every non-theme
    setting it already contains (address, showEmailPrompt, gatherUsageStats, toolbarMode); it adds
    server.enableStaticServing = true for the fonts.
@@ -97,43 +97,50 @@ Steps:
 5. Replace src/kinderbuch_bildlabor/workflow.css with docs/design/reference/workflow.css.
 6. In src/kinderbuch_bildlabor/review_keys.py, change only the inline style of the help paragraph
    from "margin:0;font:14px sans-serif;color:#555" to
-   "margin:0;font:inherit;font-size:0.875rem;line-height:1.5;color:var(--bl-ink-muted, #5A5446)".
-7. README.md: in "Weitere Dokumente", add a link "[Gestaltung](docs/design/DESIGN_SYSTEM.md)".
+   "margin:0;font:inherit;font-size:0.875rem;line-height:1.5;color:var(--bl-ink-muted, #555B62)".
+7. Add the three style hooks the stylesheet expects (same texts, same element types, same keys
+   inside them):
+   - workflow.render: the step button row becomes
+     st.container(horizontal=True, gap="xsmall", key="guide-steps").
+   - workflow.render: wrap st.caption(f"PRÜFPFAD · …") in st.container(key="guide-eyebrow").
+   - collection_view.hero: wrap st.caption("BILDARCHIV · FALLSTUDIE") in
+     st.container(key="hero-eyebrow").
+8. README.md: in "Weitere Dokumente", add a link "[Gestaltung](docs/design/DESIGN_SYSTEM.md)".
    Mention in one German sentence under "Daten" or a fitting place that fonts are bundled under
    static/fonts/ (SIL OFL). Keep the README's tone and language.
 
 Done when:
-- In the browser, document.fonts lists Newsreader, IBM Plex Sans and IBM Plex Mono as loaded, the
+- In the browser, document.fonts lists Bricolage Grotesque, Geist and Geist Mono as loaded, the
   network tab shows the .woff2 files served from /app/static/fonts/, and <html lang="de">.
-- Headings use Newsreader, body uses IBM Plex Sans, inline code uses IBM Plex Mono.
-- Inputs are near-white with a clearly visible border; captions are a solid muted color.
-- With the OS in dark mode the app uses the "Nachtlesesaal" dark theme; in light mode the paper theme.
+- Headings use Bricolage Grotesque, body uses Geist, eyebrows and inline code use Geist Mono.
+- The Prüfpfad steps form one continuous strip: gray top edge for upcoming steps, green edge and
+  check icon for done steps, a solid cobalt segment for the current step.
+- Inputs are white with a clearly visible border; captions are a solid muted color.
+- With the OS in dark mode the app uses the dark studio theme; primary buttons there have a dark
+  label on light cobalt (not white).
+- No paper/beige tones and no serif fonts remain.
 - All four quality checks pass.
 ```
 
 ---
 
-## Prompt 2: Orientation (Prüfpfad, sidebar, eyebrows)
+## Prompt 2: Orientation (Prüfpfad, sidebar)
 
 ```text
-Task: Phase 2 of docs/design/DESIGN_SYSTEM.md (section 7.1 and the Step chip row in section 8).
+Task: Phase 2 of docs/design/DESIGN_SYSTEM.md (section 8.1).
 Goal: at 1440x900 on "Genovefa, Scan 22", the tab bar and the top of the scan are visible without
 scrolling, and the sidebar shows each object's review state.
 
 Steps:
-1. Eyebrows. In workflow.render, wrap the first caption ("PRÜFPFAD · …") in
-   st.container(key="guide-eyebrow"). In collection_view.hero, wrap "BILDARCHIV · FALLSTUDIE" in
-   st.container(key="hero-eyebrow"). In workflow.css, replace the eyebrow rule that uses
-   [data-testid="stColumn"]:first-child … with .st-key-guide-eyebrow and .st-key-hero-eyebrow
-   selectors. Same text, same element type.
-2. Compact Prüfpfad. Move the step explanation caption ("Die Schaltflächen des Prüfpfads …") from
+1. Compact Prüfpfad. Move the step explanation caption ("Die Schaltflächen des Prüfpfads …") from
    below the card into the card, inside the "Prüfbereiche dieses Objekts" expander, after the
    existing caption there. Render the keyboard hint (review_keys.render) inside the card as its last
    row instead of below it; the simplest way is to let workflow.render accept a callable for the
    footer, or return the container. Keep st.progress and its text unchanged (tests read it).
-3. Step chips. Wrap the horizontal button row in st.container(key="guide-steps", horizontal=True,
-   gap="xsmall") (keep the existing button keys). Style per DESIGN_SYSTEM.md §8 "Step chip".
-4. Sidebar status. In app.py sidebar(), keep st.radio with key="view" and the same option values.
+2. Calibration strip on phones: at 390px width the strip wraps into rows; make sure every segment
+   stays at least 44px high, the labels do not truncate, and the strip's outer border still reads
+   as one block. Adjust only .st-key-guide-steps rules.
+3. Sidebar status. In app.py sidebar(), keep st.radio with key="view" and the same option values.
    Group visually with two small headers above and inside the list if feasible; at minimum:
    - add the radio "captions" argument with a short German state per option:
      Start/Import: "" ; objects: "endbestätigt" if workflow.approved(record), otherwise
@@ -143,9 +150,9 @@ Steps:
      (:material/radio_button_unchecked: offen, :material/clock_loader_40: in Arbeit,
      :material/verified: endbestätigt). Check that the icon renders as an icon, not as text; if it
      does not, leave the icon out (the caption already carries the state).
-   - style per DESIGN_SYSTEM.md §7.1 (list rows, active row on surface with 3px inset primary edge,
-     radio circle visually de-emphasized but still present for keyboard and screen readers).
-5. Remove the 4px left accent border from any card if still present (Phase 1 already does this for
+   - keep the list-row styling from Phase 1 (active row on surface with 3px inset cobalt edge);
+     the radio circle stays present for keyboard and screen readers.
+4. Remove the 4px left accent border from any card if still present (Phase 1 already does this for
    the hero and Prüfpfad).
 
 Do not change: button keys (guide-*), tabs key, help texts, wording, st.progress text.
@@ -158,7 +165,7 @@ line under every object, and all quality checks pass.
 ## Prompt 3: Review workspace (status, sign-off, decisions, comparison)
 
 ```text
-Task: Phase 3 of docs/design/DESIGN_SYSTEM.md (sections 4.2 and 8).
+Task: Phase 3 of docs/design/DESIGN_SYSTEM.md (sections 5.2 and 9).
 
 Steps:
 1. Status badges (ui.status_badge): keep the text exactly. Map colors and icons:
@@ -171,14 +178,14 @@ Steps:
    st.caption(f":violet[:material/smart_toy: Herkunft: {origin}]"). Confirm the test that looks for
    "Entwurf des KI-Assistenten" in captions still passes.
 3. Comparison cards (decision_view, the two st.metric cards): under the "Colibri automatisch"
-   metric add st.badge("maschinell", icon=":material/smart_toy:", color="violet"). In workflow.css
-   set [data-testid="stMetricValue"] to the heading font (Newsreader), 2rem, weight 600.
+   metric add st.badge("maschinell", icon=":material/smart_toy:", color="violet"). (The metric
+   value already uses Bricolage Grotesque from Phase 1.)
 4. Decision options: the radios in decision_view.decision_form have keys ending in "-outcome".
-   Style [class*="-outcome"] [data-testid="stRadioOption"] as full-width option rows per §8
+   Style [class*="-outcome"] [data-testid="stRadioOption"] as full-width option rows per §9
    "Decision options" (min-height 44px, border, radius, hover, selected state via
    :has(input:checked)). Make sure the sidebar radio is not affected.
 5. Sign-off panel: ui.confirm_controls renders st.container(key=f"{key}-box") where key ends in
-   "-review". Style [class*="-review-box"] per §8 "Sign-off panel".
+   "-review". Style [class*="-review-box"] per §9 "Sign-off panel".
 6. Scan stage: confirm every scan shown next to controls (ui.image_and_controls with pinned=...)
    sits on the neutral mat. Also give the unpinned left column in overview_tab the same mat by
    adding a keyed container (e.g. key="scan-overview") and including it in the mat selector.
@@ -196,7 +203,7 @@ marked "maschinell"; all quality checks pass.
 ## Prompt 4: Region overlays (one color per type)
 
 ```text
-Task: Phase 4 of docs/design/DESIGN_SYSTEM.md (section 4.3). Today the same region is drawn red on
+Task: Phase 4 of docs/design/DESIGN_SYSTEM.md (section 5.3). Today the same region is drawn red on
 overview tabs (regions.py colors by region number) and blue in the editor (region_canvas.js colors
 by type). Make both color by region type with the Okabe-Ito palette.
 
@@ -223,7 +230,7 @@ Scan 6" are vermilion everywhere; all quality checks pass.
 ## Prompt 5: Start page (order, cards, tools)
 
 ```text
-Task: Phase 5 of docs/design/DESIGN_SYSTEM.md (section 7.2).
+Task: Phase 5 of docs/design/DESIGN_SYSTEM.md (section 8.2).
 
 Steps:
 1. In collection_view.render, reorder the sections to: hero, Stichprobe grid, Fallstudie table,
@@ -251,7 +258,7 @@ import sits next to the lead action, and all quality checks pass.
 ```text
 Task: Final quality pass for the redesign in docs/design/DESIGN_SYSTEM.md.
 
-1. Run the accessibility checklist in DESIGN_SYSTEM.md §10. If Playwright is available, also run
+1. Run the accessibility checklist in DESIGN_SYSTEM.md §11. If Playwright is available, also run
    axe-core (inject https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js only in the test
    browser, never in the app) on the start page and the Regionen, Klassifikation and Prüfung tabs
    of "Genovefa, Scan 22", in light and dark. Report violations with selector and fix the ones
@@ -263,7 +270,7 @@ Task: Final quality pass for the redesign in docs/design/DESIGN_SYSTEM.md.
 5. Refresh the screenshots in docs/screenshots/ (same file names, same views as today) from an
    isolated data directory. Make sure they contain no real reviewer names beyond what the
    bundled example already shows.
-6. Update docs/design/DESIGN_SYSTEM.md §12 to say which phases are implemented, and delete
+6. Update docs/design/DESIGN_SYSTEM.md §13 to say which phases are implemented, and delete
    docs/design/reference/ once its contents live in the real files (mention this in the commit).
 
 Report: a table of checks with pass/fail and what you changed.

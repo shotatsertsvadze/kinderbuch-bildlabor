@@ -10,6 +10,7 @@ import streamlit as st
 
 TOKENS: dict[str, dict[str, str]] = {
     "light": {
+        "canvas": "#F4F5F3",
         "surface": "#FFFFFF",
         "sunken": "#EBEDEA",
         "border": "#DCDFDA",
@@ -21,12 +22,14 @@ TOKENS: dict[str, dict[str, str]] = {
         "primary-tint": "#E9EDFB",
         "on-primary": "#FFFFFF",
         "ok": "#146C3A",
+        "draft": "#A26300",
         "open": "#C9CDC7",
         "mat": "#E2E3E1",
         "shadow-1": "0 1px 2px rgba(21, 24, 28, 0.05), 0 1px 1px rgba(21, 24, 28, 0.03)",
         "shadow-scan": "0 1px 2px rgba(0, 0, 0, 0.16), 0 8px 24px rgba(0, 0, 0, 0.12)",
     },
     "dark": {
+        "canvas": "#111315",
         "surface": "#1A1D20",
         "sunken": "#23272B",
         "border": "#30353A",
@@ -38,6 +41,7 @@ TOKENS: dict[str, dict[str, str]] = {
         "primary-tint": "#1D2547",
         "on-primary": "#0B1640",
         "ok": "#86D6A2",
+        "draft": "#F5C26B",
         "open": "#3A4047",
         "mat": "#0B0C0D",
         "shadow-1": "0 1px 2px rgba(0, 0, 0, 0.4)",

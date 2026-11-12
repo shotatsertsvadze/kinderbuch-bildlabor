@@ -33,6 +33,7 @@ h1, h2, h3, h4 {
 }
 
 /* Überzeilen: Monospace-Etikett wie auf einem Scan-Begleitzettel */
+.st-key-object-eyebrow [data-testid="stCaptionContainer"],
 .st-key-guide-eyebrow [data-testid="stCaptionContainer"],
 .st-key-hero-eyebrow [data-testid="stCaptionContainer"] {
   font-family: "Geist Mono", ui-monospace, monospace;
@@ -207,7 +208,7 @@ button[data-testid^="stBaseButton-primary"] p {
 @media (min-width: 641px) {
   [data-testid="stLayoutWrapper"]:has(> [class*="st-key-pinned-scan-"]) {
     position: sticky;
-    top: 4rem;
+    top: 6.5rem;
   }
 }
 
@@ -387,4 +388,27 @@ label:has(input:focus-visible) {
 [class*="st-key-card-"] [data-testid="stImage"] {
   display: flex;
   justify-content: center;
+}
+
+/* ---------- Segmentierte Fortschrittsleiste: bestätigt / Entwurf / offen ------------------- */
+.bl-segbar {
+  display: flex;
+  gap: 2px;
+  height: 0.375rem;
+  margin: 0.25rem 0 0.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+}
+.bl-seg { min-width: 0.375rem; }
+.bl-seg-ok { background: var(--bl-ok); }
+.bl-seg-draft { background: var(--bl-draft); }
+.bl-seg-open { background: var(--bl-open); }
+
+/* ---------- Reiterleiste bleibt unter der Kopfzeile stehen ---------------------------------- */
+/* 3.75rem = Streamlit-Kopfzeile; der Scan (top: 6.5rem) beginnt darunter. */
+[data-testid="stTabs"] [role="tablist"] {
+  position: sticky;
+  top: 3.75rem;
+  z-index: 20;
+  background: var(--bl-canvas);
 }

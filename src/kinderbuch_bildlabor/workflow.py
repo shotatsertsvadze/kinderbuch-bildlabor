@@ -81,6 +81,16 @@ def area_counts(areas: list[dict]) -> tuple[int, int, int]:
     return confirmed, drafts, len(areas) - confirmed - drafts
 
 
+def segmented_bar(confirmed: int, drafts: int, untouched: int) -> str:
+    """Schmuckleiste zum Fortschrittsbalken: der Text darüber nennt dieselben Zahlen."""
+    segments = "".join(
+        f'<span class="bl-seg bl-seg-{name}" style="flex-grow:{count}"></span>'
+        for name, count in (("ok", confirmed), ("draft", drafts), ("open", untouched))
+        if count
+    )
+    return f'<div class="bl-segbar" aria-hidden="true">{segments}</div>'
+
+
 def object_state(
     record: dict,
 ) -> tuple[str, str, str, Literal["green", "orange", "gray"]]:
@@ -161,6 +171,7 @@ def render(
             text=f"Prüfbereiche: {confirmed} von {len(areas)} bestätigt · "
             f"{drafts} als Entwurf gespeichert · {untouched} offen",
         )
+        st.html(segmented_bar(confirmed, drafts, untouched))
         st.markdown(final_line(record, blockers))
         with st.expander(f"Prüfbereiche dieses Objekts ({len(areas)})"):
             st.markdown("\n".join(f"- {a['label_de']}: {area_state(a)}" for a in areas))

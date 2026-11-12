@@ -102,12 +102,27 @@ def sidebar() -> str:
 def object_page(cur: ui.Current) -> None:
     record = cur.record
     biblio, source = record["bibliographic_metadata_from_colibri"], record["source"]
+    published = (
+        f"{biblio['publication_place'] or ''} {biblio['publication_date'] or ''}"
+    )
+    with st.container(key="object-eyebrow"):
+        st.caption(
+            " · ".join(
+                p
+                for p in (
+                    "SAMMLUNG",
+                    biblio["title"].upper(),
+                    published.strip().upper(),
+                )
+                if p
+            )
+        )
     st.title(f"{biblio['title']} · Scan {source['scan_number']}")
     parts = [
         biblio["author_display"],
-        f"{biblio['publication_place'] or ''} {biblio['publication_date'] or ''}".strip(),
+        published.strip(),
         source["institution"],
-        source["ppn"],
+        f"`{source['ppn']}`" if source["ppn"] else None,
     ]
     st.caption(" · ".join(p or "unbekannt" for p in parts))
     export_current = export_view.export_state(cur)[0] == "current"

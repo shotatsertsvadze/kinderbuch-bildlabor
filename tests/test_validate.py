@@ -272,3 +272,51 @@ def test_required_checks_and_technical_errors_are_not_decidable():
         validate.Finding(validate.NOT_RUN, "XSD_VALIDATION", "x"),
     ]:
         assert not validate.decidable(record, finding)
+
+
+@pytest.mark.parametrize(
+    "object_id",
+    [
+        "pilot-001",
+        "genovefa-scan-014",
+        "genovefa-scan-016",
+        "genovefa-scan-017",
+        "genovefa-scan-085",
+    ],
+)
+def test_remaining_examples_validate_without_changing_fresh_state(object_id):
+    sources = store.catalog()
+    collection = [store.new_working_copy(src)["record"] for src in sources]
+    assert {record["id"] for record in collection} == {
+        "pilot-001",
+        "genovefa-scan-014",
+        "genovefa-scan-016",
+        "genovefa-scan-017",
+        "genovefa-scan-022",
+        "genovefa-scan-085",
+    }
+    assert validate.check_duplicate_ids(collection) == []
+    src = store.object_source(object_id)
+    source_hash = store.sha256(src.record)
+    working = store.new_working_copy(src)
+    before = copy.deepcopy(working)
+    findings = validate.run_all(working, src, collection)
+    assert codes(findings, validate.TECHNICAL) == set()
+    expected_reviews = {
+        "DESCRIPTION_NOT_REVIEWED",
+        "ILLUSTRATOR_ATTRIBUTION",
+        "RECORD_FINAL_REVIEW",
+        "REGION_NOT_REVIEWED",
+    }
+    expected_not_run = {"GND_LINKING", "LIVE_SOURCE", "XSD_VALIDATION"}
+    if object_id == "pilot-001":
+        expected_reviews |= {"IMPRINT_CONTEXT", "TRANSCRIPTION_PROVISIONAL"}
+        expected_not_run.add("OCR_EVALUATION")
+    else:
+        expected_reviews |= {"CLASSIFICATION_DIFFERENCE", "KEYWORDS_NOT_REVIEWED"}
+    assert codes(findings, validate.REVIEW) == expected_reviews
+    assert codes(findings, validate.NOT_RUN) == expected_not_run
+    assert "final_approval" not in working["record"]
+    assert working["change_log"] == []
+    assert working == before
+    assert store.sha256(src.record) == source_hash

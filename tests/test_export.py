@@ -280,3 +280,73 @@ def test_csv_carries_both_colibri_labels_and_the_classification_decision(tmp_pat
     # Das Pilot-Arbeitsmodell führt keine Colibri-Klassen; die Spalten bleiben leer statt geraten
     assert rows[0]["klassifikation_stand"] is None
     assert rows[1]["colibri_klasse_manuell"] is None
+
+
+@pytest.mark.parametrize(
+    "object_id",
+    [
+        "pilot-001",
+        "genovefa-scan-014",
+        "genovefa-scan-016",
+        "genovefa-scan-017",
+        "genovefa-scan-085",
+    ],
+)
+def test_remaining_examples_preserve_fresh_record_in_exports(tmp_path, object_id):
+    import copy
+
+    src = store.object_source(object_id)
+    source_hash = store.sha256(src.record)
+    working = store.new_working_copy(src)
+    before = copy.deepcopy(working)
+    json_path = tmp_path / f"{object_id}.json"
+    csv_path = tmp_path / f"{object_id}.csv"
+    exported = export.export_json(working, json_path)
+    reloaded = store.read_json(json_path)
+    assert reloaded == exported
+    assert reloaded["based_on"] == working["based_on"]
+    assert export.later_changes(working, reloaded) == []
+    report = export.roundtrip_report(working["record"], reloaded["record"])
+    assert all(ok for _, ok in report), report
+
+    record = working["record"]
+    export.export_csv(record, exported["exported_at"], csv_path)
+    with csv_path.open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == len(record["region_annotations"])
+    for row, region in zip(rows, record["region_annotations"], strict=True):
+        assert row["objekt_id"] == object_id
+        assert row["region_id"] == region["id"]
+        assert [int(row[key]) for key in ("x", "y", "breite", "hoehe")] == region[
+            "xywh"
+        ]
+        assert row["regionen_pruefstatus"] == region["review_status"]
+        assert row["suchbegriffe"] == "; ".join(region.get("keywords_de", []))
+        assert row["suchbegriffe_pruefstatus"] == (
+            region.get("keyword_review_status") or ""
+        )
+        assert row["ppn"] == record["source"]["ppn"]
+        assert row["colibri_lizenz"] == record["source"]["colibri_dataset_license"]
+        assert (
+            row["rechte_quellwerk"]
+            == record["bibliographic_metadata_from_colibri"]["rights_statement"]
+        )
+        assert row["exportiert_am"] == exported["exported_at"]
+        assert row["endpruefung_person"] == row["endpruefung_am"] == ""
+        if region["region_type"] == "illustration":
+            assert (
+                row["beschreibung"]
+                == record["image_description"]["working_description_de"]
+            )
+            assert (
+                row["beschreibung_pruefstatus"]
+                == record["image_description"]["review_status"]
+            )
+        if field := region.get("transcription_field"):
+            assert row["transkription"] == record["transcription"][field]
+            assert (
+                row["transkription_pruefstatus"]
+                == record["transcription"]["review_status_by_field"][field]
+            )
+    assert working == before
+    assert store.sha256(src.record) == source_hash

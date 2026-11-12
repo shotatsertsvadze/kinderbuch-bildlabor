@@ -745,3 +745,26 @@ def test_unchanged_decision_can_be_reconfirmed_explicitly_and_makes_export_stale
 
     exported = store.read_json(actions.export_paths(LEAD)[0])
     assert export.later_changes(saved(LEAD), exported)
+
+
+@pytest.mark.parametrize(
+    "object_id",
+    [
+        "pilot-001",
+        "genovefa-scan-014",
+        "genovefa-scan-016",
+        "genovefa-scan-017",
+        "genovefa-scan-085",
+    ],
+)
+def test_remaining_examples_open_without_review_or_writes(object_id, temp_data):
+    sources = store.catalog()
+    hashes = {src.record: store.sha256(src.record) for src in sources}
+    app = open_app("sammlung")
+    app.button(key=f"open-{object_id}").click().run()
+    assert not app.exception
+    assert app.radio(key="view").value == object_id
+    assert "**Technische Fehler: 0**" in texts(app, "markdown")
+    assert app.button(key=f"{object_id}-final-confirm").disabled
+    assert list(temp_data.iterdir()) == []
+    assert {path: store.sha256(path) for path in hashes} == hashes

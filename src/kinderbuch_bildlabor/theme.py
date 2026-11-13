@@ -50,6 +50,21 @@ TOKENS: dict[str, dict[str, str]] = {
 }
 
 
+# st.subheader hat keine Ebenenwahl und erzeugt h3 unter dem h1-Titel; aria-level ordnet die
+# Abschnitte als Ebene 2 ein, ohne die Darstellung zu ändern.
+PAGE_SCRIPT = """
+document.documentElement.lang = 'de';
+if (!window.__blHeadingLevels) {
+  window.__blHeadingLevels = true;
+  const fix = () => document
+    .querySelectorAll('[data-testid="stMain"] [data-testid="stHeading"] h3')
+    .forEach((h) => h.setAttribute('aria-level', '2'));
+  new MutationObserver(fix).observe(document.body, { childList: true, subtree: true });
+  fix();
+}
+"""
+
+
 def mode() -> str:
     """Aktiver Modus; ohne Browserangabe (z. B. in AppTest) gilt Hell."""
     return "dark" if st.context.theme.type == "dark" else "light"
@@ -64,7 +79,4 @@ def inject() -> None:
         f"--bl-{name}: {value};" for name, value in TOKENS[mode()].items()
     )
     st.html(f"<style>:root {{ {variables} }}</style>")
-    st.html(
-        "<script>document.documentElement.lang = 'de';</script>",
-        unsafe_allow_javascript=True,
-    )
+    st.html(f"<script>{PAGE_SCRIPT}</script>", unsafe_allow_javascript=True)

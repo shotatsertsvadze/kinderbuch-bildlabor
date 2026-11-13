@@ -327,8 +327,9 @@ Known gaps against this document:
 
 - An untouched decision shows the amber `st.warning` "Offen: Antwort wählen, …" instead of gray,
   because the element type may not change.
-- Section headings (`st.subheader`) render as `h3` below the `h1` title, so axe reports "heading
-  order". Fixing it means changing the element type.
+- Section headings (`st.subheader`) render as `h3` below the `h1` title. `theme.inject()` sets
+  `aria-level="2"` on them in the browser, so the heading order is valid without changing the
+  element type or the look.
 - The start page shows the first row of object cards after one scroll; the second row needs a
   further scroll.
 

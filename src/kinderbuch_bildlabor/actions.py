@@ -9,7 +9,15 @@ from pathlib import Path
 
 import streamlit as st
 
-from kinderbuch_bildlabor import export, ocr, review, store, ui, validate
+from kinderbuch_bildlabor import (
+    annotations,
+    export,
+    ocr,
+    review,
+    store,
+    ui,
+    validate,
+)
 
 
 def reviewer() -> str:
@@ -381,6 +389,10 @@ def export_paths(object_id: str):
     return store.EXPORT_DIR / f"{object_id}.json", store.EXPORT_DIR / f"{object_id}.csv"
 
 
+def annotations_path(object_id: str):
+    return store.EXPORT_DIR / f"{object_id}.annotations.json"
+
+
 def file_digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -396,6 +408,10 @@ def run_export(object_id: str) -> bool:
     try:
         data = export.export_json(current, json_path)
         export.export_csv(current["record"], data["exported_at"], csv_path)
+        store.write_json(
+            annotations_path(object_id),
+            annotations.annotation_page(current["record"], data["exported_at"]),
+        )
     except OSError as error:
         write_failed(error)
         return False

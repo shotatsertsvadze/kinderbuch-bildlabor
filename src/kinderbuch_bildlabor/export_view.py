@@ -146,7 +146,8 @@ def saved_panel(cur, exported, result, approved, json_path: Path, csv_path: Path
             icon=ui.OK,
         )
         st.markdown(
-            f"Dateien: `{json_path.name}` und `{csv_path.name}`  \nOrdner: `{json_path.parent}`"
+            f"Dateien: `{json_path.name}`, `{csv_path.name}` und "
+            f"`{actions.annotations_path(cur.id).name}` (W3C Web Annotation)  \nOrdner: `{json_path.parent}`"
         )
         if not approved:
             st.caption(

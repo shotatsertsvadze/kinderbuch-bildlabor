@@ -99,3 +99,11 @@ Stand. Wurde der Inhalt inzwischen anderswo geändert, wird sie abgelehnt.
 - Die Herkunft steht in den Feldern `region_origin_de`, `description_origin_de` und
   `keyword_origin_de`. Oberfläche und CSV zeigen Herkunft und aktuellen Prüfstand getrennt. Der
   vollständige JSON-Export bewahrt die überlieferten Feldtexte des Datensatzes.
+
+## Annotationsexport
+
+`<id>.annotations.json` ist eine `AnnotationPage` (W3C Web Annotation) mit einer Annotation je Region: `FragmentSelector` `xywh=x,y,w,h` in Pixeln des Ausgangsbilds, Bodies für Beschreibung (`describing`), Suchbegriffe (`tagging`) und Transkription (`supplementing`). `bl:status` ist `confirmed` oder `draft`; die Endbestätigung ist keine Ground Truth. Die Datei ist nur eine Darstellung und ändert weder Datensatz noch JSON-Export.
+
+Grenze des Annotationsexports: `target.source` ist die IIIF-Bild-URL (Bildinfo ohne `/info.json`), keine Canvas-ID. Die METS-Daten nennen nur die Manifest-URL des Werks (`dv:iiif`), keine Canvas-IDs der Seiten; eine Canvas-ID wird nicht geraten. Mirador ordnet Annotationen über die Canvas-ID zu, deshalb erscheinen sie ohne Zuordnung zur Manifest-Canvas nicht von selbst. Die Bildbeschreibung steht nur an der ersten Illustrationsregion; `bl:` ist als `urn:bildlabor:vocab#` im `@context` definiert.
+
+Mirador 3.4.3 zeigt eine Annotation nur an, wenn ihre `motivation` `commenting` enthält; deshalb steht dort `["describing", "commenting"]`. Geprüft wurde das mit einer lokalen Manifest-Kopie und der echten Canvas-ID aus dem Live-Manifest der SBB (`…/dc/1814684999-0006/canvas`), die in den Repo-Daten fehlt.

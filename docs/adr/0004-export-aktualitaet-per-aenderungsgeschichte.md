@@ -7,3 +7,5 @@ Kontext: Zeitstempel sagen nicht, ob ein Export aus derselben Arbeitskopie stamm
 Entscheidung: Das Änderungsprotokoll des Exports muss ein Anfang des Änderungsprotokolls der Arbeitskopie sein. Bleibt nichts übrig, ist der Export aktuell. Bleibt ein Rest, ist er veraltet. Gibt es keinen gemeinsamen Anfang, ist er fremd. Die Rückladeprüfung beschreibt nur aktuelle Exporte.
 
 Folgen: Ein Export wird nie nach Dateizeit beurteilt. Eine gekürzte oder neu begonnene Historie fällt als fremd auf.
+
+Annotationsdatei: Die Datei `<id>.annotations.json` (W3C Web Annotation) wird im selben Aufruf wie JSON und CSV geschrieben und teilt deren Aktualität. Sie wird nicht eigens geprüft; maßgeblich bleibt die Änderungsgeschichte der JSON-Datei.

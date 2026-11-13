@@ -372,3 +372,60 @@ def test_withdraw_decision_reopens_finding_and_archives():
     last = record["review_log"][-1]
     assert last["by"] == "Neu" and "zurückgezogen" in last["action"]
     assert any("Entscheidung:" in e["action"] for e in record["review_log"])
+
+
+def approved_record():
+    from kinderbuch_bildlabor import second_review  # noqa: F401
+
+    record = ready_record()
+    review.approve_final(record, copy.deepcopy(record), "Erste Person", True, [])
+    return record
+
+
+def test_second_review_rejects_same_name_and_requires_reason():
+    from kinderbuch_bildlabor import second_review as sr
+
+    record = approved_record()
+    key = "image_description"
+    digest = sr.content_hash(record, key)
+    with pytest.raises(sr.SecondReviewBlocked):
+        sr.record_review(record, key, " erste PERSON ", True, "", digest)
+    with pytest.raises(sr.SecondReviewBlocked):
+        sr.record_review(record, key, "Zweite", False, " ", digest)
+    assert record["second_review"] == {}
+
+
+def test_second_review_stale_after_edit_and_noop_does_not_rewrite():
+    from kinderbuch_bildlabor import second_review as sr
+
+    record = approved_record()
+    key = "image_description"
+    digest = sr.content_hash(record, key)
+    assert sr.record_review(record, key, "Zweite", True, "", digest)
+    assert not sr.record_review(record, key, "Zweite", True, "", digest)
+    assert sr.entry_state(record, key) == "agree"
+    assert sr.summary(record)["agree"] == 1
+    text = record["image_description"]["working_description_de"]
+    record["image_description"]["working_description_de"] = text + " neu"
+    assert sr.entry_state(record, key) == "stale"
+    with pytest.raises(review.ContentChanged):
+        sr.record_review(record, key, "Zweite", True, "", digest)
+
+
+def test_second_review_needs_final_approval_and_exports_to_csv(tmp_path):
+    from kinderbuch_bildlabor import export
+    from kinderbuch_bildlabor import second_review as sr
+
+    record = ready_record()
+    assert sr.summary(record) is None
+    with pytest.raises(sr.SecondReviewBlocked):
+        sr.record_review(record, "image_description", "Zweite", True, "", "x")
+    record = approved_record()
+    digest = sr.content_hash(record, "image_description")
+    sr.record_review(record, "image_description", "=Zweite", True, "", digest)
+    rows = export.csv_rows(record, "2026-11-13T00:00:00+00:00")
+    assert rows[0]["zweitpruefung_stand"].startswith("1 Zustimmung")
+    path = tmp_path / "a.csv"
+    export.write_csv(rows, path)
+    assert "'=Zweite" in path.read_text(encoding="utf-8-sig")
+    assert record["second_review"]["image_description"]["by"] == "=Zweite"

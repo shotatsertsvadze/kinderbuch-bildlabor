@@ -14,6 +14,7 @@ from kinderbuch_bildlabor import (
     export,
     ocr,
     review,
+    second_review,
     store,
     ui,
     validate,
@@ -477,6 +478,24 @@ def approve_object(object_id: str, seen: dict, acknowledged: bool) -> None:
     try:
         store.update_working_copy(src, approve, "Endbestätigung")
     except (review.ContentChanged, review.ApprovalBlocked) as error:
+        st.session_state.notice = str(error)
+    except OSError as error:
+        write_failed(error)
+
+
+def second_review_object(
+    object_id: str, key: str, agrees: bool, reason: str, seen_hash: str
+) -> None:
+    src = store.object_source(object_id)
+    try:
+        store.update_working_copy(
+            src,
+            lambda record: second_review.record_review(
+                record, key, reviewer(), agrees, reason, seen_hash
+            ),
+            "Zweitprüfung",
+        )
+    except (review.ContentChanged, second_review.SecondReviewBlocked) as error:
         st.session_state.notice = str(error)
     except OSError as error:
         write_failed(error)

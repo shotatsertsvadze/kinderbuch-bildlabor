@@ -181,9 +181,20 @@ def add_description_status(record: dict) -> bool:
     return True
 
 
+MIGRATION_SECOND_REVIEW = "Modellumstellung: Feld für die Zweitprüfung"
+
+
+def add_second_review(record: dict) -> bool:
+    if "second_review" in record:
+        return False
+    record["second_review"] = {}
+    return True
+
+
 MIGRATIONS = [
     (split_transcription_status, MIGRATION_SPLIT_TRANSCRIPTION),
     (add_description_status, MIGRATION_DESCRIPTION_STATUS),
+    (add_second_review, MIGRATION_SECOND_REVIEW),
 ]
 
 

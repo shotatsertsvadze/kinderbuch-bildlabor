@@ -8,13 +8,15 @@ import csv
 import io
 from pathlib import Path
 
-from kinderbuch_bildlabor import review, store
+from kinderbuch_bildlabor import review, second_review, store
 
 CSV_COLUMNS = [
     "objekt_id",
     "objekt_status",
     "endpruefung_person",
     "endpruefung_am",
+    "zweitpruefung_person",
+    "zweitpruefung_stand",
     "ppn",
     "titel",
     "physische_seite",
@@ -122,6 +124,7 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
     description = record["image_description"]
     classification = classification_columns(record)
     decisions = other_decisions(record)
+    second = second_review.summary(record)
     rows = []
     for region in record["region_annotations"]:
         x, y, w, h = region["xywh"]
@@ -139,6 +142,10 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
                 "objekt_status": record["status"],
                 "endpruefung_person": record.get("final_approval", {}).get("by"),
                 "endpruefung_am": record.get("final_approval", {}).get("at"),
+                "zweitpruefung_person": "; ".join(second["persons"]) or None
+                if second
+                else None,
+                "zweitpruefung_stand": second_review.summary_text(record),
                 "ppn": source["ppn"],
                 "titel": biblio["title"],
                 "physische_seite": source["physical_page_id"],

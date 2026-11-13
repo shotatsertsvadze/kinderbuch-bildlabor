@@ -6,6 +6,7 @@ from kinderbuch_bildlabor import (
     actions,
     decision_view,
     review,
+    second_review,
     ui,
     validate,
     workflow,
@@ -46,6 +47,7 @@ def validation_tab(cur: Current, collection: list[dict]) -> None:
         workflow.continue_button(cur.id, cur.record, f"{cur.id}-final-continue")
     decisions(cur, findings)
     final_approval(cur, state, findings)
+    second_review_section(cur)
     ui.section("Alle Prüfergebnisse")
     st.caption(
         "Alle Prüfungen laufen gegen die gespeicherten Quelldateien, ohne Netzabruf. "
@@ -119,6 +121,64 @@ def final_approval(cur: Current, state: str, findings: list) -> None:
     )
     if reason:
         st.caption(f"{ui.LOCK} Noch nicht möglich: {reason}")
+
+
+def second_review_section(cur: Current) -> None:
+    if not workflow.approved(cur.record):
+        return
+    ui.section("Zweitprüfung")
+    st.caption(
+        "Eine zweite Person sieht jeden Bereich durch und stimmt zu oder weicht mit Begründung ab. "
+        "Der Name ist nur eine Konvention ohne Anmeldung, und die Zweitprüfung ist keine "
+        "Ground-Truth-Freigabe. Eine Änderung am Inhalt macht den Eintrag veraltet."
+    )
+    st.markdown(f"**Stand:** {second_review.summary_text(cur.record)}")
+    labels = {
+        "open": "offen",
+        "agree": "Zustimmung",
+        "disagree": "Abweichung",
+        "stale": "veraltet",
+    }
+    reviewer = actions.reviewer()
+    for area in review.review_areas(cur.record):
+        key = second_review.area_key(area)
+        state = second_review.entry_state(cur.record, key)
+        entry = cur.record.get("second_review", {}).get(key)
+        with st.expander(f"{area['label_de']}: {labels[state]}"):
+            if entry:
+                st.caption(
+                    f"Zuletzt {entry['by']} · {ui.local_time(entry['at'])}: "
+                    + (
+                        "Zustimmung"
+                        if entry["agrees"]
+                        else f"Abweichung, {entry['reason']}"
+                    )
+                )
+            base = f"{cur.id}-second-{key}"
+            agrees = st.radio(
+                "Ergebnis",
+                ["Zustimmung", "Abweichung"],
+                key=f"{base}-verdict",
+                horizontal=True,
+            )
+            reason = st.text_input("Begründung (bei Abweichung)", key=f"{base}-reason")
+            st.button(
+                "Zweitprüfung speichern",
+                key=f"{base}-save",
+                disabled=not reviewer,
+                on_click=actions.second_review_object,
+                args=(
+                    cur.id,
+                    key,
+                    agrees == "Zustimmung",
+                    reason,
+                    second_review.content_hash(cur.record, key),
+                ),
+            )
+    if not reviewer:
+        st.caption(
+            f"{ui.LOCK} Tragen Sie oben unter „Prüfende Person“ Ihren Namen ein."
+        )
 
 
 def decisions(cur: Current, findings: list) -> None:

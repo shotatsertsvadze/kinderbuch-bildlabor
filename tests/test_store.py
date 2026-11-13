@@ -62,6 +62,7 @@ def test_migration_splits_transcription_status_per_field():
     assert store.migrate_record(record) == [
         store.MIGRATION_SPLIT_TRANSCRIPTION,
         store.MIGRATION_DESCRIPTION_STATUS,
+        store.MIGRATION_SECOND_REVIEW,
     ]
     assert "review_status" not in record["transcription"]
     assert record["transcription"]["review_status_by_field"] == {
@@ -91,6 +92,7 @@ def test_existing_work_file_is_migrated_once_and_keeps_history(tmp_path):
         "Bestätigung Region",
         store.MIGRATION_SPLIT_TRANSCRIPTION,
         store.MIGRATION_DESCRIPTION_STATUS,
+        store.MIGRATION_SECOND_REVIEW,
     ]
     assert migrated["record"]["review_log"] == old["record"]["review_log"]
     assert (
@@ -99,7 +101,7 @@ def test_existing_work_file_is_migrated_once_and_keeps_history(tmp_path):
     )
 
     again = store.load_working_copy(PILOT, work_dir=tmp_path)
-    assert len(again["change_log"]) == 3
+    assert len(again["change_log"]) == 4
 
 
 def test_simultaneous_saves_lose_no_update(tmp_path):
@@ -248,3 +250,19 @@ def test_write_syncs_temp_file_before_replacing(tmp_path, monkeypatch):
     monkeypatch.setattr(store.Path, "replace", replace)
     store.write_json(path, {"ok": 1})
     assert order == ["fsync", "replace"]
+
+
+def test_legacy_working_copy_gets_second_review_field_with_snapshot(tmp_path):
+    src = store.object_source("pilot-001")
+    working = store.new_working_copy(src)
+    del working["record"]["second_review"]
+    path = store.work_path("pilot-001", tmp_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    store.write_json(path, working)
+    before = path.read_bytes()
+
+    loaded = store.load_working_copy(src, tmp_path)
+
+    assert loaded["record"]["second_review"] == {}
+    snapshots = list((tmp_path / ".history" / "pilot-001").glob("*.json"))
+    assert [s.read_bytes() for s in snapshots] == [before]

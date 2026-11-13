@@ -104,6 +104,10 @@ Stand. Wurde der Inhalt inzwischen anderswo geändert, wird sie abgelehnt.
 
 `<id>.annotations.json` ist eine `AnnotationPage` (W3C Web Annotation) mit einer Annotation je Region: `FragmentSelector` `xywh=x,y,w,h` in Pixeln des Ausgangsbilds, Bodies für Beschreibung (`describing`), Suchbegriffe (`tagging`) und Transkription (`supplementing`). `bl:status` ist `confirmed` oder `draft`; die Endbestätigung ist keine Ground Truth. Die Datei ist nur eine Darstellung und ändert weder Datensatz noch JSON-Export.
 
+## Zweitprüfung
+
+`second_review` ordnet jedem Prüfbereich (Schlüssel wie im `review_log`, Klassifikation als `classification`) den letzten Eintrag zu: `by`, `at`, `agrees`, `reason`, `content_hash`. Die CSV nennt in `zweitpruefung_person` und `zweitpruefung_stand` die Personen und die Zählung (Zustimmung, Abweichung, offen, veraltet) und bleibt leer, solange das Objekt nicht endbestätigt ist. Siehe ADR 0006.
+
 Grenze des Annotationsexports: `target.source` ist die IIIF-Bild-URL (Bildinfo ohne `/info.json`), keine Canvas-ID. Die METS-Daten nennen nur die Manifest-URL des Werks (`dv:iiif`), keine Canvas-IDs der Seiten; eine Canvas-ID wird nicht geraten. Mirador ordnet Annotationen über die Canvas-ID zu, deshalb erscheinen sie ohne Zuordnung zur Manifest-Canvas nicht von selbst. Die Bildbeschreibung steht nur an der ersten Illustrationsregion; `bl:` ist als `urn:bildlabor:vocab#` im `@context` definiert.
 
 Mirador 3.4.3 zeigt eine Annotation nur an, wenn ihre `motivation` `commenting` enthält; deshalb steht dort `["describing", "commenting"]`. Geprüft wurde das mit einer lokalen Manifest-Kopie und der echten Canvas-ID aus dem Live-Manifest der SBB (`…/dc/1814684999-0006/canvas`), die in den Repo-Daten fehlt.

@@ -10,6 +10,7 @@ from kinderbuch_bildlabor import (
     regions,
     review,
     store,
+    triage,
     ui,
     validate,
     workflow,
@@ -65,6 +66,7 @@ def render(collection: list[ui.Current]) -> None:
     for index, cur in enumerate(collection):
         with columns[index % 3], st.container(border=True, key=f"card-{cur.id}"):
             card(cur, records)
+    queue(collection)
     case_study(collection)
     example_view.render()
     second_example(by_id[SECOND].record)
@@ -74,6 +76,29 @@ def render(collection: list[ui.Current]) -> None:
         collection_export(collection)
     with backup_column, st.container(border=True):
         backup_view.render()
+
+
+def queue(collection: list[ui.Current]) -> None:
+    ui.section("Warteschlange: was zuerst geprüft werden sollte")
+    st.caption(
+        "Reihenfolge: offene Klassenabweichung, dann die meisten offenen Blocker, dann die "
+        "wenigsten bestätigten Bereiche; endbestätigte Objekte zuletzt."
+    )
+    by_id = {cur.id: cur for cur in collection}
+    for number, item in enumerate(triage.rank(collection), start=1):
+        with st.container(border=True, horizontal=True, key=f"queue-{item.id}"):
+            st.markdown(
+                f"**{number}. {item.title}** ({by_id[item.id].record['source']['scan_number']})  \n"
+                f"{'Klassenabweichung offen · ' if item.disagreement else ''}"
+                f"{item.blockers} Blocker · {item.confirmed} von {item.total} Bereichen bestätigt"
+                f"{' · endbestätigt' if item.approved else ''}"
+            )
+            st.button(
+                "Öffnen",
+                key=f"queue-open-{item.id}",
+                on_click=actions.open_object,
+                args=(item.id,),
+            )
 
 
 def hero(cur: ui.Current) -> None:

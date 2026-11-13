@@ -1002,3 +1002,13 @@ def test_review_keys_reject_unknown_keys():
     assert review_keys.normalize_press({"press": {"seq": "1", "key": "x"}}) is None
     assert review_keys.normalize_press({"press": {"seq": 1, "key": "n"}}) is None
     assert review_keys.normalize_press({"press": None}) is None
+
+
+def test_queue_lists_objects_and_open_button_opens_first():
+    app = open_app("sammlung")
+    buttons = [b for b in app.button if b.key and b.key.startswith("queue-open-")]
+    assert len(buttons) == 6
+    first = buttons[0].key.removeprefix("queue-open-")
+    buttons[0].click().run()
+    assert not app.exception
+    assert app.radio(key="view").value == first

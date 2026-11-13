@@ -411,6 +411,8 @@ label:has(input:focus-visible) {
   top: 3.75rem;
   z-index: 20;
   background: var(--bl-canvas);
+  /* deckt den Seitenrand mit ab, damit Rahmen darunter nicht seitlich hervorschauen */
+  box-shadow: -1rem 0 0 var(--bl-canvas), 1rem 0 0 var(--bl-canvas);
 }
 
 /* ---------- Kopfzeile deckend: Inhalt scheint beim Blättern nicht durch --------------------- */

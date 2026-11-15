@@ -8,12 +8,16 @@ from PIL import Image
 
 from kinderbuch_bildlabor import (
     actions,
+    agreement,
     backup_view,
     colibri,
+    colibri_sample,
+    compare_view,
     example_view,
     matrix,
     regions,
     review,
+    search,
     store,
     triage,
     ui,
@@ -72,6 +76,9 @@ def render(collection: list[ui.Current]) -> None:
         with columns[index % 3], st.container(border=True, key=f"card-{cur.id}"):
             card(cur, records)
     queue(collection)
+    agreement_panel(collection)
+    search_panel(collection)
+    compare_view.render(collection)
     class_matrix(collection)
     case_study(collection)
     example_view.render()
@@ -105,6 +112,66 @@ def queue(collection: list[ui.Current]) -> None:
                 on_click=actions.open_object,
                 args=(item.id,),
             )
+
+
+def agreement_panel(collection: list[ui.Current]) -> None:
+    ui.section("Übereinstimmung von Erst- und Zweitprüfung")
+    result = agreement.collect({cur.id: cur.record for cur in collection})
+    st.caption(
+        "Konventionsstatistik nach selbst angegebenen Namen, keine Ground Truth. "
+        "Gezählt werden nur gültige Zweitprüfungen; die Endbestätigung gilt als Zustimmung der ersten Person."
+    )
+    if not result["per_area"]:
+        st.info("Noch keine gültige Zweitprüfung vorhanden.")
+        return
+    st.dataframe(
+        [
+            {"Bereich": k, "Zustimmung": c["agree"], "Abweichung": c["disagree"]}
+            for k, c in sorted(result["per_area"].items())
+        ],
+        hide_index=True,
+        key="agreement-table",
+    )
+    kappa = result["kappa"]
+    st.caption(
+        "Cohens Kappa: "
+        + (
+            f"{kappa:.2f}"
+            if kappa is not None
+            else "nicht berechenbar (ein Urteil ist immer gleich)"
+        )
+    )
+    for object_id in result["disputed"]:
+        st.button(
+            f"Strittig, öffnen: {object_id}",
+            key=f"agreement-open-{object_id}",
+            on_click=actions.open_object,
+            args=(object_id,),
+        )
+
+
+def search_panel(collection: list[ui.Current]) -> None:
+    ui.section("Suche in der Sammlung")
+    query = st.text_input("Suchbegriff", key="search-query")
+    wanted = st.multiselect(
+        "Status", search.STATUSES, default=search.STATUSES, key="search-status"
+    )
+    st.caption(
+        "Sucht in Titel, Autor, Beschreibung, Suchbegriffen und Transkriptionen; Groß-/Kleinschreibung "
+        "ist egal, typografische Varianten (etwa „Thür“ und „Tür“) bleiben verschieden."
+    )
+    hits = search.search(
+        {cur.id: cur.record for cur in collection}, query, tuple(wanted)
+    )
+    for index, (object_id, name, text) in enumerate(hits):
+        st.button(
+            f"Öffnen: {object_id}" + (f" – {name}: {text}" if name else ""),
+            key=f"search-open-{index}",
+            on_click=actions.open_object,
+            args=(object_id,),
+        )
+    if not hits:
+        st.info("Keine Treffer.")
 
 
 def colibri_path() -> Path:
@@ -188,6 +255,38 @@ def full_matrix(sample: dict[tuple[str, str], list[str]]) -> None:
         st.caption("Prüfsumme entspricht dem Stand vom 06.11.2026.")
     else:
         st.caption("Abweichende Prüfsumme, Zahlen gelten für diese Datei.")
+    disagreement_sample(path)
+
+
+@st.cache_data(max_entries=2, show_spinner="Stichprobe wird gezogen ...")
+def _sample(path: str, size: int, mtime_ns: int) -> list[dict[str, str]]:
+    return colibri_sample.sample_disagreements(Path(path))
+
+
+def disagreement_sample(path: Path) -> None:
+    ui.section("Stichprobe abweichender Klassen")
+    stat = path.stat()
+    rows = _sample(str(path), stat.st_size, stat.st_mtime_ns)
+    st.caption(
+        "Bis zu drei Zeilen je Klassenpaar, bei denen manuelle und automatische Klasse "
+        "abweichen; feste Zufallsauswahl, gleiche Datei gleiche Stichprobe. Nur Anzeige: "
+        "nichts wird gespeichert, keine Ground Truth."
+    )
+    st.dataframe(
+        [
+            {
+                "manuell": r["groundtruth"],
+                "automatisch": r["classification"],
+                "Scan": colibri_sample.scan_url(r),
+            }
+            for r in rows
+        ],
+        hide_index=True,
+        key="colibri-sample",
+        column_config={
+            "Scan": st.column_config.LinkColumn("Scan", display_text="Scan öffnen")
+        },
+    )
 
 
 def hero(cur: ui.Current) -> None:

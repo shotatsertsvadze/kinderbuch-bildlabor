@@ -45,3 +45,27 @@ def test_header_only(tmp_path):
 def test_missing_column(tmp_path):
     with pytest.raises(ValueError, match="classification"):
         colibri.aggregate(write(tmp_path, "groundtruth,x\na,b\n"))
+
+
+SAMPLE_CSV = "file,groundtruth,classification\n" + "".join(
+    f"data/PPN1/{i:08d}_0.jpg,{m},{a}\n"
+    for i, (m, a) in enumerate(
+        [("Abbildung", "Karte")] * 20
+        + [("Abbildung", "Abbildung")] * 5
+        + [("-0", "Karte")] * 5
+        + [("Karte", "Exlibris")] * 2
+    )
+)
+
+
+def test_sample_reproducible_and_stratified(tmp_path):
+    from kinderbuch_bildlabor import colibri_sample
+
+    path = write(tmp_path, SAMPLE_CSV)
+    first = colibri_sample.sample_disagreements(path, per_pair=3)
+    assert first == colibri_sample.sample_disagreements(path, per_pair=3)
+    pairs = [(r["groundtruth"], r["classification"]) for r in first]
+    assert pairs.count(("Abbildung", "Karte")) == 3
+    assert pairs.count(("Karte", "Exlibris")) == 2
+    assert all(p[0] not in ("-0", "") and p[0] != p[1] for p in pairs)
+    assert colibri_sample.scan_url(first[0]).startswith("https://content.")

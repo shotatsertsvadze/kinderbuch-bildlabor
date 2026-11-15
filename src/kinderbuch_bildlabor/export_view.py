@@ -6,7 +6,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from kinderbuch_bildlabor import actions, export, store, ui, workflow
+from kinderbuch_bildlabor import actions, export, report, store, timeline, ui, workflow
 from kinderbuch_bildlabor.ui import Current
 
 ICONS = {
@@ -60,7 +60,24 @@ def export_tab(cur: Current) -> None:
         with st.expander("Inhalt der CSV-Datei (Stand des Exports)"):
             with csv_path.open(encoding="utf-8-sig", newline="") as handle:
                 st.dataframe(list(csv.DictReader(handle)), hide_index=True)
+    report_download(cur, state)
     review_log(cur.record)
+
+
+def report_download(cur: Current, state: str) -> None:
+    ui.section("Prüfbericht")
+    page = ui.page_image(cur.src.page_image)
+    st.download_button(
+        "Prüfbericht als HTML herunterladen",
+        report.build(cur.record, page, state),
+        file_name=f"{cur.id}-pruefbericht.html",
+        mime="text/html",
+        key=f"{cur.id}-report",
+        icon=":material/description:",
+    )
+    st.caption(
+        "Zum Drucken als PDF im Browser öffnen und drucken. Nur eine Darstellung, keine Ground Truth."
+    )
 
 
 def stages(state: str, exported: dict | None, result: dict | None, approved: bool):
@@ -147,7 +164,8 @@ def saved_panel(cur, exported, result, approved, json_path: Path, csv_path: Path
         )
         st.markdown(
             f"Dateien: `{json_path.name}`, `{csv_path.name}` und "
-            f"`{actions.annotations_path(cur.id).name}` (W3C Web Annotation)  \nOrdner: `{json_path.parent}`"
+            f"`{actions.annotations_path(cur.id).name}` (W3C Web Annotation), "
+            f"`{actions.pagexml_path(cur.id).name}` (PAGE-XML)  \nOrdner: `{json_path.parent}`"
         )
         if not approved:
             st.caption(
@@ -294,6 +312,21 @@ def review_log(record: dict) -> None:
             icon=ui.INFO,
         )
         return
+    with st.expander("Verlauf in Zeitfolge"):
+        st.dataframe(
+            [
+                {
+                    "Zeitpunkt": ui.local_time(e["at"]),
+                    "Art": e["kind"],
+                    "Person": e["person"],
+                    "Bereich": e["area"],
+                    "Vorgang": e["text"],
+                }
+                for e in timeline.events(record)
+            ],
+            hide_index=True,
+            key="timeline-table",
+        )
     st.dataframe(
         [
             {

@@ -11,6 +11,7 @@ import streamlit as st
 
 from kinderbuch_bildlabor import (
     annotations,
+    pagexml,
     export,
     ocr,
     review,
@@ -399,6 +400,10 @@ def annotations_path(object_id: str):
     return store.EXPORT_DIR / f"{object_id}.annotations.json"
 
 
+def pagexml_path(object_id: str):
+    return store.EXPORT_DIR / f"{object_id}.page.xml"
+
+
 def file_digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -417,6 +422,10 @@ def run_export(object_id: str) -> bool:
         store.write_json(
             annotations_path(object_id),
             annotations.annotation_page(current["record"], data["exported_at"]),
+        )
+        store.write_text(
+            pagexml_path(object_id),
+            pagexml.page_xml(current["record"], data["exported_at"]),
         )
     except OSError as error:
         write_failed(error)

@@ -21,3 +21,20 @@ def test_order_ranks_disagreement_then_blockers_then_fewest_confirmed_approved_l
         "many",
         "done",
     ]
+
+
+def test_search_is_literal_and_filters_status():
+    import json
+    from pathlib import Path
+
+    from kinderbuch_bildlabor import search
+
+    record = json.loads(Path("sammlung/genovefa/scan_022.json").read_text("utf-8"))
+    records = {"a": record}
+    both = ("offen", "strittig", "endbestätigt")
+    assert search.search(records, "TREPPE", both)
+    assert not search.search(records, "Treppe", ("endbestätigt",))
+    record["image_description"]["working_description_de"] = "Thür und Tür"
+    assert [h[2] for h in search.search(records, "thür", both)] == ["Thür und Tür"]
+    assert [h[2] for h in search.search(records, "tür", both)] == ["Thür und Tür"]
+    assert not search.search(records, "thuer", both)

@@ -66,3 +66,47 @@ def test_context_defines_bl_prefix():
 def test_motivation_includes_commenting_for_mirador():
     record = store.new_working_copy(store.object_source("pilot-001"))["record"]
     assert all("commenting" in i["motivation"] for i in page(record)["items"])
+
+
+def test_pagexml_coords_match_regions_and_flag_drafts():
+    import copy
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+
+    from kinderbuch_bildlabor import pagexml
+
+    record = json.loads(Path("sammlung/genovefa/scan_022.json").read_text("utf-8"))
+    before = copy.deepcopy(record)
+    record["transcription"] = {
+        "titel": "Thür <&>",
+        "review_status_by_field": {"titel": "unreviewed"},
+    }
+    record["region_annotations"][0]["transcription_field"] = "titel"
+    before = copy.deepcopy(record)
+    root = ET.fromstring(pagexml.page_xml(record, "2026-01-01T00:00:00Z"))
+    ns = {"p": pagexml.NS}
+    region = record["region_annotations"][0]
+    x, y, w, h = region["xywh"]
+    coords = root.find(".//p:Coords", ns).get("points")
+    assert coords.startswith(f"{x},{y} {x + w},{y} ")
+    assert root.find(".//p:Unicode", ns).text == "Thür <&>"
+    assert root.find(".//p:TextEquiv", ns).get("custom") == "status:draft"
+    assert record == before
+
+
+def test_report_escapes_text_and_states_caveat():
+    from pathlib import Path
+
+    from PIL import Image
+
+    from kinderbuch_bildlabor import report
+
+    record = json.loads(Path("sammlung/genovefa/scan_022.json").read_text("utf-8"))
+    record["image_description"]["working_description_de"] = "<script>x</script>"
+    record["decisions"] = {
+        "k": {"outcome_de": "Ja", "rationale_de": "Grund & so", "by": "P", "at": "t"}
+    }
+    html = report.build(record, Image.new("RGB", (2000, 3000)), "stale")
+    assert "<script>" not in html and "&lt;script&gt;" in html
+    assert "Grund &amp; so" in html and "Keine Ground Truth" in html
+    assert "Export veraltet" in html

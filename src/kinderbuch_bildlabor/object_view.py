@@ -4,11 +4,14 @@ import streamlit as st
 
 from kinderbuch_bildlabor import (
     actions,
+    authority,
     iconclass,
     ocr,
+    proposals,
     region_canvas,
     regions,
     review,
+    similar,
     store,
     ui,
     workflow,
@@ -183,6 +186,8 @@ def region_tab(cur: Current) -> None:
             key=f"{cur.id}-region-choice",
         )
     canvas_section(cur)
+    proposal_section(cur, by_id[choice])
+    similar_section(cur, by_id[choice])
     withdrawn_regions_list(cur)
     left, right = ui.image_and_controls(pinned="regionen")
     with right:
@@ -203,6 +208,71 @@ def region_tab(cur: Current) -> None:
         f"Koordinaten sind Pixel [x, y, Breite, Höhe] im Ausgangsbild {width} × {height}, gezählt ab der "
         "linken oberen Ecke. Die verkleinerte Anzeige ändert sie nicht."
     )
+
+
+def apply_proposal(region_id: str, xywh: list[int]) -> None:
+    for key, value in zip(actions.xywh_keys(region_id), xywh):
+        st.session_state[key] = value
+
+
+def proposal_section(cur: Current, region: dict) -> None:
+    if not proposals.available():
+        return
+    key = f"{cur.id}-proposal"
+    with st.expander("Vorschlag eines lokalen Modells", key=f"{key}-expander"):
+        st.caption(
+            f"Fragt auf Ihren Knopfdruck das lokale Modell {proposals.model()} (Ollama, dieser Rechner). "
+            "Der Vorschlag ist ein ungeprüfter Entwurf: nichts wird gespeichert oder bestätigt."
+        )
+        if st.button("Vorschlag berechnen", key=f"{key}-run"):
+            try:
+                st.session_state[key] = proposals.propose(
+                    ui.page_image(cur.src.page_image)
+                )
+            except (OSError, ValueError, KeyError) as error:
+                st.session_state.pop(key, None)
+                st.error(f"Kein Vorschlag erhalten: {error}", icon=ui.ERROR)
+        proposal = st.session_state.get(key)
+        if not proposal:
+            return
+        st.markdown(f"Rahmen [x, y, Breite, Höhe]: `{proposal['xywh']}`")
+        st.text(proposal["description_de"])
+        st.button(
+            "Rahmen in die Eingabefelder übernehmen (nicht gespeichert)",
+            key=f"{key}-apply",
+            on_click=apply_proposal,
+            args=(region["id"], proposal["xywh"]),
+        )
+
+
+def store_collection() -> list[Current]:
+    return [Current(src, store.load_working_copy(src)) for src in store.catalog()]
+
+
+def similar_section(cur: Current, region: dict) -> None:
+    key = f"{cur.id}-similar"
+    with st.expander("Ähnliche Illustrationen", key=f"{key}-expander"):
+        st.caption(
+            "Vergleicht Kontrast-Umriss und Farbverteilung mit den anderen Regionen der Sammlung; "
+            "das sagt nichts über Inhalt oder Zugehörigkeit. Der Index liegt im Datenordner, nichts wird bestätigt."
+        )
+        if not st.button("Ähnliche suchen", key=f"{key}-run"):
+            return
+        items = [
+            (c.id, r, ui.page_image(c.src.page_image))
+            for c in store_collection()
+            for r in c.record["region_annotations"]
+        ]
+        index = similar.build(items)
+        mine = similar.entry_key(cur.id, region)
+        for other, score in similar.nearest(index[mine], index, mine):
+            object_id, region_id, _ = other.split("|")
+            st.button(
+                f"Öffnen: {object_id} / {region_id} (Abstand {score:.2f})",
+                key=f"{key}-open-{other}",
+                on_click=actions.open_object,
+                args=(object_id,),
+            )
 
 
 CANVAS_TYPES = {"illustration": "Illustration", "text": "Text"}
@@ -542,7 +612,42 @@ def biblio_tab(cur: Current) -> None:
             if sync != ui.CLEAN
             else None,
         )
+    authority_section(cur)
     tab_continue(cur, "Angaben")
+
+
+def authority_section(cur: Current) -> None:
+    key = f"{cur.id}-gnd"
+    with st.expander("GND-Kandidaten suchen (lobid.org)", key=f"{key}-expander"):
+        st.caption(
+            "Sendet Ihren Suchbegriff erst auf Knopfdruck an lobid.org. Treffer sind Vorschläge: "
+            "nichts wird gespeichert, verknüpft oder bestätigt."
+        )
+        query = st.text_input("Name oder Begriff", key=f"{key}-query")
+        if st.button("Suchen", key=f"{key}-run", disabled=not query.strip()):
+            try:
+                st.session_state[key] = authority.search(query)
+            except (OSError, ValueError) as error:
+                st.session_state.pop(key, None)
+                st.error(f"Suche fehlgeschlagen: {error}", icon=ui.ERROR)
+        found = st.session_state.get(key)
+        if found is None:
+            return
+        if not found:
+            st.info("Keine Kandidaten gefunden.")
+            return
+        st.dataframe(found, hide_index=True, key=f"{key}-table")
+        pick = st.selectbox(
+            "Kandidat",
+            found,
+            format_func=lambda c: f"{c['name']} ({c['type']})",
+            key=f"{key}-pick",
+        )
+        st.text_input(
+            "URI (Entwurf, zum Kopieren)",
+            value=pick["uri"],
+            key=f"{key}-uri-{pick['uri']}",
+        )
 
 
 def description_editor(cur: Current) -> None:

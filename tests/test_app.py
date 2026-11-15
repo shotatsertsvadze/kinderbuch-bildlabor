@@ -609,7 +609,11 @@ def test_export_panel_names_saved_files_and_offers_separate_downloads():
         for m in texts(app, "markdown")
     )
     labels = [b.label for b in app.download_button]
-    assert labels == ["JSON herunterladen", "CSV herunterladen"]
+    assert labels == [
+        "JSON herunterladen",
+        "CSV herunterladen",
+        "Prüfbericht als HTML herunterladen",
+    ]
     assert any("Noch nicht geprüft" in c for c in texts(app, "caption"))
 
 
@@ -644,7 +648,10 @@ def test_csv_from_other_export_blocks_csv_download():
     exported_at = store.read_json(store.EXPORT_DIR / f"{PILOT}.json")["exported_at"]
     path.write_text(text.replace(exported_at, "2000-01-01T00:00:00+00:00"), "utf-8-sig")
     app.run()
-    assert [b.label for b in app.download_button] == ["JSON herunterladen"]
+    assert [b.label for b in app.download_button] == [
+        "JSON herunterladen",
+        "Prüfbericht als HTML herunterladen",
+    ]
     assert any("anderen Export" in w for w in texts(app, "warning"))
 
 
@@ -1095,3 +1102,24 @@ def test_full_colibri_matrix_loaded(temp_data, monkeypatch):
     assert sample_buttons == [
         b.key for b in app.button if str(b.key).startswith("matrix-open-")
     ]
+
+
+def test_compare_view_renders_both_objects_without_saving():
+    app = open_app("sammlung")
+    before = {p: p.read_bytes() for p in store.WORK_DIR.rglob("*.json")}
+    app.selectbox(key="compare-b").set_value("genovefa-scan-014").run()
+    assert not app.exception
+    assert app.selectbox(key="compare-a").value == PILOT
+    assert app.selectbox(key="compare-b").value == "genovefa-scan-014"
+    from kinderbuch_bildlabor import compare_view
+
+    a, b = (
+        store.load_working_copy(store.object_source(i))["record"]
+        for i in (PILOT, "genovefa-scan-014")
+    )
+    rows = compare_view.rows(a, b)
+    assert {r["Vergleich"] for r in rows} <= {"gleich", "abweichend"}
+    assert next(r for r in rows if r["Feld"] == "Verfasser")["Objekt A"] == str(
+        a["bibliographic_metadata_from_colibri"]["author_display"] or ""
+    )
+    assert {p: p.read_bytes() for p in store.WORK_DIR.rglob("*.json")} == before

@@ -429,3 +429,39 @@ def test_second_review_needs_final_approval_and_exports_to_csv(tmp_path):
     export.write_csv(rows, path)
     assert "'=Zweite" in path.read_text(encoding="utf-8-sig")
     assert record["second_review"]["image_description"]["by"] == "=Zweite"
+
+
+def test_timeline_orders_events_and_keeps_withdrawn_text():
+    from kinderbuch_bildlabor import timeline
+
+    record = record_with_text_region()
+    region = record["region_annotations"][1]
+    record["transcription"][region["transcription_field"]] = "Hallo"
+    review.withdraw_region(record, region["id"], "Fehler", "Person", region["xywh"])
+    events = timeline.events(record)
+    assert [e["at"] for e in events] == sorted(e["at"] for e in events)
+    last = events[-1]
+    assert last["kind"] == "Zurückgezogen" and last["person"] == "Person"
+    assert "Fehler" in last["text"] and "Hallo" in last["text"]
+    assert len(events) == len(record["review_log"])
+
+
+def test_agreement_kappa_and_collection_counts():
+    from kinderbuch_bildlabor import agreement, second_review
+
+    assert (
+        agreement.kappa([True, True, False, False], [True, False, False, False]) == 0.5
+    )
+    assert agreement.kappa([True, True], [True, True]) is None
+    assert agreement.kappa([], []) is None
+
+    record = approved_record()
+    areas = [second_review.area_key(a) for a in review.review_areas(record)]
+    seen = second_review.content_hash(record, areas[0])
+    second_review.record_review(
+        record, areas[0], "Zweite Person", False, "falsch", seen
+    )
+    result = agreement.collect({"a": record, "b": {}})
+    assert result["disputed"] == ["a"]
+    assert result["per_area"][areas[0]]["disagree"] == 1
+    assert result["kappa"] is None

@@ -7,6 +7,7 @@ from kinderbuch_bildlabor import (
     actions,
     backup_view,
     example_view,
+    matrix,
     regions,
     review,
     store,
@@ -67,6 +68,7 @@ def render(collection: list[ui.Current]) -> None:
         with columns[index % 3], st.container(border=True, key=f"card-{cur.id}"):
             card(cur, records)
     queue(collection)
+    class_matrix(collection)
     case_study(collection)
     example_view.render()
     second_example(by_id[SECOND].record)
@@ -99,6 +101,30 @@ def queue(collection: list[ui.Current]) -> None:
                 on_click=actions.open_object,
                 args=(item.id,),
             )
+
+
+def class_matrix(collection: list[ui.Current]) -> None:
+    ui.section("Klassenabweichung: manuelle gegen automatische Klasse")
+    st.caption(
+        "Zählt alle Objekte der lokalen Stichprobe mit beiden Klassen, auch solche, bei denen "
+        "manuelle und automatische Klasse übereinstimmen; nicht die 53.533 Colibri-Zeilen."
+    )
+    table, missing = matrix.cells(collection)
+    titles = {cur.id: cur.record["source"]["scan_number"] for cur in collection}
+    for (manual, automatic), ids in sorted(table.items()):
+        with st.container(border=True, key=f"matrix-{manual}-{automatic}"):
+            st.markdown(
+                f"**manuell „{manual}“ x automatisch „{automatic}“:** {len(ids)}"
+            )
+            for object_id in ids:
+                st.button(
+                    f"Öffnen: Scan {titles[object_id]} ({object_id})",
+                    key=f"matrix-open-{object_id}",
+                    on_click=actions.open_object,
+                    args=(object_id,),
+                )
+    if missing:
+        st.caption(f"ohne Klasse: {len(missing)}")
 
 
 def hero(cur: ui.Current) -> None:

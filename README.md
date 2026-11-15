@@ -115,6 +115,8 @@ Die Befehle gelten für macOS, Linux und Windows. mypy legt seinen Zwischenspeic
 ab; den Ordner markiert mypy selbst als von Git ignoriert, er kann jederzeit gelöscht werden. Die
 Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` nicht.
 
+Optional: `BILDLABOR_OLLAMA_MODEL` wählt das lokale Modell für Vorschläge (Standard `qwen2.5vl`; die Funktion erscheint nur, wenn Ollama auf localhost läuft).
+
 ## Weitere Dokumente
 
 [Datensatz und Auswahl](docs/DATENSATZ.md) · [Offene Punkte](docs/OFFENE_PUNKTE.md) ·

@@ -53,3 +53,9 @@ Siehe [BEZUG_ZUR_STELLE.md](BEZUG_ZUR_STELLE.md), Abschnitt „Nicht gezeigt“.
 - Zweitprüfung (ADR 0006): Der Name der zweiten Person ist nur eine Konvention ohne Anmeldung. Eine echte Unabhängigkeit ist damit nicht belegt, und Ground Truth wird weiterhin nicht vergeben.
 
 - Ganze Colibri-CSV (optional): Die Startseite kann sie auswerten, wenn sie unter `data/colibri/` des Datenordners oder über `BILDLABOR_COLIBRI_CSV` liegt. Nur lesen, nicht eingecheckt, ungeprüfte Zählung, keine Ground Truth.
+
+## Zusätzliche Hilfsansichten (nur Anzeige oder Entwurf)
+
+- Stichprobe abweichender Colibri-Klassen (feste Zufallsauswahl, bis zu drei je Klassenpaar), Übereinstimmung von Erst- und Zweitprüfung (Kappa meist „nicht berechenbar“, weil die Endbestätigung immer zustimmt; keine Überlappungsmaße, da keine Geometrie der Zweitprüfung gespeichert wird), Suche mit Statusfilter (buchstäblich, nur casefold) und Zwei-Objekte-Vergleich auf der Startseite.
+- Verlauf in Zeitfolge und HTML-Prüfbericht im Export-Reiter; PAGE-XML (`<id>.page.xml`) wird beim Export mit JSON, CSV und Annotationen geschrieben, unbestätigte Texte sind als Entwurf markiert.
+- Lokaler Modellvorschlag (Ollama, ADR 0007), GND-Kandidatensuche (lobid, ADR 0008; die URI erscheint nur als Kopiervorlage, kein Datensatzfeld) und ähnliche Illustrationen (Differenz-Hash und Farbraster, kein Inhaltsvergleich; Index unter `<Datenordner>/index/`). Alle ohne Bestätigung und ohne Ground Truth.

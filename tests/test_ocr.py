@@ -112,3 +112,41 @@ def test_candidates_dedupe_reject_stale_and_do_not_confirm_transcription():
         record["transcription"]["review_status_by_field"][field]
         == review.TRANSCRIPTION_PROVISIONAL
     )
+
+
+def test_cer_and_wer_are_exact_and_literal():
+    assert ocr.cer("Heimath", "Heimath") == 0
+    assert ocr.cer("Heimath", "Heimat") == 1 / 7
+    assert ocr.cer("ſo", "so") == 0.5
+    assert ocr.cer("Mädchen", "Madchen") == 1 / 7
+    assert ocr.wer("die Heimath in Amerika", "die Heimat in Amerika") == 0.25
+    assert ocr.wer("a b", "a") == 0.5
+
+
+def test_cer_and_wer_without_reference_give_no_value():
+    assert ocr.cer("", "x") is None
+    assert ocr.wer("  ", "x") is None
+
+
+def test_cer_counts_code_points_without_unicode_normalization():
+    composed, decomposed = "Mädchen", "Mädchen"
+    assert ocr.cer(composed, composed) == 0
+    assert ocr.cer(composed, decomposed) == 2 / 7
+    assert ocr.cer(decomposed, composed) == 2 / 8
+
+
+def test_cer_and_wer_empty_strings():
+    assert ocr.cer("abc", "") == 1
+    assert ocr.wer("abc", "") == 1
+    assert ocr.cer("", "") is None
+    assert ocr.wer("", "") is None
+
+
+def test_cer_on_long_input():
+    reference = "ab" * 500
+    assert ocr.cer(reference, reference) == 0
+    assert ocr.cer(reference, reference + "x") == 1 / 1000
+    assert (
+        ocr.wer(" ".join(["wort"] * 300), " ".join(["wort"] * 299 + ["Wort"]))
+        == 1 / 300
+    )

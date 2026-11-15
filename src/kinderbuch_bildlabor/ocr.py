@@ -130,3 +130,26 @@ def text_diff(before: str, after: str) -> list[tuple[str, str]]:
         if b2 > b1:
             parts.append(("hinzugefügt", after[b1:b2]))
     return parts
+
+
+# Vergleich je Unicode-Codepoint: ä (ein Zeichen) und a + U+0308 (zwei) sind verschieden, es wird nicht normalisiert.
+def levenshtein(a: list | str, b: list | str) -> int:
+    previous = list(range(len(b) + 1))
+    for i, x in enumerate(a, start=1):
+        current = [i]
+        for j, y in enumerate(b, start=1):
+            current.append(
+                min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (x != y))
+            )
+        previous = current
+    return previous[-1]
+
+
+def cer(reference: str, text: str) -> float | None:
+    """Zeichenabstand zur Referenz in Anteilen; ohne Referenztext kein Wert."""
+    return levenshtein(reference, text) / len(reference) if reference else None
+
+
+def wer(reference: str, text: str) -> float | None:
+    words = reference.split()
+    return levenshtein(words, text.split()) / len(words) if words else None

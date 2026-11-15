@@ -3,8 +3,8 @@
 Design specification for the Kinderbuch-Bildlabor user interface. The concept is the
 **digitization studio** where these scans are made: neutral studio gray (the standard surround for
 judging color), crisp contemporary type, a vivid cobalt version of *Berliner Blau* reserved for the
-next action, and one signature element: the review path drawn as a **calibration strip**, like the
-color target photographed next to every library scan. The UI language stays German; this document
+next action, and one signature element: the review path as **one numbered workflow bar**, the
+only navigation of an object, with each step's state shown as icon, word and color. The UI language stays German; this document
 is written in English for the implementing agent.
 
 - **Implementation prompts:** [GG_CODER_PROMPTS.md](GG_CODER_PROMPTS.md)
@@ -46,7 +46,7 @@ precise look that is specific to this subject, and it helps the scans look right
 | Display type | Bricolage Grotesque | Contemporary grotesque with ink traps and a hint of print warmth that suits children's books, used only for headings and large values |
 | Text type | Geist | Crisp, neutral, highly legible UI face |
 | Utility type | Geist Mono | Labels and identifiers, like the slip that travels with a scan |
-| Signature | Prüfpfad as calibration strip | The steps really are a sequence; the strip shows each step's state as a patch |
+| Signature | Prüfpfad as the single workflow bar | The steps really are a sequence; one bar shows order, state and where you are |
 
 ## 3. Design principles
 
@@ -73,7 +73,7 @@ precise look that is specific to this subject, and it helps the scans look right
 | Inputs | Beige fields on beige page read as disabled; border contrast about 1.3:1 | White fields with a 3:1+ border (WCAG 1.4.11) |
 | Captions | Muted with `opacity: 0.7` (also fades icons and links) | Fixed muted ink color, 5.8:1 or better |
 | Status colors | Streamlit default yellow/blue/orange; "Offen" in orange, so a fresh object looks alarming | Harmonized semantic palette; untouched = neutral gray, amber only for saved-but-unconfirmed |
-| Prüfpfad steps | Row of round pills, hard to tell done from upcoming | Calibration strip: equal segments, gray/green/cobalt state edge, check icon |
+| Prüfpfad steps | Step buttons plus a separate tab bar with different names and order | One workflow bar: Übersicht, numbered steps, Bibliotheksdaten; the tab bar is hidden |
 | Scan display | Warm paper surround | Neutral gray mat ("Passepartout") behind every scan |
 | Region overlays | Same region is red on overview tabs (colored by number) and blue in the editor (colored by type) | One color per region type everywhere, color-blind-safe (Okabe-Ito) |
 | Object page | Header, Prüfpfad card, two captions and the keyboard hint push the scan below the fold at 1440×900 | Compact Prüfpfad; explanations folded in; work area starts higher |
@@ -101,7 +101,7 @@ All text/background pairs were checked against WCAG 2.2 (ratios in brackets).
 | `on-primary` | Label on primary buttons | `#FFFFFF` (7.4:1) | `#0B1640` (7.9:1) |
 | `primary-tint` | Hover/selected background | `#E9EDFB` | `#1D2547` |
 | `ok` | Done edge and icon | `#146C3A` | `#86D6A2` |
-| `open` | Upcoming edge in the strip | `#C9CDC7` | `#3A4047` |
+| `open` | Open part of progress bars | `#C9CDC7` | `#3A4047` |
 | `mat` | Neutral surround behind scans | `#E2E3E1` | `#0B0C0D` |
 
 Streamlit derives the label color of primary buttons itself and puts white on the light dark-mode
@@ -191,11 +191,11 @@ italic; do not use italics for emphasis (use weight 500–600).
 
 - **Spacing scale (rem):** 0.25 · 0.5 · 0.75 · 1 · 1.5 · 2 · 3 · 4. Use 1.5rem between related
   blocks, 3rem between page sections.
-- **Radius:** inputs and buttons 0.625rem; strip and expanders 0.75rem; scan mat 0.875rem; cards
+- **Radius:** inputs and buttons 0.625rem; expanders 0.75rem; scan mat 0.875rem; cards
   1rem; scan images 0.25rem (paper has nearly square corners).
 - **Elevation:** `shadow-1` (a 1–2px soft shadow) for cards; scans use `shadow-scan`. No other
   shadows. Prefer borders over shadows.
-- **Touch targets:** at least 40px high on desktop, 44px on phones (strip segments are 52px).
+- **Touch targets:** at least 40px high on desktop, 44px on phones (workflow bar items are 44px).
 
 ## 8. Layout and information architecture
 
@@ -203,32 +203,39 @@ italic; do not use italics for emphasis (use weight 500–600).
 
 ```
 ┌ Sidebar (sunken) ─────────┐ ┌ Main (canvas) ─────────────────────────────────────────────┐
-│ Kinderbuch-Bildlabor       │ │ Genovefa · Scan 22                                          │
-│                            │ │ Schmid, Christoph, von · Augsburg 1810 · … · PPN1772789429  │
-│ Start und Sammlung         │ │ ┌ Prüfpfad (white card) ────────────────────────────────────┐ │
-│ Eigenes Buch importieren   │ │ │ PRÜFPFAD · SCHRITT 2 VON 5 · …     Prüfende Person [____]  │ │
-│ 1 · Heimath, Scan 6        │ │ │ Nächste Handlung: …                                        │ │
-│   offen                    │ │ │ ▬▬▬▬▬▬░░░░░░░░ 1 von 4 bestätigt · 0 Entwurf · 3 offen    │ │
-│ 2 · Genovefa, Scan 14      │ │ │ ┌──────────┬──────────┬──────────┬──────────┬──────────┐  │ │
-│   1 von 4 bestätigt        │ │ │ │▀▀green▀▀▀│██cobalt██│▀▀gray▀▀▀▀│▀▀gray▀▀▀▀│▀▀gray▀▀▀▀│  │ │
-│▌5 · Genovefa, Scan 22      │ │ │ │✓ 1 Bild  │2 Klassen │3 Beschr. │4 Abschl. │5 Export  │  │ │
-│   1 von 4 bestätigt        │ │ │ └──────────┴──────────┴──────────┴──────────┴──────────┘  │ │
-│                            │ │ └────────────────────────────────────────────────────────────┘ │
-│ Eingaben werden erst mit … │ │ Übersicht | Klassifikation | Regionen | … | Prüfung | Export │
+│ Kinderbuch-Bildlabor       │ │ SAMMLUNG · GENOVEFA · AUGSBURG 1810                         │
+│ 6 Objekte · 1 in Arbeit ·… │ │ Genovefa · Scan 22                    Prüfende Person [____] │
+│ ▬▬░░░░░░░░░░░░░░░░░░░░░░  │ │ Schmid, Christoph, von · Augsburg 1810 · … · PPN1772789429  │
+│ Start und Sammlung         │ │ Übersicht │ → 1 · Bild prüfen  2 · Klassen …  5 · Export │ Bibl.│ (sticky)
+│ Eigenes Buch importieren   │ │ ────────── ═══════════ (underline = shown view) ──────────── │
+│ ◔ 1 · Heimath, Scan 6      │ │ ┌ Status card ──────────────────────────────────────────────┐ │
+│     1 von 7 bestätigt      │ │ │ PRÜFPFAD · SCHRITT 1 VON 5 …   Prüfbereiche: 0 von 4 …   │ │
+│▌○ 5 · Genovefa, Scan 22    │ │ │ Nächste Handlung: …            ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬       │ │
+│     offen                  │ │ │ Endbestätigung: …              ▸ Prüfbereiche (4)         │ │
+│ … keyboard help (objects)  │ │ └────────────────────────────────────────────────────────────┘ │
 └────────────────────────────┘ │ ┌ Scan on gray mat (sticky) ┐ ┌ Work panel ───────────────┐  │
                                │ │        [ scan ]            │ │ question · form · sign-off│  │
                                │ └────────────────────────────┘ └───────────────────────────┘  │
                                └─────────────────────────────────────────────────────────────┘
 ```
 
-- **Sidebar:** wordmark in Bricolage; navigation as list rows; the active row sits on `surface`
-  with a 3px inset cobalt edge; under each object a short state line (Phase 2).
-- **Object header:** H1 "Genovefa · Scan 22" in Bricolage, metadata line in `ink-muted`.
-- **Prüfpfad:** one white card. The two captions that currently sit below it (step explanation
-  and keyboard hint) move inside the card, into its footer or the "Prüfbereiche dieses Objekts"
-  expander. Goal at 1440×900: the tab bar and the top of the scan are visible without scrolling.
-- **Work area:** two columns, scan left (2) and controls right (3), as today (`ui.SPLIT`). The scan
-  column stays sticky on wide screens.
+- **Sidebar:** wordmark in Bricolage; collection progress line with a segmented bar; navigation as
+  full-width list rows (visual radio circle hidden, input kept for keyboard and screen readers);
+  the active row sits on `surface` with a 3px inset cobalt edge; under each object a state line.
+  Focus ring is drawn inside the row so the sidebar edge never clips it. On object pages the
+  keyboard help sits at the bottom of the sidebar.
+- **Object header** (`object-head`): eyebrow, H1 "Genovefa · Scan 22" (no break inside
+  "Scan 22") and metadata line on the left, "Prüfende Person" on the right. Below 1100px the
+  name field moves under the title.
+- **Workflow bar** (`guide-steps`): the only navigation of an object, sticky under the Streamlit
+  header. See §9. `st.tabs` still decides which view renders (keys, labels and session values are
+  unchanged), but its tab bar is hidden.
+- **Status card** (`review-guide`): eyebrow, next action and final-approval line on the left,
+  progress and the "Prüfbereiche dieses Objekts" expander on the right; stacks below 1100px.
+  Result at 1440×900: the illustration starts at about 420px instead of about 690px.
+- **Work area:** two equal columns, scan left and controls right (`ui.SPLIT = [1, 1]`). Scans are
+  capped to the window height so a whole page stays visible. The scan column stays sticky above
+  1100px; below that, scan and controls stack.
 
 ### 8.2 Start page order
 
@@ -249,7 +256,7 @@ Keep the demo narrative but bring the collection closer to the top:
 
 | Component | Spec |
 |---|---|
-| **Calibration strip** (signature; Prüfpfad step buttons in `st.container(key="guide-steps")`) | One continuous strip, 1px `border`, radius 0.75rem, segments of equal width (min 8.5rem, wraps on phones), 52px high, no gaps. Each segment has a 4px top edge: `open` gray for upcoming, `ok` green plus check icon for done, and the current step is a solid cobalt segment with `on-primary` label. Hover on other segments: `primary-tint`. No bounce animation inside the strip. Keep keys and `help=` texts. |
+| **Workflow bar** (signature; `workflow.navigation`, `st.container(key="guide-steps")`) | One row: Übersicht, the numbered steps in review order, then reference views (Bibliotheksdaten), separated by 1px dividers. Text buttons 44px high, `ink-muted` label. Shown view: `ink` label and a 3px cobalt underline (`workflow.viewed_marker`, also sets `aria-current="page"`). Next open step: cobalt label with arrow icon (`type="primary"`); done: green check icon. Scrolls horizontally on narrow screens; sticky at the top. Keys `guide-<tab>` and `help=` texts unchanged. |
 | **Primary button** | Cobalt fill, `on-primary` label, radius 0.625rem, optional leading arrow icon. One per area. The two-bounce "next step" nudge stays on "Leitbeispiel öffnen" and "Weiter"; off under reduced motion. |
 | **Secondary button** | White, 1px `border-strong`, ink label. |
 | **Tertiary / link** | "Scan in der Originalansicht öffnen": link style with external-link icon. |
@@ -258,12 +265,13 @@ Keep the demo narrative but bring the collection closer to the top:
 | **Sign-off panel** (`ui.confirm_controls`, key `…-review-box`) | Reads as a signature block: `surface`, 1px `border-strong`, radius 0.75rem; statement checkbox; primary confirm button; lock icon + reason in `ink-muted` when disabled. |
 | **Decision options** (radios with keys ending `-outcome`) | Each option a full-width row: 44px min height, 1px border, radius 0.625rem; hover border `primary`; selected = `primary` border + `primary-tint`. The sidebar radio is not affected. |
 | **Comparison cards** ("Colibri manuell" vs "Colibri automatisch") | Two equal `st.metric` cards; value in Bricolage; the automatic card gets a violet "maschinell" badge. |
-| **Scan stage** | `mat` background, 0.875rem padding and radius; image radius 0.25rem with `shadow-scan`; caption below in `ink-muted`. |
+| **Scan stage** | `mat` background, 0.875rem padding and radius; image radius 0.25rem with `shadow-scan`; caption below in `ink-muted`; height capped to the window; fullscreen button always visible. |
+| **Region editor** (`region_canvas.js`, shadow DOM, styled by its own `STYLE` from `--bl-*` tokens) | Segmented mode switch (`aria-pressed`), zoom group (−, +, Gesamtansicht), collapsible "Bildanpassung" and "Bedienung". Frames: white halo, type color, label tag 12 screen px above the frame with white or near-black text (whichever reaches 4.5:1). Unsaved frames dashed and tagged "geändert"/"neu". Live status line (`aria-live`) with selection coordinates and unsaved count. |
 | **Alerts** | Theme colors from 5.2 plus a 1px border at 20% of the text color, radius 0.75rem. Avoid stacking more than one alert per area. |
-| **Tabs** | Weight 500, active 600 with cobalt underline. Optional: sticky tab bar (adjust the sticky scan offset). |
+| **Tabs** | The object tab bar is hidden; the workflow bar replaces it. |
 | **Tables** | Header on `sunken`, tabular numbers, 1px `border`. |
 | **Keyboard hint** (`review_keys.py`) | Inherit the theme font; 0.875rem; color `var(--bl-ink-muted)`. |
-| **Focus** | 3px `primary` outline, 2px offset (inside the strip: −3px), on every interactive element. |
+| **Focus** | 3px `primary` outline, 2px offset (inside the workflow bar and sidebar rows: −3px), on every interactive element. |
 
 ## 10. Motion
 
@@ -275,8 +283,8 @@ hover color changes. Everything is disabled under `prefers-reduced-motion: reduc
 - [ ] Text contrast ≥ 4.5:1, large text ≥ 3:1, input borders and focus ring ≥ 3:1 (values in §5
   already pass in both modes).
 - [ ] Primary button labels use `on-primary` in both modes.
-- [ ] No state conveyed by color alone (icon + word always present; the strip's done segments carry
-  a check icon).
+- [ ] No state conveyed by color alone (icon + word always present; done steps carry a check icon,
+  the next step an arrow).
 - [ ] `lang="de"` set on the document.
 - [ ] All actions reachable by keyboard; visible focus ring everywhere; keyboard hint readable.
 - [ ] Usable at 200% browser zoom and at 390px width without horizontal scrolling.
@@ -290,10 +298,15 @@ hover color changes. Everything is disabled under `prefers-reduced-motion: reduc
   `headingFontSizes`, `greenBackgroundColor`, …). The implementation is
   [`.streamlit/config.toml`](../../.streamlit/config.toml).
 - **Tokens for custom CSS** come from `theme.inject()` ([`theme.py`](../../src/kinderbuch_bildlabor/theme.py)),
-  which writes `--bl-*` CSS variables for the active mode using `st.context.theme.type` and sets
-  `lang="de"`. `workflow.css` uses only these variables, never raw hex values.
+  which writes the light `--bl-*` variables on `:root` and the dark ones under
+  `:root[data-bl-theme="dark"]`, and sets `lang="de"`. `THEME_SCRIPT` sets `data-bl-theme` in the
+  browser from the background Streamlit actually renders and updates it on every theme change.
+  A server-side choice (`st.context.theme.type`) lagged behind live theme switches until the next
+  run and produced 2.2–2.4:1 primary button labels. `workflow.css` uses only these variables, never raw hex values.
 - **Selectors:** prefer the `.st-key-<key>` classes Streamlit adds to keyed containers. The design
-  needs three new hooks: `guide-steps` (strip), `guide-eyebrow`, `hero-eyebrow`. Use `data-testid`
+  hooks: `guide-steps` (workflow bar), `guide-eyebrow`, `guide-final`, `guide-keys`, `object-head`,
+  `review-guide`, `collection-progress`, `hero-eyebrow`. Streamlit replaces every character outside
+  `[A-Za-z0-9_-]` in key classes with `-` (`guide-übersicht` becomes `st-key-guide--bersicht`). Use `data-testid`
   selectors sparingly, never `:nth-child`, and never `:first-child` on generic elements (in the
   prototype a `:first-child` caption rule leaked onto unrelated captions).
 - **Do not change** widget keys, tab labels, session-state keys, German copy, or the element type of
@@ -312,7 +325,7 @@ hover color changes. Everything is disabled under `prefers-reduced-motion: reduc
 
 ## 13. Implementation status
 
-All five phases are implemented. The reference files that were used to apply Phase 1 have been
+All six phases are implemented. The reference files that were used to apply Phase 1 have been
 removed; the live files listed at the top are the source of truth.
 
 | Phase | Content | Status |
@@ -322,6 +335,8 @@ removed; the live files listed at the top are the source of truth.
 | 3 | Status badges and colors, "maschinell" marker, decision option rows, sign-off panel, scan mat | Implemented |
 | 4 | Region overlay colors by type (Okabe-Ito) in overlays and canvas editor | Implemented |
 | 5 | Start page order, import next to the lead action, card badges, side-by-side tools | Implemented |
+| 6 | UX pass: single workflow bar, compact header with reviewer field, sidebar rows and progress, larger scans, region editor toolbar and feedback, theme chosen in the browser, AA contrast audit in both modes | Implemented |
+| 7 | Region canvas fitted to the regions (1280×720), compact header on short windows, jump link to the reviewer name (`ui.name_link`), state icon moved from the sidebar radio label into the caption (fixes a return to Start after the first save), help text as tooltips, toasts at the bottom | Implemented |
 
 Known gaps against this document:
 

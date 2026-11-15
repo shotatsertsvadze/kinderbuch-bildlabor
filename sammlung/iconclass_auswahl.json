@@ -1,0 +1,18 @@
+{
+  "quelle": "Iconclass, https://iconclass.org (Daten: https://github.com/iconclass/data)",
+  "lizenz": "CC0 1.0 Universal",
+  "hinweis": "Kleine, von Hand gewaehlte Auswahl oberer Notationen mit deutschen Bezeichnungen aus iconclass.org (abgerufen 2026-11-15). Die Bezeichnungen sind wortgleich von iconclass.org uebernommen. Die Suchwoerter je Eintrag sind projektlokal und nicht Teil von Iconclass.",
+  "eintraege": [
+    {"notation": "11G", "label_de": "Engel", "woerter": ["engel"]},
+    {"notation": "11H", "label_de": "Heilige", "woerter": ["heilige"]},
+    {"notation": "25F2", "label_de": "Säugetiere", "woerter": ["hund", "pferd", "katze", "kuh", "esel", "hirsch", "wolf", "säugetier"]},
+    {"notation": "25F3", "label_de": "Vögel", "woerter": ["vogel", "vögel", "taube", "adler"]},
+    {"notation": "25F4", "label_de": "Reptilien", "woerter": ["schlange", "echse", "reptil"]},
+    {"notation": "25FF", "label_de": "Fabeltiere (manchmal fälschlich: Grotesken); Ripa: Mostri", "woerter": ["drache", "fabeltier", "einhorn"]},
+    {"notation": "25G", "label_de": "Pflanzen, Vegetation", "woerter": ["baum", "bäume", "blume", "pflanze", "busch", "strauch"]},
+    {"notation": "25H", "label_de": "Landschaften", "woerter": ["landschaft", "wald", "berg", "hügel"]},
+    {"notation": "25I", "label_de": "Stadtansicht; Landschaft mit von Menschen errichteten Anlagen", "woerter": ["stadt", "dorf", "burg", "schloss"]},
+    {"notation": "47I", "label_de": "Landwirtschaft (Ackerbau, Viehzucht, Gartenbau, Blumenzucht etc.)", "woerter": ["acker", "feld", "bauernhof", "garten"]},
+    {"notation": "41D", "label_de": "Mode, Kleidung", "woerter": ["kleid", "mantel", "hut", "tracht"]}
+  ]
+}

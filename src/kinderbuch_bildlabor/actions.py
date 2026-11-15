@@ -201,6 +201,11 @@ def keyword_key(region_id: str) -> str:
     return f"{region_id}-keywords"
 
 
+def add_keyword_line(region_id: str, line: str) -> None:
+    key = keyword_key(region_id)
+    st.session_state[key] = "\n".join([*keyword_list(st.session_state[key]), line])
+
+
 def save_keywords(object_id: str, region_id: str) -> None:
     key = keyword_key(region_id)
     apply(

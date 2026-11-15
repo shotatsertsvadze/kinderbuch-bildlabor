@@ -16,16 +16,18 @@ liegt unter [ergebnis/](ergebnis/README.md) und erscheint auf der Startseite.
 - Tabelle der Fallstudie: fünf Abbildungen aus „Genovefa“, manuell jeweils „Abbildung“, automatisch
   „Druckermarke“, „Exlibris“ oder „Karte“. Auswahlkriterium nennen: alle Zeilen dieses Buches mit
   manueller Klasse. Keine Aussage über Colibri insgesamt.
-- „Leitbeispiel öffnen“, dann im Prüfpfad einen Namen eintragen. Der Prüfpfad nennt den aktuellen
-  Schritt und die nächste Handlung; der Balken zählt die Prüfbereiche (bestätigt, als Entwurf
-  gespeichert, offen), getrennt davon steht die Endbestätigung. Erledigte Schritte sind abgehakt.
-  Nach jedem Speichern führt „Weiter“ zum nächsten Schritt.
+- „Leitbeispiel öffnen“, dann rechts neben dem Titel unter „Prüfende Person“ einen Namen eintragen.
+  Die Leiste darunter ist die einzige Navigation: Übersicht, die nummerierten Schritte und
+  Bibliotheksdaten; erledigte Schritte sind abgehakt, der nächste offene ist blau mit Pfeil. Die
+  Karte darunter nennt die nächste Handlung, zählt die Prüfbereiche (bestätigt, als Entwurf
+  gespeichert, offen) und davon getrennt die Endbestätigung. Nach jedem Speichern führt „Weiter“
+  zum nächsten Schritt.
 
-## 0:30 – Leitbeispiel Scan 22, Reiter „Klassifikation“ (60 Sekunden)
+## 0:30 – Leitbeispiel Scan 22, Schritt „Klassen vergleichen“ (60 Sekunden)
 
 ![Klassifikation](screenshots/02-klassifikation.png)
 
-- Im Prüfpfad „2 · Klassen vergleichen“ wählen.
+- In der Leiste „2 · Klassen vergleichen“ wählen.
 - Links das Material: Ausschnitt der markierten Region, Belege (Prüfstand der Region,
   Bildbeschreibung, Seitenbezug im METS: Kapitel „[Text und Illustrationen]“, Seite 16, Link zur
   Originalansicht) und die ganze Seite. Eine gerahmte Illustration, zwei Figuren im Gewölbe.
@@ -40,11 +42,12 @@ liegt unter [ergebnis/](ergebnis/README.md) und erscheint auf der Startseite.
 ![Regionen](screenshots/03-regionen.png)
 ![Prüfung](screenshots/04-pruefung.png)
 
-- Reiter „Regionen“: Häkchen und Bestätigung stehen neben dem Scan. Unter „Rahmen korrigieren“ den
+- Schritt „Bild prüfen“: Auf der Zeichenfläche zeigen gestrichelte Rahmen ungespeicherte
+  Änderungen. Häkchen und Bestätigung stehen neben dem Scan. Unter „Rahmen korrigieren“ den
   x-Wert per Pfeiltaste ändern, Vorschau und „Ungespeicherte Änderung“ zeigen, dann „Eingaben
   verwerfen“. „Speichern (Entwurf)“ ändert nur den Inhalt; erst „Als geprüft bestätigen“ zählt als
   geprüft. Gespeicherte Änderungen der Region heben eine Klassifikationsentscheidung auf.
-- Reiter „Prüfung“: oben, was zu tun ist. Der Hinweis zum unbekannten Illustrator wird begründet
+- Schritt „Prüfung abschließen“: oben, was zu tun ist. Der Hinweis zum unbekannten Illustrator wird begründet
   entschieden, nicht ausgeblendet; danach ist die Endbestätigung möglich. Sie ist keine Ground
   Truth. Darunter alle Prüfergebnisse getrennt nach Art.
 
@@ -64,5 +67,5 @@ liegt unter [ergebnis/](ergebnis/README.md) und erscheint auf der Startseite.
 
 - Übersicht: Katalog nennt Augsburg und J. A. Schlosser, das Bildblatt eine Rottweiler Buchhandlung.
   Zwei Kontexte, zwei Felder.
-- Reiter „Transkription“: OCR „‘Die Geimatly „ir Amerika.“ neben dem Ausschnitt und der Lesung „Die
+- Schritt „Text abgleichen“: OCR „‘Die Geimatly „ir Amerika.“ neben dem Ausschnitt und der Lesung „Die
   Heimath in Amerika.“. Ohne Referenz keine OCR-Bewertung.

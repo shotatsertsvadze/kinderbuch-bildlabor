@@ -592,7 +592,8 @@ def reconfirm_decision(object_id: str, code: str, message: str, seen: dict) -> N
         "info",
         f"Entscheidung unverändert erneut bestätigt von {reviewer()}. Frühere Einträge bleiben "
         "im Prüfprotokoll. Eine bisherige Endbestätigung ist aufgehoben und der Export veraltet; "
-        "nächster Schritt: Endbestätigung im Reiter „Prüfung“ neu erteilen, dann exportieren.",
+        "nächster Schritt: Endbestätigung im Schritt „Prüfung abschließen“ neu erteilen, dann "
+        "exportieren.",
     )
 
 

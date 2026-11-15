@@ -450,7 +450,7 @@ def collection_export(collection: list[ui.Current]) -> None:
     ui.section("Sammlungsübersicht exportieren")
     st.caption(
         "Eine CSV-Datei mit einer Zeile je Region aller Objekte, mit Prüfständen, Herkunft und Rechten. "
-        "Vollständige JSON-Exporte entstehen je Objekt im Reiter „Export“."
+        "Vollständige JSON-Exporte entstehen je Objekt im Schritt „Ergebnis exportieren“."
     )
     st.button(
         "Sammlungsübersicht als CSV exportieren",

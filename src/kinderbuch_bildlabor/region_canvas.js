@@ -9,68 +9,173 @@ function el(name, attrs = {}) {
 
 const same = (a, b) => a.every((value, index) => value === b[index]);
 
+// Etikettenschrift weiß oder fast schwarz, je nachdem welche auf der Regionsfarbe 4,5:1 erreicht
+function inkOn(hex) {
+  const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  const [r, g, b] = [1, 3, 5].map((i) => lin(parseInt(hex.slice(i, i + 2), 16) / 255));
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return 1.05 / (lum + 0.05) >= 4.5 ? "#fff" : "#15181C";
+}
+
+const STYLE = `
+.blc-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+.blc-bar .blc-seg:last-child { order: 3; }
+.blc-spacer { flex: 1; }
+.blc-bar details { font-size: 0.875rem; color: var(--bl-ink-muted); }
+.blc-seg { display: inline-flex; border: 1px solid var(--bl-border-strong); border-radius: 0.625rem; overflow: hidden; background: var(--bl-surface); }
+.blc-seg button, .blc-look button {
+  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--bl-ink); background: transparent;
+  border: 0; padding: 0.45rem 0.8rem; min-height: 2.5rem; min-width: 2.5rem; cursor: pointer;
+}
+.blc-seg button + button { border-left: 1px solid var(--bl-border); }
+.blc-seg button:hover { background: var(--bl-primary-tint); }
+.blc-seg button[aria-pressed="true"] { background: var(--bl-primary-tint); color: var(--bl-primary); font-weight: 620; box-shadow: inset 0 -2px 0 var(--bl-primary); }
+.blc-look button { border: 1px solid var(--bl-border-strong); border-radius: 0.625rem; background: var(--bl-surface); }
+.blc-bar button:focus-visible, .blc-bar summary:focus-visible, .blc-bar input:focus-visible, .blc-look button:focus-visible {
+  outline: 3px solid var(--bl-primary); outline-offset: 2px;
+}
+.blc-bar details { border: 1px solid var(--bl-border); border-radius: 0.625rem; background: var(--bl-surface); padding: 0.4rem 0.75rem; }
+.blc-bar details[open] { flex-basis: 100%; order: 5; }
+.blc-bar summary { cursor: pointer; color: var(--bl-ink); font-weight: 500; }
+.blc-bar details p { margin: 0.35rem 0 0; }
+.blc-look { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; padding-top: 0.5rem; }
+.blc-look input { accent-color: var(--bl-primary); vertical-align: middle; }
+.blc-svg { width: 100%; height: clamp(18rem, calc(100vh - 28rem), 42rem); touch-action: none; background: var(--bl-mat, #e2e3e1); display: block; border-radius: 0.875rem; }
+.blc-svg text { font-family: "Geist Mono", ui-monospace, monospace; }
+.blc-svg[data-mode="select"] [role="button"] { cursor: move; }
+.blc-svg[data-mode="illustration"], .blc-svg[data-mode="text"] { cursor: crosshair; }
+.blc-svg:focus-visible, .blc-svg [role="button"]:focus-visible { outline: 3px solid var(--bl-primary); outline-offset: 2px; }
+.blc-status { margin: 0.4rem 0 0; font-size: 0.8125rem; color: var(--bl-ink-muted); font-variant-numeric: tabular-nums; }
+.blc-short { display: none; }
+@media (min-height: 1001px) { .blc-svg { height: clamp(18rem, calc(100vh - 38rem), 42rem); } }
+@media (max-width: 1400px) {
+  .blc-long { display: none; }
+  .blc-short { display: inline; }
+}
+.blc-seg button { white-space: nowrap; }
+@media (max-width: 640px) {
+  .blc-bar > .blc-seg { width: 100%; }
+  .blc-seg button { flex: 1 1 0; min-height: 2.75rem; padding-inline: 0.4rem; }
+  .blc-long { display: none; }
+  .blc-short { display: inline; }
+  .blc-spacer { display: none; }
+  .blc-bar details { flex: 1 1 40%; }
+}
+`;
+
+
 export default function (component) {
   const { data, parentElement, setStateValue } = component;
   const W = data.width;
   const typeColor = (type) => data.colors[type] ?? data.colors.other;
   const H = data.height;
-  const mem = (memory[data.instance] ??= { selected: new Set(), mode: "select", focus: null, view: { x: 0, y: 0, w: W }, look: { brightness: 100, contrast: 100, gray: false, invert: false } });
+  const mem = (memory[data.instance] ??= { selected: new Set(), mode: "select", focus: null, view: { x: 0, y: 0, w: W }, fitted: false, look: { brightness: 100, contrast: 100, gray: false, invert: false, labels: true } });
   const rects = data.regions.map((r) => ({ ...r, xywh: r.xywh.slice() }));
   let created = data.created ? { type: data.created.type, xywh: data.created.xywh.slice() } : null;
 
   parentElement.replaceChildren();
+  const style = document.createElement("style");
+  style.textContent = STYLE;
+
+  const button = (text, label, onclick) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = text;
+    if (label) b.setAttribute("aria-label", label);
+    b.onclick = onclick;
+    return b;
+  };
+
   const bar = document.createElement("div");
-  bar.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;font:14px sans-serif";
+  bar.className = "blc-bar";
+  const modeGroup = document.createElement("div");
+  modeGroup.className = "blc-seg";
+  modeGroup.setAttribute("role", "group");
+  modeGroup.setAttribute("aria-label", "Werkzeug");
   const modes = [
-    ["select", "Auswählen und verschieben"],
-    ["illustration", "Illustration zeichnen"],
-    ["text", "Text zeichnen"],
+    ["select", "Auswählen und verschieben", "Auswählen"],
+    ["illustration", "Illustration zeichnen", "Illustration"],
+    ["text", "Text zeichnen", "Text"],
   ];
-  for (const [value, text] of modes) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = text;
-    button.setAttribute("aria-pressed", String(mem.mode === value));
-    button.style.cssText = `padding:4px 8px;cursor:pointer;${mem.mode === value ? "font-weight:bold;outline:2px solid var(--bl-primary, #1f77b4)" : ""}`;
-    button.onclick = () => {
+  for (const [value, text, short] of modes) {
+    const b = button(text, null, () => {
       mem.mode = value;
-      bar.querySelectorAll("button").forEach((b) => {
-        const on = b === button;
-        b.setAttribute("aria-pressed", String(on));
-        b.style.cssText = `padding:4px 8px;cursor:pointer;${on ? "font-weight:bold;outline:2px solid var(--bl-primary, #1f77b4)" : ""}`;
-      });
-    };
-    bar.append(button);
+      svg.dataset.mode = value;
+      modeGroup.querySelectorAll("button").forEach((other) => other.setAttribute("aria-pressed", String(other === b)));
+    });
+    b.setAttribute("aria-pressed", String(mem.mode === value));
+    b.innerHTML = `<span class="blc-long"></span><span class="blc-short"></span>`;
+    b.querySelector(".blc-long").textContent = text;
+    b.querySelector(".blc-short").textContent = short;
+    b.setAttribute("aria-label", text);
+    modeGroup.append(b);
   }
-  const hint = document.createElement("span");
-  hint.style.cssText = "align-self:center;color:var(--bl-ink-muted, #555)";
-  hint.textContent = "Umschalt+Klick: mehrere wählen. Pfeiltasten verschieben (Umschalt = 10 px), Alt+Pfeil ändert Breite/Höhe.";
-  bar.append(hint);
+  const zoomGroup = document.createElement("div");
+  zoomGroup.className = "blc-seg";
+  zoomGroup.setAttribute("role", "group");
+  zoomGroup.setAttribute("aria-label", "Ansicht");
+  zoomGroup.append(
+    button("−", "Verkleinern (Taste -)", () => zoomAt(0.8, ...centre())),
+    button("+", "Vergrößern (Taste +)", () => zoomAt(1.25, ...centre())),
+    button("Gesamtansicht", "Gesamtansicht (Taste 0)", () => {
+      Object.assign(view, { x: 0, y: 0, w: fullW() });
+      applyView();
+      draw();
+    }),
+  );
+  const spacer = document.createElement("span");
+  spacer.className = "blc-spacer";
+  bar.append(modeGroup, spacer, zoomGroup);
 
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, tabindex: 0, role: "group", "aria-label": "Zeichenfläche mit Regionen auf dem Scan" });
-  svg.style.cssText = "width:100%;max-height:75vh;touch-action:none;background:var(--bl-mat, #eee);display:block";
+  svg.classList.add("blc-svg");
+  svg.dataset.mode = mem.mode;
   const picture = el("image", { href: data.image, width: W, height: H });
   svg.append(picture);
   const layer = el("g");
   svg.append(layer);
-  parentElement.append(bar, svg);
+  const status = document.createElement("p");
+  status.className = "blc-status";
+  status.setAttribute("aria-live", "polite");
 
   const view = mem.view;
   const unitNow = () => (Math.max(W, H) / 200) * (view.w / W);
 
+  // Seitenverhältnis der Zeichenfläche: der Ausschnitt füllt sie, statt die Scanseite zu umranden
+  let ar = H / W;
+  const measure = () => {
+    const r = svg.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return false;
+    ar = r.height / r.width;
+    return true;
+  };
+  const fullW = () => Math.max(W, H / ar);
+  const within = (v, size, total) => (size >= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size));
+
   function clampView() {
-    view.w = Math.min(W, Math.max(W / 20, view.w));
-    view.x = Math.min(Math.max(view.x, 0), W - view.w);
-    view.y = Math.min(Math.max(view.y, 0), H - (view.w * H) / W);
+    measure();
+    view.w = Math.min(fullW(), Math.max(W / 20, view.w));
+    view.x = within(view.x, view.w, W);
+    view.y = within(view.y, view.w * ar, H);
+  }
+
+  // Erster Blick: die Regionen füllen die Fläche; „Gesamtansicht“ zeigt die ganze Seite
+  function fitRegions() {
+    measure();
+    if (!rects.length) return Object.assign(view, { x: 0, y: 0, w: fullW() });
+    const x0 = Math.min(...rects.map((r) => r.xywh[0])), y0 = Math.min(...rects.map((r) => r.xywh[1]));
+    const x1 = Math.max(...rects.map((r) => r.xywh[0] + r.xywh[2])), y1 = Math.max(...rects.map((r) => r.xywh[1] + r.xywh[3]));
+    const w = Math.max((x1 - x0) * 1.12, ((y1 - y0) * 1.12) / ar);
+    Object.assign(view, { w, x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - (w * ar) / 2 });
   }
 
   function applyView() {
     clampView();
-    svg.setAttribute("viewBox", `${view.x} ${view.y} ${view.w} ${(view.w * H) / W}`);
+    svg.setAttribute("viewBox", `${view.x} ${view.y} ${view.w} ${view.w * ar}`);
   }
 
   function zoomAt(factor, cx, cy) {
-    const next = Math.min(W, Math.max(W / 20, view.w / factor));
+    const next = Math.min(fullW(), Math.max(W / 20, view.w / factor));
     const k = next / view.w;
     view.x = cx - (cx - view.x) * k;
     view.y = cy - (cy - view.y) * k;
@@ -79,19 +184,18 @@ export default function (component) {
     draw();
   }
 
-  const centre = () => [view.x + view.w / 2, view.y + (view.w * H) / W / 2];
+  const centre = () => [view.x + view.w / 2, view.y + (view.w * ar) / 2];
 
   function applyLook() {
     const l = mem.look;
     picture.style.filter = `brightness(${l.brightness}%) contrast(${l.contrast}%) grayscale(${l.gray ? 1 : 0}) invert(${l.invert ? 1 : 0})`;
   }
 
+  // Bildanpassung und Bedienhilfe aufklappbar: sichtbar auf Wunsch, ohne die Zeichenfläche zu verdrängen
+  const lookBox = document.createElement("details");
+  lookBox.innerHTML = "<summary>Bildanpassung</summary>";
   const look = document.createElement("div");
-  look.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;font:14px sans-serif;align-items:center";
-  const note = document.createElement("span");
-  note.style.color = "var(--bl-ink-muted, #555)";
-  note.textContent = "Ansicht: Mausrad oder +/- zoomt, Ziehen auf leerer Fläche oder Leertaste+Ziehen verschiebt, 0 = Gesamtansicht. Regler ändern nur die Anzeige.";
-  look.append(note);
+  look.className = "blc-look";
   for (const [key, text, min, max] of [["brightness", "Helligkeit", 30, 250], ["contrast", "Kontrast", 30, 300]]) {
     const label = document.createElement("label");
     label.textContent = `${text} `;
@@ -115,23 +219,59 @@ export default function (component) {
     label.append(input, ` ${text}`);
     look.append(label);
   }
-  const reset = document.createElement("button");
-  reset.type = "button";
-  reset.textContent = "Ansicht zurücksetzen";
-  reset.onclick = () => {
-    Object.assign(view, { x: 0, y: 0, w: W });
-    Object.assign(mem.look, { brightness: 100, contrast: 100, gray: false, invert: false });
-    applyView();
-    applyLook();
-    look.querySelectorAll("input").forEach((i) => {
-      if (i.type === "range") i.value = 100;
-      else i.checked = false;
-    });
+  const labelsBox = document.createElement("label");
+  const labelsInput = document.createElement("input");
+  Object.assign(labelsInput, { type: "checkbox", checked: mem.look.labels });
+  labelsInput.onchange = () => {
+    mem.look.labels = labelsInput.checked;
     draw();
   };
-  look.append(reset);
-  parentElement.insertBefore(look, svg);
+  labelsBox.append(labelsInput, " Etiketten zeigen");
+  look.append(labelsBox);
+  look.append(
+    button("Ansicht zurücksetzen", null, () => {
+      Object.assign(view, { x: 0, y: 0, w: fullW() });
+      Object.assign(mem.look, { brightness: 100, contrast: 100, gray: false, invert: false, labels: true });
+      applyView();
+      applyLook();
+      look.querySelectorAll("input").forEach((i) => {
+        if (i.type === "range") i.value = 100;
+        else i.checked = i === labelsInput;
+      });
+      draw();
+    }),
+  );
+  const lookNote = document.createElement("p");
+  lookNote.textContent = "Die Regler ändern nur die Anzeige, nicht den Scan.";
+  lookBox.append(look, lookNote);
+  const helpBox = document.createElement("details");
+  helpBox.innerHTML = "<summary>Maus und Tastatur</summary>";
+  for (const text of [
+    "Umschalt+Klick: mehrere wählen. Pfeiltasten verschieben (Umschalt = 10 px), Alt+Pfeil ändert Breite/Höhe.",
+    "Ansicht: Mausrad oder +/- zoomt, Ziehen auf leerer Fläche oder Leertaste+Ziehen verschiebt, 0 = Gesamtansicht.",
+    "Gestrichelte Rahmen sind noch nicht gespeichert.",
+  ]) {
+    const line = document.createElement("p");
+    line.textContent = text;
+    helpBox.append(line);
+  }
+  bar.insertBefore(helpBox, spacer);
+  bar.insertBefore(lookBox, helpBox);
+  parentElement.append(style, bar, svg, status);
+  // Gemessen wird erst, wenn die Fläche sichtbar ist (verborgene Reiter haben keine Größe)
+  const fitOnce = () => {
+    if (!mem.fitted && measure()) {
+      mem.fitted = true;
+      fitRegions();
+    }
+  };
+  fitOnce();
   applyView();
+  new ResizeObserver(() => {
+    fitOnce();
+    applyView();
+    draw();
+  }).observe(svg);
   applyLook();
 
   svg.addEventListener(
@@ -153,7 +293,7 @@ export default function (component) {
     } else if (event.key === "-") {
       zoomAt(0.8, ...centre());
     } else if (event.key === "0") {
-      Object.assign(view, { x: 0, y: 0, w: W });
+      Object.assign(view, { x: 0, y: 0, w: fullW() });
       applyView();
       draw();
     }
@@ -185,28 +325,62 @@ export default function (component) {
     return [Math.min(Math.max(x + dx, 0), W - w), Math.min(Math.max(y + dy, 0), H - h), w, h];
   }
 
+  // Beschriftung als farbiges Etikett über dem Rahmen (innen, wenn oben kein Platz ist)
+  function tag(x, y, h, text, color) {
+    // 12 Bildschirmpixel, unabhängig von Scangröße und Zoom
+    const size = 12 / (svg.getScreenCTM()?.a || 1);
+    const unit = size / 2.4;
+    const height = size * 1.6;
+    const room = svg.viewBox.baseVal;
+    const top = y - height >= room.y ? y - height : y + h + height <= room.y + room.height ? y + h : y;
+    const group = el("g", { "pointer-events": "none" });
+    group.append(el("rect", { x, y: top, width: text.length * size * 0.58 + size, height, rx: unit * 0.5, fill: color }));
+    const label = el("text", { x: x + size * 0.5, y: top + size * 1.15, "font-size": size, "font-weight": 600, fill: inkOn(color) });
+    label.textContent = text;
+    group.append(label);
+    return group;
+  }
+
+  function frame(x, y, w, h, color, unit, { chosen = false, dashed = false } = {}) {
+    const dash = dashed ? { "stroke-dasharray": `${unit * 2} ${unit * 1.5}` } : {};
+    // Weißer Saum außen: Rahmen bleibt auf dunklem Holzschnitt wie auf hellem Papier sichtbar
+    return [
+      el("rect", { x, y, width: w, height: h, fill: "none", stroke: "#fff", "stroke-opacity": 0.9, "stroke-width": unit * (chosen ? 2.6 : 1.8), "pointer-events": "none" }),
+      el("rect", { x, y, width: w, height: h, fill: color, "fill-opacity": chosen ? 0.1 : 0.03, stroke: color, "stroke-width": unit * (chosen ? 1.3 : 0.8), ...dash }),
+    ];
+  }
+
+  function describe() {
+    const chosen = rects.filter((r) => mem.selected.has(r.id));
+    const open = rects.filter((r) => !same(r.xywh, r.saved)).length + (created ? 1 : 0);
+    const parts = [
+      chosen.length
+        ? chosen.map((r) => `Region ${rects.indexOf(r) + 1} (${r.label}): x ${r.xywh[0]}, y ${r.xywh[1]}, Breite ${r.xywh[2]}, Höhe ${r.xywh[3]}`).join("; ")
+        : "Keine Region gewählt.",
+      open ? `${open} ungespeicherte Änderung${open === 1 ? "" : "en"} (gestrichelt); unten speichern.` : "Keine ungespeicherten Änderungen.",
+    ];
+    const text = parts.join(" · ");
+    if (status.textContent !== text) status.textContent = text;
+  }
+
   function draw() {
     const unit = unitNow();
     layer.replaceChildren();
     rects.forEach((r, index) => {
       const [x, y, w, h] = r.xywh;
       const chosen = mem.selected.has(r.id);
+      const dirty = !same(r.xywh, r.saved);
       const color = typeColor(r.type);
       const group = el("g");
-      const box = el("rect", {
-        x, y, width: w, height: h, fill: color, "fill-opacity": chosen ? 0.25 : 0.1,
-        stroke: color, "stroke-width": unit * (chosen ? 1.2 : 0.7), tabindex: 0, role: "button",
-        "aria-pressed": String(chosen), "data-id": r.id,
-        "aria-label": `Region ${index + 1}, ${r.label}: x ${x}, y ${y}, Breite ${w}, Höhe ${h}`,
-      });
-      box.style.cursor = "move";
+      const [halo, box] = frame(x, y, w, h, color, unit, { chosen, dashed: dirty });
+      Object.entries({
+        tabindex: 0, role: "button", "aria-pressed": String(chosen), "data-id": r.id,
+        "aria-label": `Region ${index + 1}, ${r.label}: x ${x}, y ${y}, Breite ${w}, Höhe ${h}${dirty ? ", nicht gespeichert" : ""}`,
+      }).forEach(([key, value]) => box.setAttribute(key, value));
       box.addEventListener("keydown", (event) => onKey(event, r));
       box.addEventListener("focus", () => (mem.focus = r.id));
-      group.append(box);
-      const label = el("text", { x: x + unit, y: y + unit * 4, "font-size": unit * 3.5, fill: "#000", stroke: "#fff", "stroke-width": unit * 0.6, "paint-order": "stroke" });
-      label.textContent = `${index + 1} ${r.label}`;
-      label.style.pointerEvents = "none";
-      group.append(label);
+      group.append(halo, box);
+      if (mem.look.labels || chosen) group.append(tag(x, y, h, `${index + 1} · ${r.label}${dirty ? " · geändert" : ""}`, color));
       if (chosen) {
         for (const [cx, cy, corner] of [[x, y, "nw"], [x + w, y, "ne"], [x, y + h, "sw"], [x + w, y + h, "se"]]) {
           const handle = el("rect", { x: cx - unit * 1.5, y: cy - unit * 1.5, width: unit * 3, height: unit * 3, fill: "#fff", stroke: color, "stroke-width": unit * 0.5, "data-handle": corner, "data-id": r.id });
@@ -218,8 +392,12 @@ export default function (component) {
     });
     if (created) {
       const [x, y, w, h] = created.xywh;
-      layer.append(el("rect", { x, y, width: w, height: h, fill: "none", stroke: typeColor(created.type), "stroke-width": unit * 0.8, "stroke-dasharray": `${unit * 2} ${unit * 1.5}` }));
+      const color = typeColor(created.type);
+      const [halo, box] = frame(x, y, w, h, color, unit, { chosen: true, dashed: true });
+      box.setAttribute("pointer-events", "none");
+      layer.append(halo, box, tag(x, y, h, `neu · ${created.type === "text" ? "Text" : "Illustration"}`, color));
     }
+    describe();
     if (mem.focus) layer.querySelector(`[data-id="${CSS.escape(mem.focus)}"][role="button"]`)?.focus({ preventScroll: true });
   }
 

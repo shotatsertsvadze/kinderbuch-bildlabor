@@ -3,7 +3,7 @@
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from kinderbuch_bildlabor import actions, ocr, review, store
+from kinderbuch_bildlabor import actions, ocr, review, store, workflow
 
 APP = str(store.ROOT / "app.py")
 PILOT = "pilot-001"
@@ -1274,3 +1274,15 @@ def test_concurrent_exports_leave_one_consistent_set(monkeypatch):
     other.join()
     exported = store.read_json(store.EXPORT_DIR / f"{PILOT}.json")
     assert actions.invalid_exports(PILOT, exported) == []
+
+
+def test_guide_names_viewed_and_next_step_separately():
+    tabs = ["Regionen", "Klassifikation", "Angaben"]
+    assert workflow.view_name("Klassifikation", tabs) == "2 · Klassen vergleichen"
+    assert workflow.view_name("Übersicht", tabs) == "Übersicht"
+
+
+def test_final_line_uses_singular_for_one_finding():
+    record = store.new_working_copy(store.object_source(PILOT))["record"]
+    assert "1 offener fachlicher Hinweis im" in workflow.final_line(record, 1)
+    assert "2 offene fachliche Hinweise im" in workflow.final_line(record, 2)

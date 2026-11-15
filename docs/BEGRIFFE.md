@@ -19,7 +19,7 @@ Oberfläche und Dokumentation sind deutsch, der Code ist englisch. Pro Konzept g
 | Klassifikation | `colibri_groundtruth`, `colibri_classification`, Reiter „Klassifikation“ | Die beiden Klassen, die Colibri zu einer Abbildung führt: manuell (Colibri-Spalte „groundtruth“) und automatisch (Spalte „classification“). Weichen sie ab, ist die Entscheidung ein eigener Prüfbereich. |
 | Begründete Entscheidung | `decisions`, `record_decision`, Kategorie `begruendet_entschieden` | Festlegung einer benannten Person zu einem belegten Unterschied, mit Pflichtbegründung. Der Hinweis bleibt sichtbar. Ändert sich der zugrunde liegende Inhalt, wird sie aufgehoben. |
 | Ground Truth | | Geprüfte Referenz zur Bewertung. Wird hier nicht vergeben; auch die Endbestätigung ist keine. Die Colibri-Spalte „groundtruth“ ist eine manuelle Klasse und wird hier ebenfalls am Bild geprüft. |
-| Reiter „Prüfung“ | `check_view` | Zeigt die Validierung und die Endbestätigung. Das Wort „Prüfung“ allein meint nichts anderes. |
+| Schritt „Prüfung abschließen“ | `check_view` | Zeigt die Validierung und die Endbestätigung. Das Wort „Prüfung“ allein meint nichts anderes. |
 | Validierung, Befund | `validate`, `Finding` | Automatische Prüfung. Kategorien: technischer Fehler, fachlicher Hinweis, nicht ausgeführt, begründet entschieden. |
 | Blocker | `approval_blockers` | Befunde, die die Endbestätigung sperren: technische Fehler und fachliche Hinweise ohne begründete Entscheidung. |
 | Bibliotheksdaten | `library_view`, `oai` | METS/MODS aus der gespeicherten OAI-PMH-Antwort der Staatsbibliothek. |

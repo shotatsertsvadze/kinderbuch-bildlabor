@@ -44,7 +44,7 @@ def overview_tab(cur: Current) -> None:
         st.caption(
             "Metadaten aus dem eigenen Import; unbekannte Angaben wurden nicht ergänzt."
             if cur.src.profile == "imported"
-            else "Bibliografische Angaben aus Colibri; Abgleich mit METS/MODS im Reiter „Bibliotheksdaten“."
+            else "Bibliografische Angaben aus Colibri; Abgleich mit METS/MODS in der Ansicht „Bibliotheksdaten“."
         )
         ui.section("Seite")
         label = source.get("page_label_mets")
@@ -110,7 +110,7 @@ def progress_table(record: dict) -> None:
                 "Stand": "Bestätigt" if a["done"] else "Offen",
                 "Bereich": a["label_de"],
                 "Prüfstand": review.status_label(a["status"]),
-                "Reiter": a["tab_de"],
+                "Schritt": ui.STEPS[a["tab_de"]][0],
             }
             for a in areas
         ],
@@ -317,11 +317,12 @@ def canvas_section(cur: Current) -> None:
         }
         for r in saved
     ]
-    ui.section("Auf dem Scan zeichnen und verschieben")
-    st.caption(
-        "Rahmen ziehen oder an den Ecken ändern; Umschalt+Klick wählt mehrere. Nichts wird gespeichert, "
-        "bevor Sie unten ausdrücklich speichern. Alternativ: Zahlenfelder unter „Rahmen korrigieren“."
-    )
+    with st.container(key="region-intro"):
+        ui.section("Auf dem Scan zeichnen und verschieben")
+        st.caption(
+            "Rahmen ziehen oder an den Ecken ändern; gespeichert wird erst unten, "
+            "alternativ über „Rahmen korrigieren“."
+        )
     if error:
         st.error(error, icon=ui.ERROR)
     region_canvas.render(

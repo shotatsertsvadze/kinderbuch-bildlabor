@@ -50,6 +50,30 @@ TOKENS: dict[str, dict[str, str]] = {
 }
 
 
+# Hell oder dunkel nach der Helligkeit des tatsächlich gezeigten Hintergrunds
+THEME_SCRIPT = """
+window.__blSyncTheme = () => {
+  const app = document.querySelector('.stApp') || document.body;
+  const [r, g, b] = getComputedStyle(app).backgroundColor.match(/\\d+/g).map(Number);
+  document.documentElement.dataset.blTheme = 0.2126 * r + 0.7152 * g + 0.0722 * b < 128 ? 'dark' : 'light';
+};
+if (!window.__blThemeWatch) {
+  window.__blThemeWatch = true;
+  let queued = false;
+  // Nach einem Themenwechsel ändern sich die Klassen der Streamlit-Elemente; zweiter Blick nach
+  // einem möglichen Farbübergang
+  const later = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; window.__blSyncTheme(); });
+    setTimeout(window.__blSyncTheme, 400);
+  };
+  new MutationObserver(later).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', later);
+}
+window.__blSyncTheme();
+"""
+
 # st.subheader hat keine Ebenenwahl und erzeugt h3 unter dem h1-Titel; aria-level ordnet die
 # Abschnitte als Ebene 2 ein, ohne die Darstellung zu ändern.
 PAGE_SCRIPT = """
@@ -65,18 +89,22 @@ if (!window.__blHeadingLevels) {
 """
 
 
-def mode() -> str:
-    """Aktiver Modus; ohne Browserangabe (z. B. in AppTest) gilt Hell."""
-    return "dark" if st.context.theme.type == "dark" else "light"
+def variables(mode: str) -> str:
+    return " ".join(f"--bl-{name}: {value};" for name, value in TOKENS[mode].items())
 
 
 def inject() -> None:
-    """Setzt die CSS-Variablen --bl-* für den aktiven Modus und die Seitensprache Deutsch.
+    """Setzt die CSS-Variablen --bl-* für Hell und Dunkel und die Seitensprache Deutsch.
 
+    Welcher Satz gilt, entscheidet THEME_SCRIPT im Browser nach dem tatsächlich gezeigten Thema:
+    Streamlit wechselt das Thema sofort, ein serverseitig gewählter Satz bliebe bis zum nächsten
+    Lauf stehen (dunkle Schrift auf dunklem Kobalt, 2,4:1).
     lang="de" lässt Screenreader deutsch vorlesen und aktiviert die Silbentrennung (hyphens: auto).
     """
-    variables = " ".join(
-        f"--bl-{name}: {value};" for name, value in TOKENS[mode()].items()
+    st.html(
+        f"<style>:root {{ {variables('light')} }} "
+        f':root[data-bl-theme="dark"] {{ {variables("dark")} }}</style>'
     )
-    st.html(f"<style>:root {{ {variables} }}</style>")
-    st.html(f"<script>{PAGE_SCRIPT}</script>", unsafe_allow_javascript=True)
+    st.html(
+        f"<script>{PAGE_SCRIPT}{THEME_SCRIPT}</script>", unsafe_allow_javascript=True
+    )

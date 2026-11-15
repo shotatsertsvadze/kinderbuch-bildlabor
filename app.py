@@ -34,6 +34,7 @@ theme.inject()
 st.html(Path(workflow.__file__).with_name("workflow.css"))
 
 COLLECTION = "sammlung"
+SAVE_HELP = "Eingaben werden erst mit „Speichern“ übernommen. Gespeichertes bleibt nach einem Neustart erhalten."
 
 
 # Bei jedem Lauf frisch von der Platte: ein anderes Fenster kann inzwischen gespeichert haben
@@ -72,14 +73,25 @@ def view_label(view: str) -> str:
         return "Eigenes Buch importieren"
     if view == COLLECTION:
         return "Start und Sammlung"
-    icon = workflow.object_state(by_id[view].record)[0]
+    # Kein Zustandssymbol im Etikett: Streamlit ordnet die Auswahl über den Etikettentext zu, und
+    # ein Wechsel des Symbols (erste Speicherung) ließ die Ansicht auf „Start“ zurückspringen
     return (
-        f"{icon} {list(by_id).index(view) + 1} · {ui.object_label(by_id[view].record)}"
+        f"{list(by_id).index(view) + 1} · "
+        f"{ui.object_label(by_id[view].record).replace('Scan ', 'Scan\u00a0')}"
     )
 
 
 def sidebar() -> str:
     st.sidebar.markdown("### Kinderbuch-Bildlabor")
+    words = [workflow.object_state(c.record)[2] for c in collection]
+    final, in_work = words.count("endbestätigt"), words.count("in Arbeit")
+    with st.sidebar.container(key="collection-progress"):
+        st.caption(
+            f"{len(collection)} Objekte · {in_work} in Arbeit · {final} endbestätigt"
+        )
+        st.html(
+            workflow.segmented_bar(final, in_work, len(collection) - final - in_work)
+        )
     # Import gibt es nur lokal
     pages = [] if store.DEMO else ["import"]
     view = st.sidebar.radio(
@@ -89,30 +101,29 @@ def sidebar() -> str:
         captions=[
             "",
             *["" for _ in pages],
-            *(workflow.object_state(c.record)[1] for c in collection),
+            *("{} {}".format(*workflow.object_state(c.record)[:2]) for c in collection),
         ],
         key="view",
+        label_visibility="collapsed",
     )
     if view in {COLLECTION, "import"}:
         with st.sidebar:
             ui.reviewer_input()
     else:
         working = by_id[view].working
+        save_help = None if store.DEMO else SAVE_HELP
         if working["change_log"]:
             st.sidebar.caption(
-                f"Zuletzt gespeichert: {ui.local_time(working['change_log'][-1]['saved_at'])}"
+                f"Zuletzt gespeichert: {ui.local_time(working['change_log'][-1]['saved_at'])}",
+                help=save_help,
             )
         else:
             st.sidebar.caption(
                 "Angezeigt wird die unveränderte Quelldatei."
                 if store.DEMO
-                else "Noch nichts gespeichert; angezeigt wird die unveränderte Quelldatei."
+                else "Noch nichts gespeichert; angezeigt wird die unveränderte Quelldatei.",
+                help=save_help,
             )
-    if not store.DEMO:
-        st.sidebar.caption(
-            "Eingaben werden erst mit „Speichern“ übernommen. Gespeichertes bleibt nach einem "
-            "Neustart erhalten."
-        )
     return view
 
 
@@ -122,37 +133,38 @@ def object_page(cur: ui.Current) -> None:
     published = (
         f"{biblio['publication_place'] or ''} {biblio['publication_date'] or ''}"
     )
-    with st.container(key="object-eyebrow"):
-        st.caption(
-            " · ".join(
-                p
-                for p in (
-                    "SAMMLUNG",
-                    biblio["title"].upper(),
-                    published.strip().upper(),
+    heading, reviewer = st.container(key="object-head").columns(
+        [7, 2], vertical_alignment="bottom", gap="large"
+    )
+    with heading:
+        with st.container(key="object-eyebrow"):
+            st.caption(
+                " · ".join(
+                    p
+                    for p in (
+                        "SAMMLUNG",
+                        biblio["title"].upper(),
+                        published.strip().upper(),
+                    )
+                    if p
                 )
-                if p
             )
-        )
-    st.title(f"{biblio['title']} · Scan {source['scan_number']}")
-    parts = [
-        biblio["author_display"],
-        published.strip(),
-        source["institution"],
-        f"`{source['ppn']}`" if source["ppn"] else None,
-    ]
-    st.caption(" · ".join(p or "unbekannt" for p in parts))
+        # Geschütztes Leerzeichen: „Scan 22“ bricht nicht um
+        st.title(f"{biblio['title']} · Scan\u00a0{source['scan_number']}")
+        parts = [
+            biblio["author_display"],
+            published.strip(),
+            source["institution"],
+            f"`{source['ppn']}`" if source["ppn"] else None,
+        ]
+        # Trennpunkt bleibt am vorigen Teil: kein verwaister „·“ am Zeilenanfang
+        with st.container(key="object-sub"):
+            st.caption("\u00a0· ".join(p or "unbekannt" for p in parts))
+    with reviewer, st.container(key="object-reviewer"):
+        ui.reviewer_input()
     export_current = export_view.export_state(cur)[0] == "current"
     findings = validate.run_all(cur.working, cur.src, [x.record for x in collection])
     blockers = len(validate.approval_blockers(findings))
-    tabs_key = f"{cur.id}-tabs"
-    workflow.render(
-        record,
-        tabs_key,
-        export_current,
-        blockers,
-        footer=lambda: review_keys.render(record, tabs_key, export_current, blockers),
-    )
     names = ["Übersicht"]
     views: list[Callable[[ui.Current], None]] = [object_view.overview_tab]
     if review.classification_labels(record):
@@ -174,6 +186,15 @@ def object_page(cur: ui.Current) -> None:
         lambda c: check_view.validation_tab(c, [x.record for x in collection]),
         export_view.export_tab,
     ]
+    tabs_key = f"{cur.id}-tabs"
+    workflow.render(
+        record,
+        tabs_key,
+        names,
+        export_current,
+        blockers,
+        footer=lambda: review_keys.render(record, tabs_key, export_current, blockers),
+    )
     # Eigener Schlüssel je Objekt: ein neu geöffnetes Objekt beginnt mit der Übersicht
     # Ändert sich die Reiterliste (neue Textregion), bleibt der gewählte Reiter erhalten
     chosen = st.session_state.get(tabs_key)
@@ -188,7 +209,9 @@ view = sidebar()
 if store.DEMO:
     ui.demo_notice()
 if notice := st.session_state.pop("notice", None):
-    st.error(notice, icon=ui.ERROR)
+    with st.container(key="page-notice"):
+        st.error(notice, icon=ui.ERROR)
+        ui.show_notice()
 if view == COLLECTION:
     collection_view.render(collection)
 elif view == "import":

@@ -107,66 +107,166 @@ button[data-testid^="stBaseButton-primary"] p {
   color: var(--bl-on-primary);
 }
 
-/* ---------- Signatur: Prüfpfad als Farbkarten-Leiste ---------------------------------------- */
-/* Wie die Farbkarte neben jedem Bibliotheksscan: eine Reihe gleich breiter Felder.
-   Oberkante = Stand: grau offen, grün erledigt, Kobalt-Fläche = aktueller Schritt. */
+/* Auswahl-Etiketten in Filtern: ruhige Tönung statt weißer Schrift auf Kobalt (im Dunkelmodus 2,2:1) */
+[data-testid="stMultiSelect"] [data-tag] {
+  background: var(--bl-primary-tint) !important;
+  color: var(--bl-primary) !important;
+  border: 1px solid color-mix(in srgb, var(--bl-primary) 35%, transparent);
+}
+[data-testid="stMultiSelect"] [data-tag] * {
+  color: inherit !important;
+}
+
+/* ---------- Prüfpfad: eine Navigationsleiste ----------------------------------------------- */
+/* Ersetzt Schrittleiste und Reiterleiste. Unterstrich = gezeigte Ansicht (workflow.viewed_marker),
+   Kobalt-Schrift = nächster offener Schritt, grünes Häkchen = erledigt. */
 .st-key-guide-steps {
-  gap: 0 !important;
-  border: 1px solid var(--bl-border);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: var(--bl-border);
+  position: sticky;
+  top: 3.75rem;
+  z-index: 20;
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  margin-top: 0.25rem;
+  background: var(--bl-canvas);
+  border-bottom: 1px solid var(--bl-border);
+  box-shadow: -1rem 0 0 var(--bl-canvas), 1rem 0 0 var(--bl-canvas);
 }
 
 .st-key-guide-steps > [data-testid="stElementContainer"] {
-  flex: 1 1 0;
-  min-width: 8.5rem;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
 }
-
 .st-key-guide-steps [data-testid="stTooltipHoverTarget"],
 .st-key-guide-steps button {
-  width: 100%;
+  width: auto !important;
 }
 
-.st-key-guide-steps button {
-  justify-content: flex-start;
-  min-height: 3.25rem;
-  padding: 0.85rem 0.9rem 0.6rem;
+.st-key-guide-steps button,
+.st-key-guide-steps button:hover,
+.st-key-guide-steps button:active {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.45rem;
   border: 0 !important;
   border-radius: 0 !important;
-  box-shadow: inset 0 4px 0 var(--bl-open), inset -1px 0 0 var(--bl-border) !important;
-  background: var(--bl-surface);
-  color: var(--bl-ink-muted);
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--bl-ink-muted) !important;
   font-weight: 500;
-  text-align: left;
+  white-space: nowrap;
   animation: none !important;
 }
+.st-key-guide-steps button p {
+  color: inherit !important;
+  font-size: 0.8125rem;
+}
+.st-key-guide-steps button[aria-current="page"] {
+  color: var(--bl-ink) !important;
+}
+.st-key-guide-steps button:hover {
+  color: var(--bl-ink) !important;
+  box-shadow: inset 0 -3px 0 var(--bl-border-strong) !important;
+}
+.st-key-guide-steps button:focus-visible {
+  outline: 3px solid var(--bl-primary);
+  outline-offset: -3px;
+}
 
-/* Erledigt: sekundärer Knopf mit Häkchen-Symbol */
-.st-key-guide-steps button[data-testid="stBaseButton-secondary"]:has([data-testid="stIconMaterial"]) {
-  box-shadow: inset 0 4px 0 var(--bl-ok), inset -1px 0 0 var(--bl-border) !important;
-  color: var(--bl-ink);
+/* Nächster offener Schritt: nur Pfeilsymbol und Punktlinie; Kobalt-Schrift und Unterstrich
+   gehören ausschließlich der gezeigten Ansicht */
+.st-key-guide-steps button[data-testid="stBaseButton-primary"] {
+  background-image: radial-gradient(circle, var(--bl-primary) 1.2px, transparent 1.6px) !important;
+  background-size: 6px 4px !important;
+  background-repeat: repeat-x !important;
+  background-position: 0 100% !important;
+}
+.st-key-guide-steps button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] {
+  color: var(--bl-primary);
 }
 .st-key-guide-steps [data-testid="stIconMaterial"] {
   color: var(--bl-ok);
 }
 
-/* Aktueller Schritt */
-.st-key-guide-steps button[data-testid="stBaseButton-primary"] {
-  background: var(--bl-primary);
-  color: var(--bl-on-primary);
-  box-shadow: none !important;
-  font-weight: 600;
+/* Nachschlageansichten (Übersicht, Bibliotheksdaten) durch eine Linie von den Schritten getrennt */
+.st-key-guide-steps > [data-testid="stElementContainer"]:has(button[data-testid="stBaseButton-tertiary"]) + [data-testid="stElementContainer"]:has(button:not([data-testid="stBaseButton-tertiary"])),
+.st-key-guide-steps > [data-testid="stElementContainer"]:has(button:not([data-testid="stBaseButton-tertiary"])) + [data-testid="stElementContainer"]:has(button[data-testid="stBaseButton-tertiary"]) {
+  border-left: 1px solid var(--bl-border);
+  margin-left: 0.35rem;
+  padding-left: 0.35rem;
 }
 
-.st-key-guide-steps button:hover {
-  background: var(--bl-primary-tint);
-  color: var(--bl-ink);
+/* Die Reiter selbst bleiben die Quelle der Ansicht, ihre Leiste ersetzt die Navigation oben */
+[data-testid="stMain"] [data-testid="stTabs"] [role="tablist"] {
+  display: none;
 }
-.st-key-guide-steps button[data-testid="stBaseButton-primary"]:hover {
-  background: var(--bl-primary);
-  color: var(--bl-on-primary);
-  filter: brightness(1.08);
+
+/* ---------- Prüfstand: eine kompakte Statuskarte ------------------------------------------- */
+.st-key-review-guide {
+  padding: 0.75rem 1rem !important;
+  gap: 0.5rem;
+}
+.st-key-review-guide p,
+.st-key-review-guide [data-testid="stCaptionContainer"] {
+  line-height: 1.5;
+  hyphens: manual;
+  overflow-wrap: anywhere;
+}
+.st-key-review-guide [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+  gap: 0.5rem;
+}
+.st-key-guide-eyebrow [data-testid="stCaptionContainer"] {
+  line-height: 1.4;
+  white-space: normal;
+}
+.st-key-review-guide .bl-segbar {
+  margin: 0;
+}
+.st-key-guide-final p {
+  font-size: 0.875rem;
+  color: var(--bl-ink-muted);
+}
+/* Sichtbar ist nur die Segmentleiste (bestätigt/Entwurf/offen); Streamlits Balken bleibt für
+   Screenreader erhalten, denn die Segmentleiste ist aria-hidden. Kobalt bleibt der Handlung vorbehalten. */
+.st-key-review-guide [data-testid="stProgress"] [role="progressbar"] {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.st-key-review-guide [data-testid="stProgress"] p {
+  font-size: 0.8125rem;
+  color: var(--bl-ink-muted);
+}
+.st-key-review-guide [data-testid="stExpander"] summary {
+  padding-block: 0.4rem;
+  font-size: 0.875rem;
+}
+
+/* ---------- Objektkopf ---------------------------------------------------------------------- */
+/* Mittlere Breiten (Tablet, schmales Fenster): Spalten von Kopf und Statuskarte umbrechen,
+   bevor Namensfeld oder Fortschritt unlesbar schmal werden */
+@media (max-width: 1100px) {
+  .st-key-object-head [data-testid="stHorizontalBlock"],
+  .st-key-review-guide [data-testid="stHorizontalBlock"] {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+  .st-key-object-head [data-testid="stColumn"],
+  .st-key-review-guide [data-testid="stColumn"] {
+    min-width: 100%;
+  }
+}
+/* Weniger Seitenrand als Streamlits 5rem: die Arbeitsfläche gehört Scan und Navigation */
+@media (min-width: 1024px) {
+  [data-testid="stMainBlockContainer"] {
+    padding-inline: 2.5rem;
+  }
+}
+.st-key-object-head h1 {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  padding-block: 0.1rem 0.25rem;
 }
 
 [data-testid="stProgress"] > div > div > div {
@@ -204,11 +304,45 @@ button[data-testid^="stBaseButton-primary"] p {
   box-shadow: var(--bl-shadow-scan);
 }
 
-/* Breite Fenster: Scan bleibt beim Blättern neben Häkchen und Schaltflächen */
+/* Arbeitsflächen: die ganze Seite bleibt im Fenster sichtbar, statt nach unten aus dem Bild zu laufen */
 @media (min-width: 641px) {
+  [class*="st-key-scan-"] [data-testid="stImage"] img,
+  [class*="st-key-pinned-scan-"] [data-testid="stImage"] img {
+    max-height: calc(100vh - 10rem);
+    width: auto !important;
+    margin-inline: auto;
+  }
+  [class*="st-key-scan-"] [data-testid="stImageContainer"],
+  [class*="st-key-pinned-scan-"] [data-testid="stImageContainer"] {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+/* Vergrößern-Knopf am Scan immer sichtbar (nicht nur beim Überfahren mit der Maus) */
+[class*="st-key-scan-"] [data-testid="stElementToolbar"],
+[class*="st-key-pinned-scan-"] [data-testid="stElementToolbar"] {
+  opacity: 1;
+}
+
+/* Mittlere Breiten: Scan über der Bedienung in voller Breite statt als schmale Spalte */
+@media (max-width: 1100px) {
+  [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-scan-"]),
+  [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-pinned-scan-"]) {
+    flex-wrap: wrap;
+  }
+  [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-scan-"]) > [data-testid="stColumn"],
+  [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [class*="st-key-pinned-scan-"]) > [data-testid="stColumn"] {
+    min-width: 100%;
+  }
+}
+
+/* Breite Fenster: Scan bleibt beim Blättern neben Häkchen und Schaltflächen */
+@media (min-width: 1101px) {
   [data-testid="stLayoutWrapper"]:has(> [class*="st-key-pinned-scan-"]) {
     position: sticky;
-    top: 6.5rem;
+    /* 3.75rem Kopfzeile + 2.75rem Navigationsleiste */
+    top: 7rem;
   }
 }
 
@@ -222,10 +356,42 @@ button[data-testid^="stBaseButton-primary"] p {
   .st-key-collection-hero h1 {
     font-size: 2.5rem;
   }
-  /* Lange Komposita (Endbestätigung, Regionsgrenzen) nur auf schmalen Bildschirmen trennen */
+  /* Lange Komposita (Endbestätigung, Regionsgrenzen) nur auf schmalen Bildschirmen trennen;
+     die Statuskarte bleibt ohne Silbentrennung lesbar */
   [data-testid="stMain"] p,
   [data-testid="stMain"] li {
     hyphens: auto;
+  }
+  [data-testid="stMain"] .st-key-review-guide p {
+    hyphens: manual;
+  }
+  .st-key-review-guide {
+    padding: 0.75rem !important;
+  }
+  .st-key-guide-eyebrow [data-testid="stCaptionContainer"] {
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* Weicher Rand rechts, solange sich die Leiste weiter wischen lässt (setzt workflow.viewed_marker) */
+.st-key-guide-steps.bl-more {
+  mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+}
+
+/* ---------- Meldungen (Toasts) --------------------------------------------------------------- */
+/* Unten statt oben, damit sie weder Seitentitel noch die Navigationsleiste überdecken */
+[data-testid="stToastContainer"] {
+  top: auto !important;
+  bottom: 1rem !important;
+  right: 1rem !important;
+  left: auto !important;
+  max-width: min(24rem, calc(100vw - 2rem));
+  z-index: 30;
+}
+@media (max-width: 640px) {
+  [data-testid="stToastContainer"] {
+    left: 1rem !important;
   }
 }
 
@@ -242,21 +408,94 @@ button[data-testid^="stBaseButton-primary"] p {
   letter-spacing: -0.025em;
 }
 
+/* Weniger Leerraum über dem Namen der Anwendung */
+[data-testid="stSidebarHeader"] {
+  height: 3rem;
+  margin-bottom: 0;
+}
+[data-testid="stSidebarUserContent"] {
+  padding-top: 0;
+}
+
+/* Ganze Zeile (Titel + Zustandszeile) ist das Ziel; der sichtbare Radiokreis entfällt, das
+   Eingabefeld bleibt für Tastatur und Screenreader erhalten. */
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] {
+  gap: 0.125rem;
+}
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > div {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.5rem;
+}
 [data-testid="stSidebar"] [data-testid="stRadioOption"] {
   width: 100%;
   margin: 0;
-  padding: 0.4rem 0.6rem;
-  border-radius: 0.5rem;
+  padding: 0;
+}
+[data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div:first-child {
+  display: none;
+}
+[data-testid="stSidebar"] [data-testid="stRadioOption"] p {
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+[data-testid="stSidebar"] [data-testid="stRadioCaption"] {
+  padding-left: 0;
+  margin-top: 0.1rem;
+}
+[data-testid="stSidebar"] [data-testid="stRadioCaption"] p {
+  font-size: 0.8125rem;
 }
 
-[data-testid="stSidebar"] [data-testid="stRadioOption"]:hover {
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > div:hover {
   background: color-mix(in srgb, var(--bl-surface) 70%, transparent);
 }
 
-[data-testid="stSidebar"] [data-testid="stRadioOption"]:has(input:checked) {
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > div:has(input:checked) {
   background: var(--bl-surface);
   box-shadow: inset 3px 0 0 var(--bl-primary), var(--bl-shadow-1);
+}
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > div:has(input:checked) p {
   font-weight: 600;
+}
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > div:has(input:checked) [data-testid="stRadioCaption"] p {
+  font-weight: 400;
+}
+
+/* Fokusring innen, damit ihn der Rand der Seitenleiste nicht abschneidet */
+[data-testid="stSidebar"] [data-testid="stRadioGroup"] > div:has(input:focus-visible) {
+  outline: 3px solid var(--bl-primary);
+  outline-offset: -3px;
+}
+[data-testid="stSidebar"] [data-testid="stRadioOption"],
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:focus-within {
+  outline: none !important;
+  background: transparent !important;
+}
+
+.st-key-collection-progress .bl-segbar {
+  margin: 0.15rem 0 0.25rem;
+}
+
+.st-key-guide-keys p {
+  font-size: 0.8125rem !important;
+}
+
+/* ---------- Gesperrte Schaltflächen ----------------------------------------------------------- */
+/* Streamlit setzt die Schrift gesperrter Primärtasten auf „on-primary“ ohne Primärfläche: unlesbar.
+   Gesperrt heißt hier: gedämpfte Fläche und Schrift mit mind. 4,5:1, ohne Schatten und Bewegung. */
+button:disabled,
+button:disabled:hover {
+  background: var(--bl-sunken) !important;
+  border-color: var(--bl-border-strong) !important;
+  color: var(--bl-ink-muted) !important;
+  box-shadow: none;
+  animation: none;
+  cursor: not-allowed;
+}
+button:disabled p,
+button:disabled [data-testid="stIconMaterial"] {
+  color: var(--bl-ink-muted) !important;
 }
 
 /* ---------- Fokus und Bewegung -------------------------------------------------------------- */
@@ -293,52 +532,6 @@ label:has(input:focus-visible) {
   *, *::before, *::after {
     animation: none !important;
     transition: none !important;
-  }
-}
-
-/* ---------- Prüfpfad-Leiste auf dem Telefon: Zeilen bleiben ein Block, Felder mindestens 44px -- */
-@media (max-width: 640px) {
-  .st-key-guide-steps {
-    gap: 1px !important;
-  }
-  .st-key-guide-steps > [data-testid="stElementContainer"] {
-    flex: 1 1 10rem;
-    min-width: 10rem;
-    width: auto !important;
-  }
-  .st-key-guide-steps {
-    align-items: stretch !important;
-  }
-  .st-key-guide-steps > [data-testid="stElementContainer"],
-  .st-key-guide-steps [data-testid="stButton"],
-  .st-key-guide-steps [data-testid="stTooltipHoverTarget"] {
-    display: flex;
-  }
-  .st-key-guide-steps [data-testid="stButton"],
-  .st-key-guide-steps [data-testid="stTooltipHoverTarget"] {
-    flex: 1 1 auto;
-    width: 100%;
-  }
-  .st-key-guide-steps [data-testid="stButton"] > div:has(> button) {
-    display: flex;
-    width: 100%;
-  }
-  .st-key-guide-steps button {
-    height: auto;
-  }
-  .st-key-guide-steps button {
-    min-height: 3.25rem;
-    height: auto;
-  }
-  [data-testid="stTabs"] [role="tab"] p {
-    hyphens: none;
-    white-space: nowrap;
-    overflow-wrap: normal;
-  }
-  .st-key-guide-steps button p {
-    white-space: normal;
-    overflow-wrap: break-word;
-    hyphens: auto;
   }
 }
 
@@ -404,18 +597,102 @@ label:has(input:focus-visible) {
 .bl-seg-draft { background: var(--bl-draft); }
 .bl-seg-open { background: var(--bl-open); }
 
-/* ---------- Reiterleiste bleibt unter der Kopfzeile stehen ---------------------------------- */
-/* 3.75rem = Streamlit-Kopfzeile; der Scan (top: 6.5rem) beginnt darunter. */
-[data-testid="stTabs"] [role="tablist"] {
-  position: sticky;
-  top: 3.75rem;
-  z-index: 20;
-  background: var(--bl-canvas);
-  /* deckt den Seitenrand mit ab, damit Rahmen darunter nicht seitlich hervorschauen */
-  box-shadow: -1rem 0 0 var(--bl-canvas), 1rem 0 0 var(--bl-canvas);
-}
 
 /* ---------- Kopfzeile deckend: Inhalt scheint beim Blättern nicht durch --------------------- */
 [data-testid="stHeader"] {
   background: var(--bl-canvas);
+}
+
+/* ---------- Kompakter Kopf: der Scan gehört in den ersten Blick -------------------------------- */
+/* Fenster bis 1000 px Höhe (Laptop 1280x720, 1440x900): Überzeile, Quellenzeile und Endbestätigungszeile weichen;
+   sie stehen in der Übersicht, im Reiter Prüfung und in der Seitenleiste. */
+@media (min-width: 641px) and ((max-height: 1000px) or (max-width: 1100px)) {
+  [data-testid="stMainBlockContainer"] {
+    padding-top: 4rem;
+  }
+  .st-key-object-eyebrow,
+  .st-key-object-sub,
+  .st-key-guide-final {
+    display: none;
+  }
+  .st-key-object-head h1 {
+    font-size: 1.75rem;
+  }
+  .st-key-review-guide {
+    padding: 0.5rem 0.9rem !important;
+    gap: 0.25rem;
+  }
+  [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] {
+    gap: 0.6rem;
+  }
+  .st-key-region-intro {
+    display: none;
+  }
+  [data-testid="stMain"] [data-testid="stTabs"] [role="tabpanel"] {
+    padding-top: 0;
+  }
+  [data-testid="stMain"] [data-testid="stTabs"] [role="tabpanel"] > [data-testid="stVerticalBlock"] {
+    gap: 0.6rem;
+  }
+}
+/* Schmale Fenster: Kopf und Prüfpfad-Karte kürzen, damit Scan und Bedienung früher erscheinen */
+@media (max-width: 640px) {
+  [data-testid="stMainBlockContainer"] {
+    padding-top: 3.5rem;
+  }
+  [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"],
+  [data-testid="stMain"] [data-testid="stTabs"] [role="tabpanel"] > [data-testid="stVerticalBlock"] {
+    gap: 0.6rem;
+  }
+  [data-testid="stMain"] [data-testid="stTabs"] [role="tabpanel"] {
+    padding-top: 0;
+  }
+  /* Der Fortschrittstext und die Leiste stehen im aufklappbaren Bereich darunter und im Reiter Prüfung */
+  .st-key-review-guide [data-testid="stProgress"],
+  .st-key-review-guide .bl-segbar,
+  .st-key-region-intro {
+    display: none;
+  }
+  .st-key-review-guide {
+    padding: 0.6rem 0.75rem !important;
+    gap: 0.4rem;
+  }
+  .st-key-object-eyebrow,
+  .st-key-object-sub,
+  .st-key-guide-final {
+    display: none;
+  }
+}
+
+/* Sprunglink zum Namensfeld */
+a.bl-jump {
+  display: inline-block;
+  min-height: 2rem;
+  padding-block: 0.3rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--bl-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Fehlermeldungen stehen immer im Blick und heben sich von Hinweisen ab */
+.st-key-page-notice {
+  scroll-margin-top: 7rem;
+}
+
+/* Auswahlkreise: der ungewählte Rand erreicht mindestens 3:1 zum Untergrund */
+[data-testid="stMain"] [data-testid="stRadioOption"]:has(input:not(:checked)) > div > div:first-child {
+  border: 2px solid var(--bl-control) !important;
+  background: var(--bl-surface) !important;
+}
+
+/* Lange Klassennamen („Druckermarke“) in den Colibri-Karten bleiben ganze Wörter */
+[data-testid="stMetricValue"] {
+  font-size: clamp(1.25rem, 1.8vw, 2.25rem);
+}
+[data-testid="stMetricValue"] * {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: manual;
 }

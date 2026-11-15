@@ -23,10 +23,48 @@ LOCK = ":material/lock:"
 BLOCKED = ":material/block:"
 
 # Gemeinsame Maße: Spaltenverhältnis Bild zu Bedienfeldern, Höhe von Textfeldern, größte Bildbreite
-SPLIT = [2, 3]
+SPLIT = [1, 1]
 TEXT_AREA_HEIGHT = 140
 MAX_CROP_WIDTH = 730
 MAX_CROP_HEIGHT = 420
+
+
+# Prüfschritte je Reiter: Name in der Navigationsleiste und Erklärung
+STEPS = {
+    "Regionen": (
+        "Bild prüfen",
+        "Prüfen Sie, ob der Rahmen die Illustration vollständig erfasst.",
+    ),
+    "Klassifikation": (
+        "Klassen vergleichen",
+        "Vergleichen Sie beide Colibri-Klassen mit dem Bild und begründen Sie Ihre Wahl.",
+    ),
+    "Angaben": (
+        "Angaben ergänzen",
+        "Ergänzen Sie Verfasser, Ort, Jahr, Verlag, Rechte und Quelle des Buches.",
+    ),
+    "Beschreibung": (
+        "Bild beschreiben",
+        "Prüfen Sie Beschreibung und Suchbegriffe an den sichtbaren Motiven.",
+    ),
+    "Transkription": (
+        "Text abgleichen",
+        "Vergleichen Sie die Transkription mit dem Bildausschnitt.",
+    ),
+    "Prüfung": (
+        "Prüfung abschließen",
+        "Entscheiden Sie offene Hinweise und erteilen Sie die Endbestätigung.",
+    ),
+    "Export": (
+        "Ergebnis exportieren",
+        "Schreiben Sie JSON und CSV und prüfen Sie das zurückgelesene Ergebnis.",
+    ),
+}
+
+
+def place(tab: str) -> str:
+    """Ziel in der Navigationsleiste so benannt, wie es dort zu lesen ist."""
+    return f"Schritt „{STEPS[tab][0]}“" if tab in STEPS else f"Ansicht „{tab}“"
 
 
 def section(title: str) -> None:
@@ -186,6 +224,32 @@ def reviewer_input() -> None:
     )
 
 
+JUMP_NAME = (
+    '<a class="bl-jump" href="#">Zum Feld „Prüfende Person“ springen</a>'
+    "<script>if (!window.__blJump) { window.__blJump = true;"
+    " document.addEventListener('click', (e) => { if (!e.target.closest('a.bl-jump')) return;"
+    " e.preventDefault(); const i = document.querySelector('input[aria-label=\"Prüfende Person\"]');"
+    " if (i) { i.scrollIntoView({block: 'center'}); i.focus(); } }); }</script>"
+)
+NOTICE_SCRIPT = (
+    "<script>const n = document.querySelector('.st-key-page-notice');"
+    " if (n) { n.scrollIntoView({block: 'nearest'});"
+    " if (/Prüfende Person/.test(n.textContent)) n.querySelector('a.bl-jump')?.focus(); }</script>"
+)
+
+
+def name_link() -> None:
+    """Sprung zum Namensfeld, das auf der Seite oben steht, nicht neben der Schaltfläche."""
+    if not store.DEMO:
+        st.html(JUMP_NAME, unsafe_allow_javascript=True)
+
+
+def show_notice() -> None:
+    """Holt die Fehlermeldung ins Bild; fehlt der Name, führt sie zum Feld."""
+    st.html(JUMP_NAME, unsafe_allow_javascript=True)
+    st.html(NOTICE_SCRIPT, unsafe_allow_javascript=True)
+
+
 def confirm_controls(
     key: str,
     meaning_de: str,
@@ -226,6 +290,8 @@ def confirm_controls(
         )
         if reason:
             st.caption(f"{LOCK} Noch nicht möglich: {reason}")
+            if not reviewer:
+                name_link()
 
 
 def confirmed_note(record: dict, area: str) -> None:
@@ -300,19 +366,19 @@ def next_step(record: dict, export_current: bool, blockers: int = 0) -> str:
         if area["draft"]:
             return (
                 f"Gespeicherten Entwurf am Bild prüfen und bestätigen: {area['label_de']} "
-                f"(Reiter „{area['tab_de']}“)."
+                f"({place(area['tab_de'])})."
             )
-        return f"{area['label_de']} prüfen (Reiter „{area['tab_de']}“)."
+        return f"{area['label_de']} prüfen ({place(area['tab_de'])})."
     if blockers:
         return (
-            f"Offene fachliche Hinweise ({blockers}) im Reiter „Prüfung“ begründet entscheiden "
+            f"Offene fachliche Hinweise ({blockers}) im {place('Prüfung')} begründet entscheiden "
             "oder bewusst offen lassen; bis dahin ist keine Endbestätigung möglich."
         )
     approved = record.get("final_approval") and record.get("status") == (
         review.FINAL_APPROVED
     )
     if not approved:
-        return "Endbestätigung im Reiter „Prüfung“ erteilen, danach exportieren."
+        return f"Endbestätigung im {place('Prüfung')} erteilen, danach exportieren."
     if not export_current:
-        return "Export erstellen (Reiter „Export“)."
+        return f"Export erstellen ({place('Export')})."
     return "Das Objekt ist endbestätigt und exportiert. Das ist keine Ground-Truth-Freigabe."

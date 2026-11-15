@@ -125,6 +125,8 @@ def final_approval(cur: Current, state: str, findings: list) -> None:
     )
     if reason:
         st.caption(f"{ui.LOCK} Noch nicht möglich: {reason}")
+        if not actions.reviewer():
+            ui.name_link()
 
 
 def second_review_section(cur: Current) -> None:
@@ -185,6 +187,7 @@ def second_review_section(cur: Current) -> None:
         st.caption(
             f"{ui.LOCK} Tragen Sie oben unter „Prüfende Person“ Ihren Namen ein."
         )
+        ui.name_link()
 
 
 def decisions(cur: Current, findings: list) -> None:
@@ -203,7 +206,7 @@ def decisions(cur: Current, findings: list) -> None:
                 entry = review.decision(cur.record, finding.code, finding.message_de)
                 st.caption(
                     (f"{entry['outcome_de']} ({entry['by']}). " if entry else "Offen. ")
-                    + "Entschieden wird im Reiter „Klassifikation“ am Bild."
+                    + "Entschieden wird im Schritt „Klassen vergleichen“ am Bild."
                 )
             else:
                 decision_view.decision_form(cur, finding.code, finding.message_de)

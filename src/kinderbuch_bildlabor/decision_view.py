@@ -227,6 +227,7 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
                 f"{ui.LOCK} Zum Speichern wird Ihr Name benötigt: oben im Prüfpfad unter "
                 "„Prüfende Person“."
             )
+            ui.name_link()
         st.form_submit_button(
             "Entscheidung mit Namen speichern",
             key=f"{key}-submit",
@@ -235,7 +236,12 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
             args=(cur.id, code, message, review.decision_basis(record, code)),
         )
     if error := st.session_state.pop(f"{key}-error", None):
-        st.error(error, icon=ui.ERROR)
+        st.error(
+            f"Nicht gespeichert: {error} Das Formular steht direkt darüber; Ihre Eingaben bleiben erhalten.",
+            icon=ui.ERROR,
+        )
+        if "Prüfende Person" in error:
+            ui.name_link()
     ui.feedback(cur.id, key)
     withdrawn_list(record, code, message)
     st.caption(

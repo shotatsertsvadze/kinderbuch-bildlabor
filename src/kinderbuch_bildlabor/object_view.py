@@ -4,6 +4,7 @@ import streamlit as st
 
 from kinderbuch_bildlabor import (
     actions,
+    iconclass,
     ocr,
     region_canvas,
     regions,
@@ -591,6 +592,33 @@ def description_editor(cur: Current) -> None:
         )
 
 
+def iconclass_suggestions(cur: Current, region: dict, key: str) -> None:
+    basis = " ".join(
+        [
+            cur.record["image_description"]["working_description_de"],
+            *region["keywords_de"],
+        ]
+    )
+    present = actions.keyword_list(st.session_state.get(key, ""))
+    options = [s for s in iconclass.suggest(basis) if s.line not in present]
+    if not options:
+        return
+    ui.subsection("Vorschläge aus Iconclass")
+    st.caption(
+        "Vorschlag aus Wörtern der gespeicherten Beschreibung und Begriffe, entnommen einer kleinen, "
+        "von Hand gewählten Auswahl aus Iconclass (CC0), nicht dem ganzen System. Übernehmen ändert nur das Eingabefeld: erst speichern, dann bestätigen."
+    )
+    for option in options:
+        with st.container(horizontal=True, vertical_alignment="center"):
+            st.markdown(f"{option.notation}: {option.label_de}")
+            st.button(
+                "Übernehmen",
+                key=f"{key}-iconclass-{option.notation}",
+                on_click=actions.add_keyword_line,
+                args=(region["id"], option.line),
+            )
+
+
 def keyword_editor(cur: Current, region: dict) -> None:
     region_id = region["id"]
     ui.section(f"Suchbegriffe: {region['label_de']}")
@@ -614,6 +642,7 @@ def keyword_editor(cur: Current, region: dict) -> None:
     )
     if sync == ui.CLEAN:
         ui.feedback(cur.id, f"{key}-save")
+    iconclass_suggestions(cur, region, key)
     if region["keyword_review_status"] == review.KEYWORDS_ACCEPTED:
         ui.confirmed_note(cur.record, f"{region_id}/keywords_de")
     else:
@@ -633,8 +662,9 @@ def transcription_tab(cur: Current) -> None:
     transcription = cur.record["transcription"]
     ui.neutral_badge("Keine Ground Truth")
     st.caption(
-        "Ground Truth wäre eine freigegebene Referenztranskription, an der OCR gemessen wird "
-        "(CER/WER). Die gibt es hier nicht; die OCR-Ausgabe wird deshalb gezeigt, nicht bewertet. "
+        "Ground Truth wäre eine freigegebene Referenztranskription, an der OCR gemessen wird. "
+        "Die gibt es hier nicht; bei einer zweiten Lesung wird nur der Abstand zur eigenen "
+        "Arbeitstranskription angezeigt (CER/WER), keine Messung der OCR-Qualität. "
         "Prüfweg: Bildausschnitt ansehen, Arbeitstranskription Zeichen für Zeichen vergleichen, "
         "historische Schreibweise beibehalten, dann bestätigen oder vorläufig lassen."
     )
@@ -717,6 +747,16 @@ def diff_markdown(before: str, after: str) -> str:
     )
 
 
+def distance_caption(human: str, text: str) -> None:
+    cer, wer = ocr.cer(human, text), ocr.wer(human, text)
+    if cer is None or wer is None:
+        return
+    st.caption(
+        f"Abstand zur Arbeitstranskription: CER {cer:.1%}, WER {wer:.1%}. "
+        "Unterschied zur aktuellen Lesung, kein Vergleich mit einer Ground Truth."
+    )
+
+
 def second_reading(
     cur: Current, region: dict, human: str, original: dict | None
 ) -> None:
@@ -791,6 +831,7 @@ def second_reading(
                     "Gegenüber Ihrer Arbeitstranskription: "
                     + diff_markdown(human, candidate["text"])
                 )
+                distance_caption(human, candidate["text"])
                 st.button(
                     "Als Entwurf in die Transkription übernehmen",
                     key=f"{key}-adopt-{candidate['id']}",
@@ -809,6 +850,7 @@ def show_candidate(
     st.markdown(
         "Gegenüber Ihrer Arbeitstranskription: " + diff_markdown(human, run["text"])
     )
+    distance_caption(human, run["text"])
     if original:
         st.markdown(
             "Gegenüber der unveränderten Quell-OCR: "

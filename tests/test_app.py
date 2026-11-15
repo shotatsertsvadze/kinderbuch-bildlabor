@@ -3,7 +3,7 @@
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from kinderbuch_bildlabor import review, store
+from kinderbuch_bildlabor import actions, ocr, review, store
 
 APP = str(store.ROOT / "app.py")
 PILOT = "pilot-001"
@@ -1012,3 +1012,57 @@ def test_queue_lists_objects_and_open_button_opens_first():
     buttons[0].click().run()
     assert not app.exception
     assert app.radio(key="view").value == first
+
+
+def test_class_matrix_lists_cells_and_opens_object():
+    app = open_app("sammlung")
+    assert any("Klassenabweichung: manuelle" in m for m in texts(app, "subheader"))
+    app.button(key=f"matrix-open-{LEAD}").click().run()
+    assert app.radio(key="view").value == LEAD
+
+
+def test_second_reading_shows_distance_only_with_candidate(monkeypatch):
+    monkeypatch.setattr(ocr, "available_models", lambda: ["deu"])
+    app = open_app(PILOT)
+    assert not any(
+        "Abstand zur Arbeitstranskription" in c for c in texts(app, "caption")
+    )
+    src = store.object_source(PILOT)
+
+    def add(record):
+        region = next(
+            r for r in record["region_annotations"] if r.get("transcription_field")
+        )
+        crop = actions.current_crop_sha(src, region)
+        cand = {
+            "text": "Xeimath",
+            "engine_version": "t",
+            "model": "deu",
+            "model_sha256": "m",
+            "psm": 7,
+            "created_at": "2026-11-12T00:00:00+00:00",
+            "image_sha256": "i",
+            "crop_sha256": crop,
+            "xywh": region["xywh"],
+        }
+        return review.save_ocr_candidate(record, region["id"], cand, crop)
+
+    store.update_working_copy(src, add, "test")
+    app.run()
+    assert any(
+        "Abstand zur Arbeitstranskription: CER" in c for c in texts(app, "caption")
+    )
+
+
+def test_iconclass_suggestion_is_an_unsaved_edit_and_needs_confirmation():
+    app = open_app(PILOT)
+    key = f"{REGION_1}-keywords"
+    app.button(key=f"{key}-iconclass-25H").click().run()
+    assert not app.exception
+    assert "Iconclass 25H Landschaften" in app.text_area(key=key).value
+    assert not store.WORK_DIR.exists()
+    assert app.button(key=f"{key}-save").disabled is False
+    app.button(key=f"{key}-save").click().run()
+    region = saved()["record"]["region_annotations"][0]
+    assert "Iconclass 25H Landschaften" in region["keywords_de"]
+    assert region["keyword_review_status"] != review.KEYWORDS_ACCEPTED

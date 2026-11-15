@@ -1,11 +1,15 @@
 """Startseite: Leitfrage, Fallstudie, Einstieg, Begriffe und die Objekte der Sammlung."""
 
+import os
+from pathlib import Path
+
 import streamlit as st
 from PIL import Image
 
 from kinderbuch_bildlabor import (
     actions,
     backup_view,
+    colibri,
     example_view,
     matrix,
     regions,
@@ -103,11 +107,22 @@ def queue(collection: list[ui.Current]) -> None:
             )
 
 
+def colibri_path() -> Path:
+    default = store.DATA_DIR / "colibri" / "ColibriImagesMetadataAnnotations.csv"
+    return Path(os.environ.get("BILDLABOR_COLIBRI_CSV", default))
+
+
+@st.cache_data(max_entries=2, show_spinner="Colibri-Datei wird gezählt ...")
+def _aggregate(path: str, size: int, mtime_ns: int) -> colibri.Aggregate:
+    return colibri.aggregate(Path(path))
+
+
 def class_matrix(collection: list[ui.Current]) -> None:
     ui.section("Klassenabweichung: manuelle gegen automatische Klasse")
     st.caption(
-        "Zählt alle Objekte der lokalen Stichprobe mit beiden Klassen, auch solche, bei denen "
-        "manuelle und automatische Klasse übereinstimmen; nicht die 53.533 Colibri-Zeilen."
+        "Geprüft: lokale Stichprobe. Zählt alle Objekte der Stichprobe mit beiden Klassen, "
+        f"auch solche, bei denen manuelle und automatische Klasse übereinstimmen "
+        f"({len(collection)} Objekte)."
     )
     table, missing = matrix.cells(collection)
     titles = {cur.id: cur.record["source"]["scan_number"] for cur in collection}
@@ -125,6 +140,54 @@ def class_matrix(collection: list[ui.Current]) -> None:
                 )
     if missing:
         st.caption(f"ohne Klasse: {len(missing)}")
+    full_matrix(table)
+
+
+def full_matrix(sample: dict[tuple[str, str], list[str]]) -> None:
+    ui.section("Ganze Colibri-Datei: ungeprüft, nur gezählt")
+    path = colibri_path()
+    if not path.is_file():
+        st.info(
+            f"Die Colibri-CSV liegt nicht vor. Erwartet: {path} "
+            "(Pfad änderbar über BILDLABOR_COLIBRI_CSV). Die App lädt sie nicht selbst herunter."
+        )
+        return
+    if st.button("Gesamte Colibri-Datei auswerten", key="colibri-run"):
+        st.session_state["colibri-shown"] = True
+    if not st.session_state.get("colibri-shown"):
+        return
+    stat = path.stat()
+    try:
+        result = _aggregate(str(path), stat.st_size, stat.st_mtime_ns)
+    except ValueError as error:
+        st.error(str(error))
+        return
+    st.caption(
+        "Colibris eigene Klassen, wie veröffentlicht: hier nicht geprüft und keine Ground Truth. "
+        "Bei manchen Klassen überschreibt die manuelle Klasse die automatische; Übereinstimmungen "
+        "messen daher nicht die Genauigkeit des Klassifikators. Die Zahlen sagen nicht, welche "
+        "Klasse zutrifft. Mehrfachklassen stehen als eigene Zeile, etwa „Abbildung,Initiale“."
+    )
+    manuals = sorted({m for m, _ in result.cells})
+    automatics = sorted({a for _, a in result.cells})
+    st.dataframe(
+        [
+            {"manuell": m, **{a: result.cells.get((m, a), 0) for a in automatics}}
+            | {"Summe": sum(result.cells.get((m, a), 0) for a in automatics)}
+            for m in manuals
+        ],
+        hide_index=True,
+        key="colibri-table",
+    )
+    st.caption(
+        f"{result.rows} Zeilen; ohne manuelle Klasse: {result.without_manual}. "
+        f"Davon lokal in der Stichprobe: {sum(len(ids) for ids in sample.values())} Objekte "
+        "mit beiden Klassen."
+    )
+    if result.sha256 == colibri.MANIFEST_SHA256:
+        st.caption("Prüfsumme entspricht dem Stand vom 06.11.2026.")
+    else:
+        st.caption("Abweichende Prüfsumme, Zahlen gelten für diese Datei.")
 
 
 def hero(cur: ui.Current) -> None:

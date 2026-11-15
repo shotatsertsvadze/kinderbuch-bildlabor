@@ -1066,3 +1066,32 @@ def test_iconclass_suggestion_is_an_unsaved_edit_and_needs_confirmation():
     region = saved()["record"]["region_annotations"][0]
     assert "Iconclass 25H Landschaften" in region["keywords_de"]
     assert region["keyword_review_status"] != review.KEYWORDS_ACCEPTED
+
+
+def test_full_colibri_matrix_missing_file(temp_data, monkeypatch):
+    monkeypatch.setenv("BILDLABOR_COLIBRI_CSV", str(temp_data / "fehlt.csv"))
+    app = open_app("sammlung")
+    assert any("Colibri-CSV liegt nicht vor" in i.value for i in app.info)
+    assert "colibri-run" not in [b.key for b in app.button]
+    assert not store.WORK_DIR.exists()
+
+
+def test_full_colibri_matrix_loaded(temp_data, monkeypatch):
+    csv_path = temp_data / "c.csv"
+    csv_path.write_text(
+        "groundtruth,classification\nAbbildung,Karte\nAbbildung,Karte\n-0,Karte\n"
+    )
+    monkeypatch.setenv("BILDLABOR_COLIBRI_CSV", str(csv_path))
+    app = open_app("sammlung")
+    sample_buttons = [
+        b.key for b in app.button if str(b.key).startswith("matrix-open-")
+    ]
+    app.button(key="colibri-run").click().run()
+    assert not app.exception
+    assert any("ungeprüft" in s.value for s in app.subheader)
+    assert any("keine Ground Truth" in c.value for c in app.caption)
+    assert any("3 Zeilen; ohne manuelle Klasse: 1" in c.value for c in app.caption)
+    assert any("Abweichende Prüfsumme" in c.value for c in app.caption)
+    assert sample_buttons == [
+        b.key for b in app.button if str(b.key).startswith("matrix-open-")
+    ]

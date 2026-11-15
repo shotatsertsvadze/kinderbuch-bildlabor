@@ -174,3 +174,36 @@ def test_imported_exports_preserve_identity_and_unknowns(tmp_path, monkeypatch):
     row = export.csv_rows(working["record"], "now")[0]
     assert row["ppn"] is None and row["colibri_lizenz"] is None
     assert row["metadaten_herkunft"] == "Import: unbekannt"
+
+
+def test_imported_objects_have_defined_image_reference(tmp_path, monkeypatch):
+    """Regression: Annotation und PAGE-XML scheiterten an image_info_url=None."""
+    from kinderbuch_bildlabor import annotations, pagexml
+
+    monkeypatch.setattr(store, "DATA_DIR", tmp_path)
+    upload = imports.commit_import(pages(), {"title": "Eigenes Buch"})[0]
+    iiif_page = pages()[0] | {
+        "import_kind": "iiif",
+        "canvas": "https://example.org/canvas/1",
+        "image_url": "https://example.org/iiif/1/full/max/0/default.jpg",
+    }
+    iiif = imports.commit_import([iiif_page], {"title": "IIIF-Buch"})[0]
+    expected = {
+        upload.id: f"urn:bildlabor:{upload.id}:image",
+        iiif.id: iiif_page["image_url"],
+    }
+    for src in (upload, iiif):
+        record = store.new_working_copy(src)["record"]
+        page = annotations.annotation_page(record, "now")
+        assert page["items"][0]["target"]["source"] == expected[src.id]
+        assert f'imageFilename="{expected[src.id]}"' in pagexml.page_xml(record, "now")
+
+
+def test_fixture_image_reference_unchanged():
+    from kinderbuch_bildlabor import annotations
+
+    src = store.object_source("pilot-001")
+    record = store.read_json(src.record)
+    assert annotations.image_reference(record) == record["source"][
+        "image_info_url"
+    ].removesuffix("/info.json")

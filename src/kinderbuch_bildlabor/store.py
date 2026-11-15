@@ -16,8 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_DIR = ROOT / "Kinderbuch_Bildlabor_Start"
+# Öffentliche Ansicht: liest nur den kuratierten Stand, schreibt nichts, ruft nichts auf
+DEMO = os.environ.get("BILDLABOR_DEMO") == "1"
 # Getrennter Datenordner für Tests, damit echte Bearbeitungen unberührt bleiben
-DATA_DIR = Path(os.environ.get("BILDLABOR_DATA_DIR", ROOT))
+DATA_DIR = Path(os.environ.get("BILDLABOR_DATA_DIR", ROOT / "demo" if DEMO else ROOT))
 WORK_DIR = DATA_DIR / "data" / "work"
 EXPORT_DIR = DATA_DIR / "exports"
 
@@ -30,6 +32,17 @@ def sha256(path: Path) -> str:
 
 def now_utc() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+class ReadOnlyDemo(RuntimeError):
+    """Die öffentliche Ansicht verweigert Schreiben, Netzabrufe und externe Programme."""
+
+
+def refuse_in_demo(action_de: str) -> None:
+    if DEMO:
+        raise ReadOnlyDemo(
+            f"Öffentliche Ansicht, nur lesen: {action_de} ist hier abgeschaltet."
+        )
 
 
 def read_json(path: Path):
@@ -122,6 +135,7 @@ def write_text(
     path: Path, text: str, encoding: str = "utf-8", newline: str | None = None
 ) -> None:
     """Schreibt über eine temporäre Datei, damit kein halb geschriebener Stand entsteht."""
+    refuse_in_demo("Speichern")
     path.parent.mkdir(parents=True, exist_ok=True)
     # Eigener Name je Schreibvorgang: gleichzeitige Speicherungen dürfen sich nicht die Datei teilen
     with tempfile.NamedTemporaryFile(
@@ -145,8 +159,12 @@ def write_text(
     Path(tmp.name).replace(path)
 
 
+def json_text(data) -> str:
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+
+
 def write_json(path: Path, data) -> None:
-    write_text(path, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+    write_text(path, json_text(data))
 
 
 # Alle Browser-Sitzungen laufen als Threads in einem Streamlit-Prozess; die Sperre macht
@@ -234,6 +252,7 @@ def load_working_copy(src: ObjectSource, work_dir: Path | None = None) -> dict:
 
 
 def snapshot_working_copy(path: Path) -> Path:
+    refuse_in_demo("Speichern")
     content = path.read_bytes()
     digest = hashlib.sha256(content).hexdigest()
     snapshot = path.parent / ".history" / path.stem / f"{digest}.json"
@@ -252,6 +271,7 @@ def snapshot_working_copy(path: Path) -> Path:
 def save_working_copy(
     working: dict, area_de: str, work_dir: Path | None = None
 ) -> Path:
+    refuse_in_demo("Speichern")
     path = work_path(working["record"]["id"], work_dir)
     with LOCK:
         # Auch automatische Migrationen müssen den vorherigen Dateistand erhalten.

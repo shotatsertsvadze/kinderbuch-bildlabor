@@ -17,6 +17,7 @@ MAX_PAGES = 200
 
 
 def preview_import(files: list[tuple[str, bytes]]) -> list[dict]:
+    store.refuse_in_demo("Import")
     if not files or len(files) > MAX_PAGES:
         raise ValueError("Bitte 1–200 JPEG/PNG-Seiten auswählen.")
     pages = []
@@ -93,6 +94,7 @@ def imported_record(object_id: str, page: dict, number: int, metadata: dict) -> 
 
 
 def commit_import(pages: list[dict], metadata: dict) -> list[store.ObjectSource]:
+    store.refuse_in_demo("Import")
     if not pages or len(pages) > MAX_PAGES or not metadata.get("title", "").strip():
         raise ValueError("Seiten und Buchtitel sind erforderlich.")
     digest = hashlib.sha256()
@@ -167,6 +169,7 @@ def pdf_available() -> bool:
 
 
 def preview_pdf(name: str, content: bytes) -> list[dict]:
+    store.refuse_in_demo("PDF-Import")
     if not pdf_available():
         raise ValueError(
             "PDF-Import benötigt lokal Poppler (pdfinfo und pdftoppm im PATH). JPEG/PNG bleiben nutzbar."
@@ -298,6 +301,7 @@ def parse_iiif_pages(manifest: dict) -> list[dict]:
 
 
 def preview_iiif(url: str) -> dict:
+    store.refuse_in_demo("IIIF-Import")
     raw = fetch_public(url, 5 * 1024 * 1024)
     manifest = json.loads(raw)
     return {
@@ -310,6 +314,7 @@ def preview_iiif(url: str) -> dict:
 
 
 def download_iiif(preview: dict, selected: list[int]) -> list[dict]:
+    store.refuse_in_demo("IIIF-Import")
     pages = []
     for index in selected:
         entry = preview["pages"][index]

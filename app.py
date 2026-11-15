@@ -42,6 +42,14 @@ def load_collection() -> list[ui.Current]:
     for src in store.catalog():
         try:
             loaded.append(ui.Current(src, store.load_working_copy(src)))
+        except store.ReadOnlyDemo:
+            # Älteres Format bräuchte eine gespeicherte Umstellung; das darf die Demo nicht
+            st.info(
+                "Dieser Stand kann in der öffentlichen Demo nicht angezeigt werden. Die lokale "
+                "Fassung zeigt ihn vollständig.",
+                icon=ui.INFO,
+            )
+            st.stop()
         except json.JSONDecodeError:
             path = store.work_path(src.id).relative_to(store.DATA_DIR)
             st.error(
@@ -72,11 +80,17 @@ def view_label(view: str) -> str:
 
 def sidebar() -> str:
     st.sidebar.markdown("### Kinderbuch-Bildlabor")
+    # Import gibt es nur lokal
+    pages = [] if store.DEMO else ["import"]
     view = st.sidebar.radio(
         "Ansicht",
-        [COLLECTION, "import", *by_id],
+        [COLLECTION, *pages, *by_id],
         format_func=view_label,
-        captions=["", "", *(workflow.object_state(c.record)[1] for c in collection)],
+        captions=[
+            "",
+            *["" for _ in pages],
+            *(workflow.object_state(c.record)[1] for c in collection),
+        ],
         key="view",
     )
     if view in {COLLECTION, "import"}:
@@ -90,12 +104,15 @@ def sidebar() -> str:
             )
         else:
             st.sidebar.caption(
-                "Noch nichts gespeichert; angezeigt wird die unveränderte Quelldatei."
+                "Angezeigt wird die unveränderte Quelldatei."
+                if store.DEMO
+                else "Noch nichts gespeichert; angezeigt wird die unveränderte Quelldatei."
             )
-    st.sidebar.caption(
-        "Eingaben werden erst mit „Speichern“ übernommen. Gespeichertes bleibt nach einem "
-        "Neustart erhalten."
-    )
+    if not store.DEMO:
+        st.sidebar.caption(
+            "Eingaben werden erst mit „Speichern“ übernommen. Gespeichertes bleibt nach einem "
+            "Neustart erhalten."
+        )
     return view
 
 
@@ -168,6 +185,8 @@ def object_page(cur: ui.Current) -> None:
 
 
 view = sidebar()
+if store.DEMO:
+    ui.demo_notice()
 if notice := st.session_state.pop("notice", None):
     st.error(notice, icon=ui.ERROR)
 if view == COLLECTION:

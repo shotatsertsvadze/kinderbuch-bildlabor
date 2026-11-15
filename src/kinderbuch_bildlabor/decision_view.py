@@ -4,7 +4,16 @@ import xml.etree.ElementTree as ET
 
 import streamlit as st
 
-from kinderbuch_bildlabor import actions, export, oai, regions, review, ui, workflow
+from kinderbuch_bildlabor import (
+    actions,
+    export,
+    oai,
+    regions,
+    review,
+    store,
+    ui,
+    workflow,
+)
 from kinderbuch_bildlabor.library_view import parsed_source
 from kinderbuch_bildlabor.ui import Current
 
@@ -55,8 +64,11 @@ def classification_tab(cur: Current) -> None:
     with right:
         ui.section("Welche Klasse trifft zu?")
         st.markdown(
-            "Colibri nennt zwei Klassen. Wählen Sie am Bild die zutreffende und nennen Sie Ihre "
-            "Belege. Beide Ausgangswerte bleiben erhalten."
+            "Colibri nennt zwei Klassen. Die Entscheidung unten wird am Bild getroffen und mit "
+            "Belegen begründet. Beide Ausgangswerte bleiben erhalten."
+            if store.DEMO
+            else "Colibri nennt zwei Klassen. Wählen Sie am Bild die zutreffende und nennen Sie "
+            "Ihre Belege. Beide Ausgangswerte bleiben erhalten."
         )
         groundtruth = (
             "Steht in Colibri in der Spalte „groundtruth“; wird hier trotzdem am Bild geprüft. "
@@ -173,7 +185,11 @@ def withdrawn_list(record: dict, code: str, message: str) -> None:
 def decision_form(cur: Current, code: str, message: str) -> dict | None:
     record = cur.record
     entry = review.decision(record, code, message)
-    if entry is None:
+    if entry is None and store.DEMO:
+        st.info(
+            "Offen: Für diesen Hinweis liegt keine Entscheidung vor.", icon=ui.PENDING
+        )
+    elif entry is None:
         st.warning(
             "Offen: Antwort wählen, begründen, mit Namen speichern.", icon=ui.PENDING
         )
@@ -185,6 +201,9 @@ def decision_form(cur: Current, code: str, message: str) -> dict | None:
             icon=ui.CONFIRMED if review.resolves(entry) else ui.PENDING,
         )
     key = actions.decision_key(cur.id, code, message)
+    if store.DEMO:
+        withdrawn_list(record, code, message)
+        return entry
     if entry is not None:
         reconfirm(cur, code, message, entry, key)
         withdraw(cur, code, message, entry, key)

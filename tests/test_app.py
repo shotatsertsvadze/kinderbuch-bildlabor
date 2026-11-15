@@ -649,10 +649,13 @@ def test_csv_from_other_export_blocks_csv_download():
     path.write_text(text.replace(exported_at, "2000-01-01T00:00:00+00:00"), "utf-8-sig")
     app.run()
     assert [b.label for b in app.download_button] == [
-        "JSON herunterladen",
-        "Prüfbericht als HTML herunterladen",
+        "Prüfbericht als HTML herunterladen"
     ]
-    assert any("anderen Export" in w for w in texts(app, "warning"))
+    assert not any("Export aktuell" in s for s in texts(app, "success"))
+    assert any(
+        e.startswith("Exportdateien unvollständig") and f"{PILOT}.csv" in e
+        for e in texts(app, "error")
+    )
 
 
 def test_draft_save_feedback_stays_at_button_until_confirmation():
@@ -1123,3 +1126,151 @@ def test_compare_view_renders_both_objects_without_saving():
         a["bibliographic_metadata_from_colibri"]["author_display"] or ""
     )
     assert {p: p.read_bytes() for p in store.WORK_DIR.rglob("*.json")} == before
+
+
+def export_files(object_id: str) -> list:
+    return [
+        *actions.export_paths(object_id),
+        actions.annotations_path(object_id),
+        actions.pagexml_path(object_id),
+    ]
+
+
+def test_imported_object_full_export_writes_all_files():
+    """Regression: Export eines importierten Objekts brach nach JSON/CSV mit AttributeError ab."""
+    src = imported_source()
+    app = open_app(src.id)
+    app.button(key=f"{src.id}-export").click().run()
+    assert not app.exception
+    assert all(path.exists() for path in export_files(src.id))
+    assert any(s.startswith("JSON und CSV gespeichert.") for s in texts(app, "success"))
+    page = store.read_json(actions.annotations_path(src.id))
+    assert page["items"][0]["target"]["source"] == f"urn:bildlabor:{src.id}:image"
+    app.button(key=f"{src.id}-roundtrip").click().run()
+    assert not app.exception
+    assert any(s.startswith("Export geprüft") for s in texts(app, "success"))
+
+
+def test_failed_export_build_writes_nothing(monkeypatch):
+    from kinderbuch_bildlabor import pagexml
+
+    def broken(record, exported_at):
+        raise ValueError("kaputt")
+
+    monkeypatch.setattr(pagexml, "page_xml", broken)
+    app = open_app()
+    app.button(key=f"{PILOT}-export").click().run()
+    assert app.exception
+    assert not any(path.exists() for path in export_files(PILOT))
+    assert not any(s.startswith("JSON und CSV") for s in texts(app, "success"))
+
+
+def fail_writes_to(monkeypatch, suffix: str) -> None:
+    real = store.write_text
+
+    def failing(path, *args, **kwargs):
+        if path.name.endswith(suffix):
+            raise OSError(28, "No space left on device", str(path))
+        real(path, *args, **kwargs)
+
+    monkeypatch.setattr(store, "write_text", failing)
+
+
+@pytest.mark.parametrize("previous", [False, True])
+@pytest.mark.parametrize("suffix", [".csv", ".annotations.json", ".page.xml", "1.json"])
+def test_export_failure_is_never_shown_as_current_and_stays_visible(
+    monkeypatch, previous, suffix
+):
+    """Regression: nach einem abgebrochenen Export galt ein gemischter Dateisatz als aktuell."""
+    app = open_app()
+    if previous:
+        app.button(key=f"{PILOT}-export").click().run()
+    before = {p: p.read_bytes() for p in export_files(PILOT) if p.exists()}
+    fail_writes_to(monkeypatch, suffix)
+    monkeypatch.setattr(store, "now_utc", lambda: "2099-01-01T00:00:00Z")
+    app.button(key=f"{PILOT}-export").click().run()
+    for _ in range(2):
+        assert not app.exception
+        errors = texts(app, "error")
+        assert any(e.startswith("Letzter Exportversuch") for e in errors)
+        current = any("Export aktuell" in s for s in texts(app, "success"))
+        if previous and suffix == ".csv":
+            # Nichts wurde ersetzt: der frühere, vollständige Satz ist weiterhin aktuell
+            assert current
+            assert before == {p: p.read_bytes() for p in export_files(PILOT)}
+        elif previous:
+            assert not current
+            assert any(e.startswith("Exportdateien unvollständig") for e in errors)
+        else:
+            assert not current
+            assert "Noch kein Export für dieses Objekt vorhanden." in texts(app, "info")
+        app.run()
+
+
+def test_successful_export_clears_earlier_failure(monkeypatch):
+    app = open_app()
+    with monkeypatch.context() as patch:
+        fail_writes_to(patch, ".page.xml")
+        app.button(key=f"{PILOT}-export").click().run()
+    app.button(key=f"{PILOT}-export").click().run()
+    assert not any(e.startswith("Letzter Exportversuch") for e in texts(app, "error"))
+    assert any("Export aktuell" in s for s in texts(app, "success"))
+
+
+@pytest.mark.parametrize("name", [".csv", ".annotations.json", ".page.xml"])
+def test_altered_or_missing_companion_makes_export_incomplete(name):
+    app = open_app()
+    app.button(key=f"{PILOT}-export").click().run()
+    path = store.EXPORT_DIR / f"{PILOT}{name}"
+    path.write_bytes(path.read_bytes() + b" ")
+    app.run()
+    assert not any("Export aktuell" in s for s in texts(app, "success"))
+    assert any(path.name in e for e in texts(app, "error"))
+    assert app.button(key=f"{PILOT}-roundtrip").disabled
+    assert "CSV herunterladen" not in [b.label for b in app.download_button]
+    preview = any("Inhalt der CSV-Datei" in e.label for e in app.expander)
+    assert preview == (name != ".csv")
+    path.unlink()
+    app.run()
+    assert any(path.name in e for e in texts(app, "error"))
+
+
+def test_orphaned_csv_is_not_previewed():
+    store.EXPORT_DIR.mkdir(parents=True)
+    (store.EXPORT_DIR / f"{PILOT}.csv").write_text("objekt_id\nfremd\n")
+    app = open_app()
+    assert not any("Inhalt der CSV-Datei" in e.label for e in app.expander)
+
+
+def test_concurrent_exports_leave_one_consistent_set(monkeypatch):
+    """Ohne Sperre schrieb ein zweiter Export zwischen die Dateien des ersten."""
+    import threading
+
+    real = store.write_text
+    second_done = threading.Event()
+
+    def slow_first(path, *args, **kwargs):
+        real(path, *args, **kwargs)
+        if threading.current_thread().name == "first" and path.suffix == ".csv":
+            # Gibt dem zweiten Export Gelegenheit, sich dazwischenzuschieben
+            second_done.wait(timeout=1)
+
+    monkeypatch.setattr(store, "write_text", slow_first)
+    monkeypatch.setattr(
+        store,
+        "now_utc",
+        lambda: f"2099-01-01T00:00:0{threading.current_thread().name == 'second':d}Z",
+    )
+
+    def second():
+        actions.run_export(PILOT)
+        second_done.set()
+
+    first = threading.Thread(target=actions.run_export, args=(PILOT,), name="first")
+    first.start()
+    other = threading.Thread(target=second, name="second")
+    other.start()
+    first.join()
+    other.join()
+    exported = store.read_json(store.EXPORT_DIR / f"{PILOT}.json")
+    assert actions.invalid_exports(PILOT, exported) == []

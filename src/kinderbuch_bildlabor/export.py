@@ -8,7 +8,7 @@ import csv
 import io
 from pathlib import Path
 
-from kinderbuch_bildlabor import review, second_review, store
+from kinderbuch_bildlabor import annotations, pagexml, review, second_review, store
 
 CSV_COLUMNS = [
     "objekt_id",
@@ -68,13 +68,17 @@ CSV_COLUMNS = [
 ]
 
 
-def export_json(working: dict, path: Path) -> dict:
-    data = {
+def export_data(working: dict) -> dict:
+    return {
         "exported_at": store.now_utc(),
         "based_on": working["based_on"],
         "change_log": working["change_log"],
         "record": working["record"],
     }
+
+
+def export_json(working: dict, path: Path) -> dict:
+    data = export_data(working)
     store.write_json(path, data)
     return data
 
@@ -216,7 +220,7 @@ def csv_rows(record: dict, exported_at: str) -> list[dict]:
     return rows
 
 
-def write_csv(rows: list[dict], path: Path) -> None:
+def csv_text(rows: list[dict]) -> str:
     """utf-8-sig, damit Excel Umlaute und typografische Anführungszeichen korrekt öffnet."""
     buffer = io.StringIO(newline="")
     writer = csv.DictWriter(buffer, fieldnames=CSV_COLUMNS)
@@ -235,7 +239,22 @@ def write_csv(rows: list[dict], path: Path) -> None:
         }
         for row in rows
     )
-    store.write_text(path, buffer.getvalue(), encoding="utf-8-sig", newline="")
+    return buffer.getvalue()
+
+
+def write_csv(rows: list[dict], path: Path) -> None:
+    store.write_text(path, csv_text(rows), encoding="utf-8-sig", newline="")
+
+
+def companions(record: dict, exported_at: str) -> dict[str, str]:
+    """Begleitdateien eines Exports; dieselbe Erzeugung dient zum Schreiben und zum Prüfen."""
+    return {
+        "csv": csv_text(csv_rows(record, exported_at)),
+        "annotations": store.json_text(
+            annotations.annotation_page(record, exported_at)
+        ),
+        "pagexml": pagexml.page_xml(record, exported_at),
+    }
 
 
 def export_csv(record: dict, exported_at: str, path: Path) -> None:

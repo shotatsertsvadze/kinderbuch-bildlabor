@@ -17,18 +17,27 @@ ICONS = {
 }
 
 
-def export_state(cur: Current) -> tuple[str, list[dict] | None, dict | None]:
-    """'none', 'damaged', 'current', 'stale' oder 'foreign' mit späteren Änderungen und Exportdaten."""
+def export_state(
+    cur: Current,
+) -> tuple[str, list[dict] | None, dict | None, list[Path]]:
+    """Zustand ('none', 'damaged', 'current', 'incomplete', 'stale', 'foreign'), spätere
+    Änderungen, Exportdaten und ungültige Begleitdateien."""
     json_path, _ = actions.export_paths(cur.id)
     if not json_path.exists():
-        return "none", None, None
+        return "none", None, None, []
     try:
         exported = store.read_json(json_path)
     except json.JSONDecodeError:
-        return "damaged", None, None
+        return "damaged", None, None, []
     later = export.later_changes(cur.working, exported)
-    state = "foreign" if later is None else "stale" if later else "current"
-    return state, later, exported
+    invalid = actions.invalid_exports(cur.id, exported)
+    if later is None:
+        state = "foreign"
+    elif later:
+        state = "stale"
+    else:
+        state = "incomplete" if invalid else "current"
+    return state, later, exported, invalid
 
 
 def verification(cur: Current, state: str, exported: dict | None) -> dict | None:
@@ -50,13 +59,16 @@ def passed(result: dict) -> bool:
 
 def export_tab(cur: Current) -> None:
     json_path, csv_path = actions.export_paths(cur.id)
-    state, later, exported = export_state(cur)
+    state, later, exported, invalid = export_state(cur)
     result = verification(cur, state, exported)
     approved = workflow.approved(cur.record)
     stages(state, exported, result, approved)
-    save_section(cur, state, later, exported, result, approved, json_path, csv_path)
+    save_section(
+        cur, state, later, exported, invalid, result, approved, json_path, csv_path
+    )
     verify_section(cur, state, result, approved)
-    if csv_path.exists():
+    # Nur die CSV zeigen, die genau zur vorhandenen JSON-Datei gehört
+    if exported is not None and csv_path not in invalid:
         with st.expander("Inhalt der CSV-Datei (Stand des Exports)"):
             with csv_path.open(encoding="utf-8-sig", newline="") as handle:
                 st.dataframe(list(csv.DictReader(handle)), hide_index=True)
@@ -90,6 +102,7 @@ def stages(state: str, exported: dict | None, result: dict | None, approved: boo
     save = {
         "none": ("open", "Noch kein Export"),
         "damaged": ("error", "Exportdatei beschädigt"),
+        "incomplete": ("error", "Exportdateien unvollständig"),
         "foreign": ("error", "Export passt nicht zum Arbeitsstand"),
         "stale": ("warn", "Veraltet: danach gespeichert"),
     }.get(state) or ("done", f"Gespeichert {ui.local_time(exported['exported_at'])}")  # type: ignore[index]
@@ -113,12 +126,20 @@ def stages(state: str, exported: dict | None, result: dict | None, approved: boo
                 st.markdown(f"**{number} · {title}**  \n{ICONS[kind]} {text}")
 
 
-def save_section(cur, state, later, exported, result, approved, json_path, csv_path):
-    ui.section("Dateien speichern")
-    st.caption(
-        "Speichert den aktuellen Arbeitsstand als JSON- und CSV-Datei im Exportordner."
-    )
-    if st.button(
+def save_section(
+    cur, state, later, exported, invalid, result, approved, json_path, csv_path
+):
+    if store.DEMO:
+        ui.section("Vorbereiteter Export")
+        st.caption(
+            "Lokal erstellte Exportdateien, hier unverändert zum Herunterladen angeboten."
+        )
+    else:
+        ui.section("Dateien speichern")
+        st.caption(
+            "Speichert den aktuellen Arbeitsstand als JSON- und CSV-Datei im Exportordner."
+        )
+    if not store.DEMO and st.button(
         "JSON und CSV exportieren",
         key=f"{cur.id}-export",
         type="secondary" if state == "current" else "primary",
@@ -127,12 +148,26 @@ def save_section(cur, state, later, exported, result, approved, json_path, csv_p
         with st.spinner("JSON und CSV werden gespeichert …"):
             actions.run_export(cur.id)
         st.rerun()
+    if failure := st.session_state.get(actions.export_failed_key(cur.id)):
+        st.error(
+            f"Letzter Exportversuch ({ui.local_time_exact(failure['at'])}) fehlgeschlagen: "
+            f"{failure['message']} Darunter steht der Stand der Dateien im Exportordner.",
+            icon=ui.ERROR,
+        )
     if state == "none":
         st.info("Noch kein Export für dieses Objekt vorhanden.", icon=ui.INFO)
     elif state == "damaged":
         st.error(
             "Die vorhandene Exportdatei ist beschädigt und kann nicht gelesen werden. "
             "Ein neuer Export ersetzt sie.",
+            icon=ui.ERROR,
+        )
+    elif state == "incomplete":
+        names = ", ".join(f"`{path.name}`" for path in invalid)
+        st.error(
+            f"Exportdateien unvollständig: {names} fehlt oder gehört nicht zur JSON-Datei dieses "
+            "Exports, zum Beispiel nach einem abgebrochenen Export. Ein Export gilt nur mit allen "
+            "vier Dateien als aktuell. Bitte neu exportieren.",
             icon=ui.ERROR,
         )
     elif state == "foreign":
@@ -165,7 +200,9 @@ def saved_panel(cur, exported, result, approved, json_path: Path, csv_path: Path
         st.markdown(
             f"Dateien: `{json_path.name}`, `{csv_path.name}` und "
             f"`{actions.annotations_path(cur.id).name}` (W3C Web Annotation), "
-            f"`{actions.pagexml_path(cur.id).name}` (PAGE-XML)  \nOrdner: `{json_path.parent}`"
+            f"`{actions.pagexml_path(cur.id).name}` (PAGE-XML)"
+            # Der Serverpfad gehört nicht in die öffentliche Ansicht
+            + ("" if store.DEMO else f"  \nOrdner: `{json_path.parent}`")
         )
         if not approved:
             st.caption(
@@ -198,29 +235,15 @@ def downloads(cur, exported, json_path: Path, csv_path: Path):
             icon=":material/download:",
             on_click="ignore",
         )
-        if csv_matches(csv_path, exported["exported_at"]):
-            st.download_button(
-                "CSV herunterladen",
-                data=csv_path.read_bytes(),
-                file_name=csv_path.name,
-                mime="text/csv",
-                key=f"{cur.id}-download-csv",
-                icon=":material/download:",
-                on_click="ignore",
-            )
-        else:
-            st.warning(
-                "Die CSV-Datei fehlt oder stammt aus einem anderen Export. Bitte neu exportieren.",
-                icon=ui.WARNING,
-            )
-
-
-def csv_matches(path: Path, exported_at: str) -> bool:
-    if not path.exists():
-        return False
-    with path.open(encoding="utf-8-sig", newline="") as handle:
-        return all(
-            row["exportiert_am"] == exported_at for row in csv.DictReader(handle)
+        # Nur im Zustand "current" erreichbar: Die CSV ist dann geprüft
+        st.download_button(
+            "CSV herunterladen",
+            data=csv_path.read_bytes(),
+            file_name=csv_path.name,
+            mime="text/csv",
+            key=f"{cur.id}-download-csv",
+            icon=":material/download:",
+            on_click="ignore",
         )
 
 

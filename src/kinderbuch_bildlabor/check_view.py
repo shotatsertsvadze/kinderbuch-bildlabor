@@ -7,6 +7,7 @@ from kinderbuch_bildlabor import (
     decision_view,
     review,
     second_review,
+    store,
     ui,
     validate,
     workflow,
@@ -97,6 +98,9 @@ def final_approval(cur: Current, state: str, findings: list) -> None:
         )
         workflow.continue_button(cur.id, cur.record, f"{cur.id}-approved-continue")
         return
+    if store.DEMO:
+        st.info("Für dieses Objekt liegt keine Endbestätigung vor.", icon=ui.INFO)
+        return
     ack = st.checkbox(
         "Ich bestätige den gesamten gespeicherten Arbeitsstand; keine Ground-Truth-Freigabe.",
         key=f"{cur.id}-final-ack",
@@ -154,6 +158,8 @@ def second_review_section(cur: Current) -> None:
                         else f"Abweichung, {entry['reason']}"
                     )
                 )
+            if store.DEMO:
+                continue
             base = f"{cur.id}-second-{key}"
             agrees = st.radio(
                 "Ergebnis",
@@ -175,7 +181,7 @@ def second_review_section(cur: Current) -> None:
                     second_review.content_hash(cur.record, key),
                 ),
             )
-    if not reviewer:
+    if not reviewer and not store.DEMO:
         st.caption(
             f"{ui.LOCK} Tragen Sie oben unter „Prüfende Person“ Ihren Namen ein."
         )
@@ -187,8 +193,8 @@ def decisions(cur: Current, findings: list) -> None:
         return
     ui.section("Hinweise begründet entscheiden")
     st.caption(
-        "Belegte Unterschiede lassen sich nicht wegklicken. Halten Sie mit Ihrem Namen fest, wie "
-        "damit umgegangen wird, und begründen Sie das. „Nicht entscheidbar“ lässt den Hinweis offen."
+        "Belegte Unterschiede lassen sich nicht wegklicken. Festgehalten wird mit Namen, wie "
+        "damit umgegangen wird, und warum. „Nicht entscheidbar“ lässt den Hinweis offen."
     )
     for finding in decidable:
         with st.container(border=True):

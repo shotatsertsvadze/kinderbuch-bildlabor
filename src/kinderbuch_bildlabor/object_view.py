@@ -185,9 +185,11 @@ def region_tab(cur: Current) -> None:
             horizontal=True,
             key=f"{cur.id}-region-choice",
         )
-    canvas_section(cur)
-    proposal_section(cur, by_id[choice])
-    similar_section(cur, by_id[choice])
+    # Zeichnen, Modellvorschlag und Ähnlichkeitssuche nur lokal
+    if not store.DEMO:
+        canvas_section(cur)
+        proposal_section(cur, by_id[choice])
+        similar_section(cur, by_id[choice])
     withdrawn_regions_list(cur)
     left, right = ui.image_and_controls(pinned="regionen")
     with right:
@@ -405,7 +407,7 @@ def region_editor(cur: Current, region: dict) -> list[int]:
         ui.confirmed_note(cur.record, region_id)
         if sync == ui.CLEAN:
             region_continue(cur, region_id)
-    else:
+    elif not store.DEMO:
         st.markdown(
             "**Prüfen Sie den markierten Rahmen im Scan.** Passt er genau um den Bereich, "
             "setzen Sie das Häkchen und speichern Sie die Prüfung."
@@ -421,12 +423,17 @@ def region_editor(cur: Current, region: dict) -> list[int]:
             else None,
             button_label="Rahmen als geprüft bestätigen",
         )
-    # Fester Schlüssel: sonst klappt der Bereich zu, sobald die Eingabe wieder dem Gespeicherten entspricht
-    with st.expander(
-        "Rahmen korrigieren", expanded=sync != ui.CLEAN, key=f"{region_id}-correct"
-    ):
+    if store.DEMO:
         ui.origin_note(region.get("region_origin_de"))
-        shown = region_coordinates(cur, region, keys, sync, width, height)
+        st.markdown(f"Koordinaten [x, y, Breite, Höhe]: `{region['xywh']}`")
+        shown = region["xywh"]
+    else:
+        # Fester Schlüssel: sonst klappt der Bereich zu, sobald die Eingabe wieder dem Gespeicherten entspricht
+        with st.expander(
+            "Rahmen korrigieren", expanded=sync != ui.CLEAN, key=f"{region_id}-correct"
+        ):
+            ui.origin_note(region.get("region_origin_de"))
+            shown = region_coordinates(cur, region, keys, sync, width, height)
     st.image(
         regions.crop(ui.page_image(cur.src.page_image), shown),
         width=ui.crop_width(shown),
@@ -435,7 +442,7 @@ def region_editor(cur: Current, region: dict) -> list[int]:
         else "Ausschnitt (gespeicherter Stand)",
         alt="Ausschnitt der gewählten Region aus der gescannten Seite.",
     )
-    if review.is_imported(cur.record):
+    if review.is_imported(cur.record) and not store.DEMO:
         withdraw_region_form(cur, region)
     return shown
 
@@ -583,6 +590,11 @@ def biblio_tab(cur: Current) -> None:
     )
     keys = actions.biblio_keys(cur.id)
     stored = [stored_values[name] or "" for name in review.BIBLIO_FIELDS]
+    if store.DEMO:
+        for value, (label, _, _) in zip(stored, review.BIBLIO_FIELDS.values()):
+            ui.stored_text(label, value)
+        ui.confirmed_note(record, "bibliographic")
+        return
     sync = ui.sync_fields(keys, stored, lambda values: [v.strip() for v in values])
     for key, (label, _, _) in zip(keys, review.BIBLIO_FIELDS.values()):
         st.text_input(label, key=key)
@@ -661,6 +673,13 @@ def description_editor(cur: Current) -> None:
         "verschiedene Rollen)"
     )
     key, stored = actions.description_key(cur.id), description["working_description_de"]
+    if store.DEMO:
+        ui.stored_text("Bildbeschreibung (sichtbarer Inhalt, ohne Deutung)", stored)
+        if description["observation_de"] != stored:
+            with st.expander("Erste Beobachtung (unverändert)"):
+                ui.source_text(description["observation_de"])
+        ui.confirmed_note(cur.record, "image_description")
+        return
     sync = ui.sync_fields([key], [stored], lambda values: [values[0].strip()])
     st.text_area(
         "Bildbeschreibung (sichtbarer Inhalt, ohne Deutung)",
@@ -731,6 +750,10 @@ def keyword_editor(cur: Current, region: dict) -> None:
     ui.origin_note(region.get("keyword_origin_de"))
     st.caption("Projektlokale Begriffe, keine geprüften GND-Verknüpfungen.")
     key, stored = actions.keyword_key(region_id), ["\n".join(region["keywords_de"])]
+    if store.DEMO:
+        ui.stored_text("Ein Begriff pro Zeile", stored[0])
+        ui.confirmed_note(cur.record, f"{region_id}/keywords_de")
+        return
     sync = ui.sync_fields(
         [key], stored, lambda values: [actions.keyword_list(values[0])]
     )
@@ -803,6 +826,19 @@ def transcription_editor(cur: Current, region: dict, ocr: dict | None) -> None:
         alt=f"Ausschnitt mit dem Text für: {region['label_de']}.",
     )
     key = actions.transcription_key(cur.id, field)
+    if store.DEMO:
+        columns = st.columns(2 if ocr else 1, gap="large")
+        with columns[0]:
+            ui.stored_text(
+                "Arbeitstranskription (zeichengetreu, historische Schreibweise)",
+                transcription[field],
+            )
+        if ocr:
+            with columns[1]:
+                ocr_block(cur, ocr)
+        saved_readings(cur, region, transcription[field])
+        ui.confirmed_note(cur.record, f"transcription/{field}")
+        return
     sync = ui.sync_fields([key], [transcription[field]])
     columns = st.columns(2 if ocr else 1, gap="large")
     with columns[0]:
@@ -865,7 +901,7 @@ def distance_caption(human: str, text: str) -> None:
 def second_reading(
     cur: Current, region: dict, human: str, original: dict | None
 ) -> None:
-    region_id, field = region["id"], region["transcription_field"]
+    region_id = region["id"]
     key = actions.ocr_run_key(cur.id, region_id)
     with st.expander(
         "Zweite Lesung mit lokaler OCR (Tesseract)", key=f"{key}-expander"
@@ -910,41 +946,47 @@ def second_reading(
                 args=(cur.id, region_id),
             )
             ui.feedback(cur.id, f"{key}-save")
-        saved = [
-            c
-            for c in cur.record.get("ocr_candidates", [])
-            if c["region_id"] == region_id
-        ]
-        if saved:
-            crop_sha = actions.current_crop_sha(cur.src, region)
-            ui.subsection("Gespeicherte zweite Lesungen")
-        for candidate in saved:
-            stale = review.candidate_stale(candidate, region, crop_sha)
-            with st.container(border=True):
-                st.code(candidate["text"], language=None)
-                st.caption(
-                    f"{candidate['engine_version']}, Modell {candidate['model']} "
-                    f"(SHA-256 {str(candidate['model_sha256'])[:12]}), PSM {candidate['psm']}, "
-                    f"{ui.local_time(candidate['created_at'])}"
-                    + (
-                        "; veraltet: der Bildausschnitt wurde seither geändert"
-                        if stale
-                        else ""
-                    )
+        saved_readings(cur, region, human)
+
+
+def saved_readings(cur: Current, region: dict, human: str) -> None:
+    region_id, field = region["id"], region["transcription_field"]
+    key = actions.ocr_run_key(cur.id, region_id)
+    saved = [
+        c for c in cur.record.get("ocr_candidates", []) if c["region_id"] == region_id
+    ]
+    if saved:
+        crop_sha = actions.current_crop_sha(cur.src, region)
+        ui.subsection("Gespeicherte zweite Lesungen")
+    for candidate in saved:
+        stale = review.candidate_stale(candidate, region, crop_sha)
+        with st.container(border=True):
+            st.code(candidate["text"], language=None)
+            st.caption(
+                f"{candidate['engine_version']}, Modell {candidate['model']} "
+                f"(SHA-256 {str(candidate['model_sha256'])[:12]}), PSM {candidate['psm']}, "
+                f"{ui.local_time(candidate['created_at'])}"
+                + (
+                    "; veraltet: der Bildausschnitt wurde seither geändert"
+                    if stale
+                    else ""
                 )
-                st.markdown(
-                    "Gegenüber Ihrer Arbeitstranskription: "
-                    + diff_markdown(human, candidate["text"])
-                )
-                distance_caption(human, candidate["text"])
-                st.button(
-                    "Als Entwurf in die Transkription übernehmen",
-                    key=f"{key}-adopt-{candidate['id']}",
-                    on_click=actions.adopt_ocr,
-                    args=(cur.id, region_id, candidate["id"], field),
-                    disabled=stale,
-                    help="Ändert nur das Eingabefeld und speichert als Entwurf; bestätigt wird nichts.",
-                )
+            )
+            st.markdown(
+                "Gegenüber Ihrer Arbeitstranskription: "
+                + diff_markdown(human, candidate["text"])
+            )
+            distance_caption(human, candidate["text"])
+            if store.DEMO:
+                continue
+            st.button(
+                "Als Entwurf in die Transkription übernehmen",
+                key=f"{key}-adopt-{candidate['id']}",
+                on_click=actions.adopt_ocr,
+                args=(cur.id, region_id, candidate["id"], field),
+                disabled=stale,
+                help="Ändert nur das Eingabefeld und speichert als Entwurf; bestätigt wird nichts.",
+            )
 
 
 def show_candidate(

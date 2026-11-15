@@ -14,6 +14,7 @@ FRESHNESS = {
     "stale": "Export veraltet (seitdem gespeichert)",
     "foreign": "Export stammt aus fremder Änderungsgeschichte",
     "damaged": "Export beschädigt",
+    "incomplete": "Exportdateien unvollständig",
 }
 NOTE = "Keine Ground Truth: Endbestätigung und Zweitprüfung sind Konventionen nach selbst angegebenen Namen."
 

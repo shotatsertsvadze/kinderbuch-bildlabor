@@ -4,6 +4,8 @@ import socket
 import ssl
 from urllib.parse import urljoin, urlsplit
 
+from kinderbuch_bildlabor import store
+
 
 MAX_DOWNLOAD = 50 * 1024 * 1024
 
@@ -29,6 +31,7 @@ def public_address(url: str) -> tuple[str, int, str, str]:
 
 
 def fetch_public(url: str, limit: int = MAX_DOWNLOAD) -> bytes:
+    store.refuse_in_demo("Abruf aus dem Netz")
     for _ in range(6):
         host, port, address, scheme = public_address(url)
         connection: http.client.HTTPConnection

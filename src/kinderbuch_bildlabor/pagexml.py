@@ -2,7 +2,7 @@
 
 import xml.etree.ElementTree as ET
 
-from kinderbuch_bildlabor import review
+from kinderbuch_bildlabor import annotations, review
 
 NS = "http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"
 
@@ -26,7 +26,7 @@ def page_xml(record: dict, exported_at: str) -> str:
     page = ET.SubElement(
         root,
         f"{{{NS}}}Page",
-        imageFilename=record["source"]["image_info_url"].removesuffix("/info.json"),
+        imageFilename=annotations.image_reference(record),
         imageWidth=str(width),
         imageHeight=str(height),
     )

@@ -81,14 +81,18 @@ def render(collection: list[ui.Current]) -> None:
     compare_view.render(collection)
     class_matrix(collection)
     case_study(collection)
-    example_view.render()
+    # Historische Prüfakten (docs/ergebnis) gehören nicht in die öffentliche Ansicht
+    if not store.DEMO:
+        example_view.render()
     second_example(by_id[SECOND].record)
     glossary()
-    export_column, backup_column = st.columns(2, gap="large")
-    with export_column, st.container(border=True):
-        collection_export(collection)
-    with backup_column, st.container(border=True):
-        backup_view.render()
+    # Sammlungsexport und Sicherung schreiben bzw. enthalten alle Arbeitsstände: nur lokal
+    if not store.DEMO:
+        export_column, backup_column = st.columns(2, gap="large")
+        with export_column, st.container(border=True):
+            collection_export(collection)
+        with backup_column, st.container(border=True):
+            backup_view.render()
 
 
 def queue(collection: list[ui.Current]) -> None:
@@ -207,7 +211,9 @@ def class_matrix(collection: list[ui.Current]) -> None:
                 )
     if missing:
         st.caption(f"ohne Klasse: {len(missing)}")
-    full_matrix(table)
+    # Die ganze Colibri-Datei liegt nur lokal vor
+    if not store.DEMO:
+        full_matrix(table)
 
 
 def full_matrix(sample: dict[tuple[str, str], list[str]]) -> None:
@@ -299,10 +305,16 @@ def hero(cur: ui.Current) -> None:
             st.title("Kinderbuch-Bildlabor")
             st.markdown(f"**{QUESTION}**")
             manual, automatic = review.classification_labels(cur.record) or ("", "")
+            how = (
+                "Das Leitbeispiel zeigt, wie am Bild geprüft, begründet entschieden und mit "
+                "Herkunft exportiert wird."
+                if store.DEMO
+                else "Sie prüfen am Bild, welche zutrifft, begründen Ihre Entscheidung und "
+                "exportieren sie mit Herkunft."
+            )
             st.write(
                 f"Colibri führt für diese Illustration die manuelle Klasse „{manual}“ "
-                f"und die automatische Klasse „{automatic}“. Sie prüfen am Bild, welche zutrifft, begründen Ihre "
-                "Entscheidung und exportieren sie mit Herkunft."
+                f"und die automatische Klasse „{automatic}“. {how}"
             )
             with st.container(horizontal=True):
                 st.button(
@@ -314,11 +326,12 @@ def hero(cur: ui.Current) -> None:
                     type="primary",
                     icon=":material/arrow_forward:",
                 )
-                st.button(
-                    "Eigenes Buch importieren",
-                    key="import-start",
-                    on_click=lambda: st.session_state.update(view="import"),
-                )
+                if not store.DEMO:
+                    st.button(
+                        "Eigenes Buch importieren",
+                        key="import-start",
+                        on_click=lambda: st.session_state.update(view="import"),
+                    )
             st.caption(
                 "Fünf Schritte: Rahmen prüfen → Klassen vergleichen → "
                 "Beschreibung prüfen → Prüfung abschließen → exportieren"

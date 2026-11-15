@@ -11,6 +11,8 @@ wheels/
 
 # Erzeugte Exporte
 exports/
+# Ausnahme: kuratierter Demonstrationsstand (docs/DEMO_KURATIERUNG.md)
+!demo/exports/
 .DS_Store
 
 # Lokale Arbeitsstände und Werkzeugordner

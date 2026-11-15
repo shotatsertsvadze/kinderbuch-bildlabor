@@ -1,5 +1,5 @@
 - Preserve source fixtures and real review records; use temporary data for tests.
-- Do not commit working data, exports, credentials, or local backups.
+- Do not commit working data, exports, credentials, or local backups. Only exception: `demo/`, the curated, checksummed demonstration snapshot built with `kinderbuch_bildlabor.demo_data` (docs/DEMO_KURATIERUNG.md); the app never writes to it.
 
 <!-- gg:init:start -->
 # Kinderbuch-Bildlabor

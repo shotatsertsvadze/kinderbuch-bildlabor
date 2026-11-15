@@ -12,7 +12,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from kinderbuch_bildlabor import regions
+from kinderbuch_bildlabor import regions, store
 from kinderbuch_bildlabor.store import now_utc
 
 TIMEOUT = 60
@@ -24,6 +24,9 @@ class OcrUnavailable(Exception):
 
 
 def executable() -> str:
+    if store.DEMO:
+        # Als "nicht verfügbar" melden, damit die Ansicht ohne Prozessaufruf weiterläuft
+        raise OcrUnavailable("Lokale OCR ist in der öffentlichen Ansicht abgeschaltet.")
     path = os.environ.get("BILDLABOR_TESSERACT") or shutil.which("tesseract")
     if not path:
         raise OcrUnavailable(
@@ -39,6 +42,7 @@ def tessdata_args() -> list[str]:
 
 
 def run(arguments: list[str]) -> subprocess.CompletedProcess:
+    store.refuse_in_demo("Lokale OCR")
     try:
         return subprocess.run(
             arguments, capture_output=True, text=True, timeout=TIMEOUT, check=True

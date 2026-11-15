@@ -10,8 +10,6 @@ from pathlib import Path
 import streamlit as st
 
 from kinderbuch_bildlabor import (
-    annotations,
-    pagexml,
     export,
     ocr,
     review,
@@ -52,12 +50,16 @@ def region_label(object_id: str, region_id: str) -> str:
     return f"„{review.find_region(record, region_id)['label_de']}“"
 
 
-def write_failed(error: OSError) -> None:
+def write_failed_message(error: OSError) -> str:
     where = f" ({Path(error.filename).name})" if error.filename else ""
-    st.session_state.notice = (
+    return (
         f"Schreiben fehlgeschlagen: {error.strerror}{where}. "
         "Bitte Berechtigungen und freien Speicherplatz prüfen und erneut versuchen."
     )
+
+
+def write_failed(error: OSError) -> None:
+    st.session_state.notice = write_failed_message(error)
 
 
 DRAFT_NEXT_DE = (
@@ -392,16 +394,17 @@ def confirm_transcription(object_id: str, field: str, seen_text: str) -> None:
     )
 
 
-def export_paths(object_id: str):
-    return store.EXPORT_DIR / f"{object_id}.json", store.EXPORT_DIR / f"{object_id}.csv"
+def export_paths(object_id: str, export_dir: Path | None = None):
+    folder = export_dir or store.EXPORT_DIR
+    return folder / f"{object_id}.json", folder / f"{object_id}.csv"
 
 
-def annotations_path(object_id: str):
-    return store.EXPORT_DIR / f"{object_id}.annotations.json"
+def annotations_path(object_id: str, export_dir: Path | None = None):
+    return (export_dir or store.EXPORT_DIR) / f"{object_id}.annotations.json"
 
 
-def pagexml_path(object_id: str):
-    return store.EXPORT_DIR / f"{object_id}.page.xml"
+def pagexml_path(object_id: str, export_dir: Path | None = None):
+    return (export_dir or store.EXPORT_DIR) / f"{object_id}.page.xml"
 
 
 def file_digest(path: Path) -> str:
@@ -412,24 +415,69 @@ def roundtrip_key(object_id: str) -> str:
     return f"{object_id}-roundtrip-result"
 
 
-def run_export(object_id: str) -> bool:
-    json_path, csv_path = export_paths(object_id)
-    previous = st.session_state.get(roundtrip_key(object_id))
-    current = store.load_working_copy(store.object_source(object_id))
+# Kodierung und Zeilenende je Begleitdatei: CSV mit BOM für Tabellenprogramme
+COMPANION_FORMATS = {
+    "csv": ("utf-8-sig", ""),
+    "annotations": ("utf-8", None),
+    "pagexml": ("utf-8", None),
+}
+
+
+def companion_paths(object_id: str, export_dir: Path | None = None) -> dict[str, Path]:
+    return {
+        "csv": export_paths(object_id, export_dir)[1],
+        "annotations": annotations_path(object_id, export_dir),
+        "pagexml": pagexml_path(object_id, export_dir),
+    }
+
+
+def read_companion(path: Path, kind: str) -> str | None:
+    encoding, newline = COMPANION_FORMATS[kind]
     try:
-        data = export.export_json(current, json_path)
-        export.export_csv(current["record"], data["exported_at"], csv_path)
-        store.write_json(
-            annotations_path(object_id),
-            annotations.annotation_page(current["record"], data["exported_at"]),
-        )
-        store.write_text(
-            pagexml_path(object_id),
-            pagexml.page_xml(current["record"], data["exported_at"]),
-        )
-    except OSError as error:
-        write_failed(error)
-        return False
+        return path.read_text(encoding=encoding, newline=newline)
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def invalid_exports(
+    object_id: str, exported: dict, export_dir: Path | None = None
+) -> list[Path]:
+    """Begleitdateien, die fehlen oder nicht genau aus dieser JSON-Datei entstehen."""
+    expected = export.companions(exported["record"], exported["exported_at"])
+    return [
+        path
+        for kind, path in companion_paths(object_id, export_dir).items()
+        if read_companion(path, kind) != expected[kind]
+    ]
+
+
+def export_failed_key(object_id: str) -> str:
+    return f"{object_id}-export-failed"
+
+
+def run_export(object_id: str) -> bool:
+    json_path, _ = export_paths(object_id)
+    previous = st.session_state.get(roundtrip_key(object_id))
+    # Die Sperre verhindert verschränkte Exporte; atomar über vier Dateien wird es dadurch nicht
+    with store.LOCK:
+        current = store.load_working_copy(store.object_source(object_id))
+        # Alles vor dem ersten Schreiben erzeugen; ein Fehler darf keine Teildateien hinterlassen
+        data = export.export_data(current)
+        texts = export.companions(current["record"], data["exported_at"])
+        try:
+            for kind, path in companion_paths(object_id).items():
+                encoding, newline = COMPANION_FORMATS[kind]
+                store.write_text(path, texts[kind], encoding, newline)
+            # JSON zuletzt: Ohne sie gilt kein neuer Export als vorhanden
+            store.write_json(json_path, data)
+        except OSError as error:
+            # Bleibt sichtbar, bis ein Export gelingt, auch über spätere Neuläufe hinweg
+            st.session_state[export_failed_key(object_id)] = {
+                "at": store.now_utc(),
+                "message": write_failed_message(error),
+            }
+            return False
+    st.session_state.pop(export_failed_key(object_id), None)
     st.session_state.pop(roundtrip_key(object_id), None)
     # Eine frühere Prüfung galt der alten Datei; das soll sichtbar erklärt werden
     st.session_state[f"{object_id}-export-replaced"] = (

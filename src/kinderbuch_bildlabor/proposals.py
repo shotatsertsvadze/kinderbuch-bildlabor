@@ -8,6 +8,8 @@ import urllib.request
 
 from PIL import Image
 
+from kinderbuch_bildlabor import store
+
 HOST = "http://localhost:11434"
 SCHEMA = {
     "type": "object",
@@ -32,6 +34,8 @@ def model() -> str:
 
 
 def available() -> bool:
+    if store.DEMO:
+        return False
     try:
         with urllib.request.urlopen(f"{HOST}/api/tags", timeout=0.5):
             return True
@@ -41,6 +45,7 @@ def available() -> bool:
 
 def propose(image: Image.Image) -> dict:
     """{'xywh': [x, y, w, h] innerhalb des Bildes, 'description_de': str}."""
+    store.refuse_in_demo("Modellvorschlag")
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, "JPEG")
     body = {

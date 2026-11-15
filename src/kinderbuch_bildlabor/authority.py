@@ -18,6 +18,7 @@ def _cache_file(query: str) -> Path:
 
 def search(query: str, size: int = 5) -> list[dict]:
     """[{'name', 'uri', 'type'}]; wiederholte Anfragen kommen aus dem Zwischenspeicher im Datenordner."""
+    store.refuse_in_demo("GND-Suche")
     query = query.strip()
     if not query:
         return []

@@ -117,6 +117,11 @@ Tests arbeiten in temporären Ordnern und berühren `data/work/` und `exports/` 
 
 Optional: `BILDLABOR_OLLAMA_MODEL` wählt das lokale Modell für Vorschläge (Standard `qwen2.5vl`; die Funktion erscheint nur, wenn Ollama auf localhost läuft).
 
+## Öffentliche Demo (nur lesbar)
+
+`BILDLABOR_DEMO=1 uv run streamlit run app.py` zeigt den kuratierten Stand aus `demo/`, ohne Bearbeiten,
+Import, Netzabrufe oder externe Programme. Anlegen des Stands: [DEMO_KURATIERUNG.md](docs/DEMO_KURATIERUNG.md).
+
 ## Weitere Dokumente
 
 [Datensatz und Auswahl](docs/DATENSATZ.md) · [Offene Punkte](docs/OFFENE_PUNKTE.md) ·

@@ -68,9 +68,18 @@ def _bodies(record: dict, region: dict, describe: bool) -> list[dict]:
     return bodies
 
 
+def image_reference(record: dict) -> str:
+    """Bild, auf dessen Pixel sich die Regionen beziehen."""
+    if info := record["source"]["image_info_url"]:
+        return info.removesuffix("/info.json")
+    # Importe haben keinen IIIF-Bilddienst: abgerufene Bildadresse, sonst lokale Kennung
+    return record["metadata_provenance"].get("image_url") or (
+        f"urn:bildlabor:{record['id']}:image"
+    )
+
+
 def annotation_page(record: dict, exported_at: str) -> dict:
-    source = record["source"]
-    canvas = source["image_info_url"].removesuffix("/info.json")
+    canvas = image_reference(record)
     items = []
     first_illustration = next(
         (

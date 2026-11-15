@@ -376,3 +376,18 @@ def test_roundtrip_detects_lost_withdrawn_entries():
     assert dict(export.roundtrip_report(record, dict(record)))[
         "Zurückgezogene Regionen und Entscheidungen unverändert"
     ]
+
+
+def test_companions_are_reproducible_from_exported_json(tmp_path):
+    """Grundlage der Exportprüfung: Begleitdateien entstehen genau aus der JSON-Datei."""
+    import json
+
+    from kinderbuch_bildlabor import export, store
+
+    for src in store.catalog():
+        working = store.new_working_copy(src)
+        data = export.export_data(working)
+        reloaded = json.loads(store.json_text(data))
+        expected = export.companions(working["record"], data["exported_at"])
+        assert export.companions(reloaded["record"], data["exported_at"]) == expected
+        assert expected == export.companions(working["record"], data["exported_at"])

@@ -5,7 +5,7 @@ from typing import Literal
 
 import streamlit as st
 
-from kinderbuch_bildlabor import review, ui
+from kinderbuch_bildlabor import review, store, ui
 
 STEPS = {
     "Regionen": (
@@ -161,8 +161,9 @@ def render(
         with text:
             with st.container(key="guide-eyebrow"):
                 st.caption(f"PRÜFPFAD · {current_step(all_steps, pending).upper()}")
+            label = "Offen im Prüfablauf" if store.DEMO else "Nächste Handlung"
             st.markdown(
-                f"**Nächste Handlung:** {ui.next_step(record, export_current, blockers)}"
+                f"**{label}:** {ui.next_step(record, export_current, blockers)}"
             )
         with reviewer:
             ui.reviewer_input()

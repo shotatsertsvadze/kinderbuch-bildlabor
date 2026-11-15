@@ -48,6 +48,8 @@ def _collect() -> dict[str, bytes]:
 
 
 def write_backup(dest: IO[bytes] | Path) -> int:
+    # Das Paket enthält alle Arbeitsstände mit Namen: nie öffentlich ausliefern
+    store.refuse_in_demo("Sicherung")
     with store.LOCK:
         files = _collect()
     manifest = {
@@ -64,6 +66,7 @@ def write_backup(dest: IO[bytes] | Path) -> int:
 
 
 def create_backup(target_zip: Path) -> int:
+    store.refuse_in_demo("Sicherung")
     target_zip = target_zip.resolve()
     if target_zip.exists():
         raise BackupError(
@@ -121,6 +124,7 @@ def _problems(zf: zipfile.ZipFile) -> list[str]:
 
 
 def verify_backup(zip_file: Path | IO[bytes]) -> list[str]:
+    store.refuse_in_demo("Sicherungsprüfung")
     try:
         with zipfile.ZipFile(zip_file) as zf:
             return _problems(zf)
@@ -129,6 +133,7 @@ def verify_backup(zip_file: Path | IO[bytes]) -> list[str]:
 
 
 def restore_backup(zip_path: Path, target_dir: Path) -> int:
+    store.refuse_in_demo("Wiederherstellung")
     target_dir = target_dir.resolve()
     if target_dir.exists() and (not target_dir.is_dir() or any(target_dir.iterdir())):
         raise BackupError(f"{target_dir} ist nicht leer; es wird nichts überschrieben.")

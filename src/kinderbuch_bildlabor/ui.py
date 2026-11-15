@@ -154,7 +154,30 @@ def edit_state(sync: str, consequence_de: str = "") -> None:
         st.caption(":material/save: Entspricht dem gespeicherten Stand.")
 
 
+DEMO_NOTICE = (
+    "**Öffentliche Demo – nur lesbar.** Die gezeigten Prüfungen und Entscheidungen sind "
+    "Demonstrationsdaten des Bewerbers: nicht unabhängig verifiziert und keine Ground Truth. "
+    "Bearbeiten, Import und lokale Werkzeuge gibt es nur in der lokalen Fassung."
+)
+
+
+def demo_notice() -> None:
+    with st.container(key="demo-notice", border=True):
+        st.caption(f":material/visibility: {DEMO_NOTICE}")
+
+
+def stored_text(label: str, text: str) -> None:
+    """Gespeicherter Text statt Eingabefeld (öffentliche Ansicht)."""
+    st.caption(label)
+    if text.strip():
+        source_text(text)
+    else:
+        st.caption("leer")
+
+
 def reviewer_input() -> None:
+    if store.DEMO:
+        return
     st.text_input(
         "Prüfende Person",
         key="reviewer",
@@ -173,6 +196,9 @@ def confirm_controls(
     button_label: str = "Als geprüft bestätigen",
 ) -> None:
     """Bestätigung mit erklärter Bedeutung und sichtbarem Grund, falls gesperrt."""
+    # Öffentliche Ansicht: der Prüfstand steht im Statusabzeichen, bestätigt wird nichts
+    if store.DEMO:
+        return
     with st.container(border=True, key=f"{key}-box"):
         subsection("Prüfung mit Ihrem Namen bestätigen")
         st.caption(

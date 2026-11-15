@@ -2,12 +2,17 @@
 
 import streamlit as st
 
-from kinderbuch_bildlabor import workflow
+from kinderbuch_bildlabor import store, workflow
 
 KEYS = {"n"}
 HELP = (
     "Tasten außerhalb von Eingabefeldern: n = nächster offener Schritt, "
     "b = Bestätigung im aktuellen Reiter fokussieren (bestätigt wird erst mit Leertaste und Name), "
+    "? = diese Hilfe vorlesen."
+)
+# Ohne „b“: In der öffentlichen Ansicht gibt es nichts zu bestätigen
+DEMO_HELP = (
+    "Tasten außerhalb von Eingabefeldern: n = nächster offener Schritt, "
     "? = diese Hilfe vorlesen."
 )
 JS = """
@@ -81,7 +86,7 @@ def render(record: dict, tabs_key: str, export_current: bool, blockers: int) -> 
 
     COMPONENT(
         key=instance,
-        data={"help": HELP},
+        data={"help": DEMO_HELP if store.DEMO else HELP},
         default={"press": None},
         on_press_change=on_press,
     )

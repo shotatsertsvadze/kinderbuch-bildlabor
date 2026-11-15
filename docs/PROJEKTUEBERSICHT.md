@@ -81,7 +81,7 @@ Einschränkungen: [ergebnis/](ergebnis/README.md).
 - **Lesung am Bild prüfen:** Die gespeicherte Tesseract-Ausgabe zum Bildtitel lautet
   „‘Die Geimatly „ir Amerika.“ (mit Zeilenumbruch). Daneben stehen der Bildausschnitt und die
   Arbeitstranskription „Die Heimath in Amerika.“ mit historischer Schreibweise. Die OCR wird gezeigt,
-  nicht bewertet: Ohne freigegebene Referenz (Ground Truth) gibt es keine CER/WER.
+  nicht bewertet: Ohne freigegebene Referenz (Ground Truth) gibt es keine Messung der OCR-Qualität; bei einer lokalen Zweitlesung wird nur der Abstand (CER/WER) zur Arbeitstranskription angezeigt.
 
 ## Grundsätze
 
@@ -126,8 +126,8 @@ Eigene Prüfungen in der Anwendung verändern diese Dateien nicht.
 
 - Geprüft ist ein Beispiel. Eine Zweitprüfung durch eine andere Person gab es nicht; die
   Endbestätigung ist keine Ground-Truth-Freigabe.
-- Sechs vorbereitete Beispiele, kein Import eigener Daten (siehe oben).
-- Keine Live-Abfrage von OAI-PMH oder IIIF, keine neue OCR, keine XSD-Validierung, keine
+- Sechs vorbereitete Beispiele; eigene Bücher lassen sich importieren, ihre Angaben sind nicht geprüft.
+- Keine Live-Abfrage von OAI-PMH oder IIIF, OCR nur lokal auf Knopfdruck, keine XSD-Validierung, keine
   GND-Anbindung.
 - Einzelplatzbetrieb: ein Server, gern mehrere Browserfenster; mehrere Server auf einem Datenordner
   sind nicht abgesichert.

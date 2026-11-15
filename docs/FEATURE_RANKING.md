@@ -53,3 +53,7 @@ Keine bekannt: `OFFENE_PUNKTE.md` und `BEZUG_ZUR_STELLE.md` sind an Import, Zeic
 - Behoben: Nach dem Anlegen der ersten Textregion sprang die Ansicht auf „Übersicht“, weil dadurch der Reiter
   „Transkription“ neu entstand; der gewählte Reiter bleibt jetzt erhalten.
 - Zurückgezogene Entscheidungen lassen sich nur bei Objekten mit Befund zurückziehen; bei importierten Büchern gibt es keine.
+
+## Nachtrag (15.11.2026): drei Anzeige-Erweiterungen umgesetzt
+
+Kreuztabelle manuelle gegen automatische Klasse (Startseite, nur lokale Stichprobe), Iconclass-Vorschläge im Suchbegriff-Editor (kleine CC0-Auswahl, nur Entwurf) und CER/WER zur Tesseract-Zweitlesung (Abstand zur Arbeitstranskription, nicht gespeichert). Keine neuen Felder, Prüfbereiche oder Migrationen; Ground Truth wird weiterhin nicht vergeben.

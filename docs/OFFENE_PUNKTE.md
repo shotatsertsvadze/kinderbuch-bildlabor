@@ -40,6 +40,12 @@ vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer
 - Unter etwa 650 Pixel Fensterbreite stehen Bild und Bearbeitung untereinander; dann ist mehr Blättern nötig.
 - Eine Entscheidung lässt sich ersetzen, unverändert erneut bestätigen oder mit Grund zurückziehen; sie bleibt dann im Datensatz archiviert.
 
+## Anzeigehilfen ohne Speicherung
+
+- Kreuztabelle auf der Startseite: zählt manuelle gegen automatische Klasse nur in der lokalen Stichprobe (nicht die 53.533 Colibri-Zeilen); ein Import der ganzen CSV ist nicht umgesetzt.
+- Iconclass-Vorschläge im Suchbegriff-Editor: kleine, von Hand gewählte CC0-Auswahl (`sammlung/iconclass_auswahl.json`), Suchwörter projektlokal. „Übernehmen“ ändert nur das Eingabefeld; Speichern und Bestätigen laufen wie bei jedem Suchbegriff. Keine eigene Herkunft je Notation gespeichert, keine GND-Verknüpfung.
+- CER/WER bei Zweitlesungen: Abstand zur aktuellen Arbeitstranskription, buchstabengenau ohne Normalisierung; nicht gespeichert, nicht exportiert, keine Ground Truth.
+
 ## Nicht umgesetzt (mögliche Erweiterungen)
 
 Siehe [BEZUG_ZUR_STELLE.md](BEZUG_ZUR_STELLE.md), Abschnitt „Nicht gezeigt“.

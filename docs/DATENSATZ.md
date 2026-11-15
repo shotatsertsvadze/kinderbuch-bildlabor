@@ -104,6 +104,10 @@ Stand. Wurde der Inhalt inzwischen anderswo geändert, wird sie abgelehnt.
 
 `<id>.annotations.json` ist eine `AnnotationPage` (W3C Web Annotation) mit einer Annotation je Region: `FragmentSelector` `xywh=x,y,w,h` in Pixeln des Ausgangsbilds, Bodies für Beschreibung (`describing`), Suchbegriffe (`tagging`) und Transkription (`supplementing`). `bl:status` ist `confirmed` oder `draft`; die Endbestätigung ist keine Ground Truth. Die Datei ist nur eine Darstellung und ändert weder Datensatz noch JSON-Export.
 
+## Iconclass-Vorschläge
+
+Übernommene Vorschläge stehen als Suchbegriff in der Form `Iconclass <Notation> <deutsche Bezeichnung>` in `keywords_de`; es gibt kein eigenes Feld und keine eigene Bestätigung. Die Auswahl in `sammlung/iconclass_auswahl.json` stammt aus iconclass.org (CC0 1.0). CER/WER und die Klassen-Kreuztabelle werden nur angezeigt und nicht im Datensatz gespeichert.
+
 ## Zweitprüfung
 
 `second_review` ordnet jedem Prüfbereich (Schlüssel wie im `review_log`, Klassifikation als `classification`) den letzten Eintrag zu: `by`, `at`, `agrees`, `reason`, `content_hash`. Die CSV nennt in `zweitpruefung_person` und `zweitpruefung_stand` die Personen und die Zählung (Zustimmung, Abweichung, offen, veraltet) und bleibt leer, solange das Objekt nicht endbestätigt ist. Siehe ADR 0006.

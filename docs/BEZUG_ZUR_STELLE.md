@@ -23,14 +23,15 @@ Was das Projekt tatsächlich zeigt, mit Fundstelle. Geplantes steht getrennt dar
 - **IIIF:** gespeicherte Image-API-`info.json` und Vollbilder. Regionen nutzen dieselbe Form
   `x,y,w,h` in Originalpixeln wie der IIIF-Regionsparameter; der gespeicherte OCR-Eingabeausschnitt
   wurde genau so abgerufen (`400,1640,550,80`). Presentation-API-Manifeste nur beim ausdrücklich ausgelösten Import eigener Bücher, keine Live-Kacheln,
-  kein Annotationsexport im IIIF- oder W3C-Format.
+  der Annotationsexport (W3C Web Annotation) nennt die IIIF-Bild-URL, keine Canvas-ID.
 - **OCR:** ein einzelner, dokumentierter Tesseract-5.5.1-Lauf (Modell `deu`, tessdata_best) auf dem
   Titelausschnitt. In der Anwendung nur eine lokale Tesseract-Zweitlesung auf Anforderung (Vergleichstext,
-  keine Bewertung); kein ALTO, keine CER/WER-Bewertung.
+  keine Bewertung); kein ALTO. Zu jeder Zweitlesung wird nur der Abstand (CER/WER) zur eigenen
+  Arbeitstranskription angezeigt, nicht gespeichert und keine Messung gegen Ground Truth.
 
 ## Nicht gezeigt, als Erweiterung denkbar
 
-Live-Harvesting über OAI-PMH; XSD-Validierung; Export als MODS, ALTO, PAGE oder W3C Web Annotation;
-GND-Verknüpfung der Suchbegriffe; CER/WER nach Freigabe einer Referenztranskription; HTR;
-Massenbearbeitung mit OpenRefine oder Catmandu; Zweitprüfung durch eine zweite Person.
+Live-Harvesting über OAI-PMH; XSD-Validierung; Export als MODS, ALTO oder PAGE;
+GND-Verknüpfung der Suchbegriffe; CER/WER als Messung nach Freigabe einer Referenztranskription; HTR;
+Massenbearbeitung mit OpenRefine oder Catmandu; eine Zweitprüfung mit nachgewiesener Unabhängigkeit (die vorhandene ist nur eine Namenskonvention, ADR 0006).
 Workshops und Öffentlichkeitsarbeit sind nicht Gegenstand des Prototyps.

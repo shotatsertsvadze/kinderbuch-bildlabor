@@ -115,3 +115,7 @@ Stand. Wurde der Inhalt inzwischen anderswo geändert, wird sie abgelehnt.
 Grenze des Annotationsexports: `target.source` ist die IIIF-Bild-URL (Bildinfo ohne `/info.json`), keine Canvas-ID. Die METS-Daten nennen nur die Manifest-URL des Werks (`dv:iiif`), keine Canvas-IDs der Seiten; eine Canvas-ID wird nicht geraten. Mirador ordnet Annotationen über die Canvas-ID zu, deshalb erscheinen sie ohne Zuordnung zur Manifest-Canvas nicht von selbst. Die Bildbeschreibung steht nur an der ersten Illustrationsregion; `bl:` ist als `urn:bildlabor:vocab#` im `@context` definiert.
 
 Mirador 3.4.3 zeigt eine Annotation nur an, wenn ihre `motivation` `commenting` enthält; deshalb steht dort `["describing", "commenting"]`. Geprüft wurde das mit einer lokalen Manifest-Kopie und der echten Canvas-ID aus dem Live-Manifest der SBB (`…/dc/1814684999-0006/canvas`), die in den Repo-Daten fehlt.
+
+## Ganze Colibri-CSV (optional)
+
+Die CSV (53.533 Zeilen) liegt nicht im Repository. Wer sie selbst ablegt (`BILDLABOR_COLIBRI_CSV` oder `<Datenordner>/colibri/ColibriImagesMetadataAnnotations.csv`), kann auf der Startseite die Kreuztabelle `groundtruth` x `classification` zählen lassen. Zeilen mit `-0` oder leerem `groundtruth` stehen gesondert. Die Zahlen sind Colibris ungeprüfte Labels, keine Ground Truth; Datensätze, Bestätigungen und Exporte bleiben unberührt.

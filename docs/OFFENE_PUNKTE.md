@@ -51,3 +51,5 @@ vermutlich den gedruckten Zahlen; das ist nicht bestätigt, das Feld bleibt leer
 Siehe [BEZUG_ZUR_STELLE.md](BEZUG_ZUR_STELLE.md), Abschnitt „Nicht gezeigt“.
 
 - Zweitprüfung (ADR 0006): Der Name der zweiten Person ist nur eine Konvention ohne Anmeldung. Eine echte Unabhängigkeit ist damit nicht belegt, und Ground Truth wird weiterhin nicht vergeben.
+
+- Ganze Colibri-CSV (optional): Die Startseite kann sie auswerten, wenn sie unter `data/colibri/` des Datenordners oder über `BILDLABOR_COLIBRI_CSV` liegt. Nur lesen, nicht eingecheckt, ungeprüfte Zählung, keine Ground Truth.

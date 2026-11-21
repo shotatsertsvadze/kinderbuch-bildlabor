@@ -87,7 +87,8 @@ def comparison(record: dict, rows: list[oai.SourceValue]) -> None:
         {
             "Feld": c["label_de"],
             "Ergebnis": c["outcome"],
-            "Lokaler Wert": c["local"],
+            # Nur Anzeige: ein leeres Feld sonst als „None“ statt als Strich
+            "Lokaler Wert": "–" if c["local"] is None else c["local"],
             "Wert im MODS": " | ".join(c["source"]) or "–",
             "Herkunft lokal": c["local_origin"],
         }

@@ -28,12 +28,17 @@ from kinderbuch_bildlabor import (
 )
 
 st.set_page_config(
-    page_title="Kinderbuch-Bildlabor", page_icon=":material/menu_book:", layout="wide"
+    page_title="Kinderbuch-Bildlabor",
+    # Lokale Datei: ein Material-Symbol als Seitensymbol lädt der Browser von fonts.gstatic.com
+    page_icon=str(Path(__file__).with_name("static") / "favicon.png"),
+    layout="wide",
 )
 theme.inject()
 st.html(Path(workflow.__file__).with_name("workflow.css"))
 
 COLLECTION = "sammlung"
+# Nur in der öffentlichen Demo: Pflichtangaben einer öffentlich erreichbaren Website
+LEGAL = "rechtliches"
 SAVE_HELP = "Eingaben werden erst mit „Speichern“ übernommen. Gespeichertes bleibt nach einem Neustart erhalten."
 
 
@@ -73,6 +78,8 @@ def view_label(view: str) -> str:
         return "Eigenes Buch importieren"
     if view == COLLECTION:
         return "Start und Sammlung"
+    if view == LEGAL:
+        return "Impressum und Datenschutz"
     # Kein Zustandssymbol im Etikett: Streamlit ordnet die Auswahl über den Etikettentext zu, und
     # ein Wechsel des Symbols (erste Speicherung) ließ die Ansicht auf „Start“ zurückspringen
     return (
@@ -94,19 +101,21 @@ def sidebar() -> str:
         )
     # Import gibt es nur lokal
     pages = [] if store.DEMO else ["import"]
+    legal = [LEGAL] if store.DEMO else []
     view = st.sidebar.radio(
         "Ansicht",
-        [COLLECTION, *pages, *by_id],
+        [COLLECTION, *pages, *by_id, *legal],
         format_func=view_label,
         captions=[
             "",
             *["" for _ in pages],
             *("{} {}".format(*workflow.object_state(c.record)[:2]) for c in collection),
+            *["" for _ in legal],
         ],
         key="view",
         label_visibility="collapsed",
     )
-    if view in {COLLECTION, "import"}:
+    if view in {COLLECTION, "import", LEGAL}:
         with st.sidebar:
             ui.reviewer_input()
     else:
@@ -205,6 +214,11 @@ def object_page(cur: ui.Current) -> None:
             view(cur)
 
 
+def legal_page() -> None:
+    for name in ("impressum.md", "datenschutz.md", "lizenzen.md"):
+        st.markdown((store.ROOT / LEGAL / name).read_text("utf-8"))
+
+
 view = sidebar()
 if store.DEMO:
     ui.demo_notice()
@@ -216,6 +230,8 @@ if view == COLLECTION:
     collection_view.render(collection)
 elif view == "import":
     import_view.render()
+elif view == LEGAL:
+    legal_page()
 else:
     object_page(by_id[view])
 if st.session_state.get("shown_view") != view:

@@ -1,0 +1,39 @@
+# Auf dem Server: TAG=<git-commit> DOMAIN=<domain> docker compose -f deploy/compose.yaml up -d
+services:
+  app:
+    image: kinderbuch-bildlabor:${TAG:?TAG fehlt}
+    environment:
+      BILDLABOR_DEMO: "1"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 768m
+    cpus: 1
+    restart: unless-stopped
+    logging:
+      driver: local
+      options: {max-size: 5m, max-file: "2"}
+
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN fehlt}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: local
+      options: {max-size: 5m, max-file: "2"}
+
+volumes:
+  caddy_data:
+  caddy_config:

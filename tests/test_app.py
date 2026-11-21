@@ -603,7 +603,9 @@ def export_and_verify(app: AppTest) -> None:
 def test_export_panel_names_saved_files_and_offers_separate_downloads():
     app = open_app()
     app.button(key=f"{PILOT}-export").click().run()
-    assert any(s.startswith("JSON und CSV gespeichert.") for s in texts(app, "success"))
+    assert any(
+        s.startswith("Exportdateien gespeichert.") for s in texts(app, "success")
+    )
     assert any(
         "`pilot-001.json`" in m and str(store.EXPORT_DIR) in m
         for m in texts(app, "markdown")
@@ -612,8 +614,12 @@ def test_export_panel_names_saved_files_and_offers_separate_downloads():
     assert labels == [
         "JSON herunterladen",
         "CSV herunterladen",
+        "Web Annotation herunterladen",
+        "PAGE-XML herunterladen",
         "Prüfbericht als HTML herunterladen",
     ]
+    files = {b.proto.id: b for b in app.download_button}
+    assert len(files) == 5
     assert any("Noch nicht geprüft" in c for c in texts(app, "caption"))
 
 
@@ -1143,7 +1149,9 @@ def test_imported_object_full_export_writes_all_files():
     app.button(key=f"{src.id}-export").click().run()
     assert not app.exception
     assert all(path.exists() for path in export_files(src.id))
-    assert any(s.startswith("JSON und CSV gespeichert.") for s in texts(app, "success"))
+    assert any(
+        s.startswith("Exportdateien gespeichert.") for s in texts(app, "success")
+    )
     page = store.read_json(actions.annotations_path(src.id))
     assert page["items"][0]["target"]["source"] == f"urn:bildlabor:{src.id}:image"
     app.button(key=f"{src.id}-roundtrip").click().run()
@@ -1286,3 +1294,10 @@ def test_final_line_uses_singular_for_one_finding():
     record = store.new_working_copy(store.object_source(PILOT))["record"]
     assert "1 offener fachlicher Hinweis im" in workflow.final_line(record, 1)
     assert "2 offene fachliche Hinweise im" in workflow.final_line(record, 2)
+
+
+def test_every_start_page_image_has_alternative_text():
+    app = open_app("sammlung")
+    images = [img for el in app.get("image") for img in el.proto.imgs]
+    assert len(images) >= 8
+    assert all(img.alt for img in images)

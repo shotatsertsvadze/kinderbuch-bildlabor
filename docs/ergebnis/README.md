@@ -3,6 +3,10 @@
 Diese Seite zeigt ohne Installation, was die bewerbende Person an einer Illustration selbst geprüft und
 entschieden hat. Grundlage ist ihr unveränderter Export aus der Anwendung.
 
+Hinweis: Das Prüfprotokoll dieses historischen Exports enthält frühe Testeinträge unter „shota“ und
+„ShotaTest“. Der Export bleibt unverändert; die öffentliche Demo verwendet ihn nicht, sondern den
+kuratierten Stand in `demo/` ([DEMO_KURATIERUNG.md](../DEMO_KURATIERUNG.md)).
+
 Drei Stände sind zu unterscheiden:
 
 | Stand | Wo | Inhalt |

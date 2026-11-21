@@ -1,0 +1,10 @@
+{
+  "kind": "Demonstrationsdaten, keine Ground Truth",
+  "files": {
+    "data/work/genovefa-scan-022.json": "2d7753069d23db885ab53343f15ed93b9f375beea2f1584826e3bd6aadbfcd4b",
+    "exports/genovefa-scan-022.annotations.json": "ba187d09e89151c378371cd519ca16e129ca24ece626807f03001e5cee3db999",
+    "exports/genovefa-scan-022.csv": "8174dcc2c8eb352698f2e93a8b60571f5fa6a4fc81b2132d7695f8275961065f",
+    "exports/genovefa-scan-022.json": "2a36d10f3b120dabb3552109efa8560a4e332383cb495ea6733c5287cb78cc0d",
+    "exports/genovefa-scan-022.page.xml": "a6e512db01678707085069121666fe0697436775d9982f4ac9663838ee1384f9"
+  }
+}

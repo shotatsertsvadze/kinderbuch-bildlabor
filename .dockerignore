@@ -1,0 +1,14 @@
+**
+!pyproject.toml
+!uv.lock
+!.python-version
+!app.py
+!.streamlit/config.toml
+!src
+!static
+!sammlung
+!Kinderbuch_Bildlabor_Start
+!demo
+!rechtliches
+**/__pycache__
+**/.DS_Store

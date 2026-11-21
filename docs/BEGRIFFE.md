@@ -26,3 +26,8 @@ Oberfläche und Dokumentation sind deutsch, der Code ist englisch. Pro Konzept g
 | Colibri-Metadaten | `source` | Bibliografische Zeile aus dem Colibri-Datensatz. |
 | Änderungsprotokoll, Prüfprotokoll | `change_log`, `review_log` | Jede Speicherung beziehungsweise jede Bestätigung. |
 | Export, aktuell / veraltet / fremd | `export` | JSON und CSV. Aktuell: keine späteren Änderungen. Veraltet: spätere Änderungen. Fremd: andere Änderungsgeschichte. |
+| Zweitprüfung | `second_review`, `agreement` | Nach der Endbestätigung je Prüfbereich Zustimmung oder Abweichung einer zweiten Person. Der Name ist eine Konvention ohne Anmeldung; die Zweitprüfung vergibt keine Ground Truth. Ein Eintrag gilt nur, solange der Inhalt des Bereichs unverändert ist. |
+| Prüfpfad | `workflow` | Die geführte Reihenfolge der Schritte eines Objekts mit aktuellem Schritt, nächster Handlung und Zählung der Prüfbereiche. Die Reiter bleiben zum Nachsehen erreichbar. |
+| Zurückziehen | `withdrawn_regions`, `withdrawn_decisions` | Eine Region oder Entscheidung mit Begründung aus der Geltung nehmen. Der Inhalt bleibt mit Person, Zeit und Grund im Export und im Prüfprotokoll erhalten. |
+| Sicherungspaket | `backup` | ZIP mit Prüfsummen über Arbeitskopien, Importe und Exporte. Zurückgespielt wird nur in einen neuen, leeren Ordner. Es enthält Namen und wird nicht veröffentlicht. |
+| Öffentliche Demo | `store.DEMO`, Ordner `demo/` | Nur lesende Ansicht des kuratierten Stands (`BILDLABOR_DEMO=1`). Bearbeiten, Import, Netzabrufe und externe Programme sind abgeschaltet. |

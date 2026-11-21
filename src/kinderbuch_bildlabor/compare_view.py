@@ -44,6 +44,7 @@ def render(collection: list[ui.Current]) -> None:
         column.image(
             regions.crop(ui.page_image(cur.src.page_image), region["xywh"]),
             caption=f"{object_id}: erste Region",
+            alt=f"Ausschnitt der ersten Region von {object_id} aus der gescannten Seite.",
         )
     st.dataframe(
         rows(by_id[first].record, by_id[second].record),

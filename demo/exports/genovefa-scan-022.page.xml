@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15">
+  <Metadata>
+    <Creator>Kinderbuch-Bildlabor</Creator>
+    <Created>2026-11-16T13:57:34+00:00</Created>
+    <LastChange>2026-11-16T13:57:34+00:00</LastChange>
+    <Comment>Endbestätigung ist keine Ground Truth; Texte mit custom="status:draft" sind ungeprüfte Entwürfe.</Comment>
+  </Metadata>
+  <Page imageFilename="https://content.staatsbibliothek-berlin.de/dc/PPN1772789429-00000022" imageWidth="1209" imageHeight="2071" />
+</PcGts>

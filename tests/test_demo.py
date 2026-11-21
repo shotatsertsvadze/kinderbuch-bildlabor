@@ -245,6 +245,8 @@ ALLOWED_BUTTON = re.compile(
 ALLOWED_DOWNLOADS = {
     "JSON herunterladen",
     "CSV herunterladen",
+    "Web Annotation herunterladen",
+    "PAGE-XML herunterladen",
     "Prüfbericht als HTML herunterladen",
 }
 IMPORT = "Eigenes Buch importieren"
@@ -337,3 +339,20 @@ def test_every_public_object_shows_rights_and_attribution(demo):
         credit = record["source"]["colibri_dataset_credit"]
         assert "Rechte und Herkunft" in [h.value for h in app.subheader]
         assert any(rights in m.value and credit in m.value for m in app.markdown)
+
+
+def test_legal_page_is_reachable_only_in_demo(demo):
+    app = open_demo("rechtliches")
+    text = " ".join(m.value for m in app.markdown)
+    assert "Impressum" in text and "Datenschutzerklärung" in text
+    assert "Lizenzen und Namensnennung" in text
+    assert "https://creativecommons.org/licenses/by/4.0/" in text
+    assert "Impressum und Datenschutz" in app.radio(key="view").options
+
+
+def test_local_mode_has_no_legal_page(tmp_path, monkeypatch):
+    monkeypatch.setattr(store, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(store, "WORK_DIR", tmp_path / "data" / "work")
+    monkeypatch.setattr(store, "EXPORT_DIR", tmp_path / "exports")
+    app = AppTest.from_file(APP, default_timeout=30).run()
+    assert "Impressum und Datenschutz" not in app.radio(key="view").options

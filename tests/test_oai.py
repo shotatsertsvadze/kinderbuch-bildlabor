@@ -323,3 +323,16 @@ def test_shared_parse_reuses_tree_until_file_changes(tmp_path):
     path.write_text("<a><b/></a>", encoding="utf-8")
     assert oai.parse_shared(path) is not first
     assert oai.parse_shared(path).find("b") is not None
+
+
+def test_library_comparison_shows_missing_local_value_as_dash():
+    from streamlit.testing.v1 import AppTest
+
+    app = AppTest.from_string(
+        "from kinderbuch_bildlabor import library_view, store\n"
+        "src = store.object_source('genovefa-scan-022')\n"
+        "library_view.render(store.new_working_copy(src)['record'], src)\n"
+    ).run()
+    table = app.dataframe[0].value
+    publisher = table[table["Feld"] == "Verlag"]["Lokaler Wert"].tolist()
+    assert publisher == ["–"]

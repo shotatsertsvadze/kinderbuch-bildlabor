@@ -1,0 +1,61 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    {
+      "bl": "urn:bildlabor:vocab#"
+    }
+  ],
+  "id": "urn:bildlabor:genovefa-scan-022:annotations",
+  "type": "AnnotationPage",
+  "bl:exported_at": "2026-11-16T13:57:34+00:00",
+  "bl:object_status": "final_review_approved",
+  "bl:note": "Endbestätigung ist keine Ground Truth; Inhalte mit bl:status 'draft' sind ungeprüfte Entwürfe.",
+  "items": [
+    {
+      "id": "urn:bildlabor:genovefa-scan-022-region-01",
+      "type": "Annotation",
+      "motivation": [
+        "describing",
+        "commenting"
+      ],
+      "label": "Illustration",
+      "bl:status": "confirmed",
+      "bl:region_review_status": "visually_reviewed",
+      "bl:region_confirmed_by": "Shota Tsertsvadze",
+      "bl:region_confirmed_at": "2026-11-16T13:25:16+00:00",
+      "body": [
+        {
+          "type": "TextualBody",
+          "value": "Die Illustration zeigt zwei menschliche Figuren in einem gemauerten Innenraum mit Rundbögen, einer Treppe und einem vergitterten Fenster. Die mittig stehende Figur trägt Kleidung mit Puffärmeln und stützt eine Hand in die Hüfte. Die rechte Figur trägt eine kronenartige Kopfbedeckung und hält eine Hand erhoben.",
+          "language": "de",
+          "purpose": "describing",
+          "bl:status": "confirmed",
+          "bl:review_status": "description_reviewed",
+          "bl:confirmed_by": "Shota Tsertsvadze",
+          "bl:confirmed_at": "2026-11-16T13:43:08+00:00",
+          "bl:note": "Endbestätigung ist keine Ground Truth; Inhalte mit bl:status 'draft' sind ungeprüfte Entwürfe."
+        },
+        {
+          "type": "TextualBody",
+          "value": "Figuren; Innenraum; Gewölbe; Treppe; Gitterfenster",
+          "language": "de",
+          "purpose": "tagging",
+          "bl:status": "confirmed",
+          "bl:review_status": "accepted_by_user",
+          "bl:confirmed_by": "Shota Tsertsvadze",
+          "bl:confirmed_at": "2026-11-16T13:45:52+00:00",
+          "bl:note": "Endbestätigung ist keine Ground Truth; Inhalte mit bl:status 'draft' sind ungeprüfte Entwürfe."
+        }
+      ],
+      "target": {
+        "type": "SpecificResource",
+        "source": "https://content.staatsbibliothek-berlin.de/dc/PPN1772789429-00000022",
+        "selector": {
+          "type": "FragmentSelector",
+          "conformsTo": "http://www.w3.org/TR/media-frags/",
+          "value": "xywh=229,299,924,617"
+        }
+      }
+    }
+  ]
+}

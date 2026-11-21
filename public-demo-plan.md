@@ -1,7 +1,12 @@
 # Public read-only demo: implementation plan (for approval)
 
-Status: approved 2026-11-15 (options 1/1/1); steps 1-3 implemented; step 4 tooling implemented, the
-curated data itself awaits the owner's review session; steps 5-8 not started.
+Status: approved 2026-11-15 (options 1/1/1); steps 1-3 implemented. Step 4: the owner's review session
+(Scan 22 only) passes `demo_data check`; a snapshot was built outside the repository and waits for the
+licence entries. Step 6: Dockerfile, deploy/ and rechtliches/ written 2026-11-20 and run as a read-only
+local stand-in (no Docker on the build machine, so the image itself is not yet built). 2026-11-21: the
+full visitor walk also ran through the real `deploy/Caddyfile` (local Caddy 2.11.9), the Dockerfile steps
+were replayed in TZ=UTC (uv.lock timezone fix in pyproject.toml), and both publication gates were shown
+to block and to pass. Step 7 needs the owner's purchase decision. Steps 5 and 8 not started.
 Step 3 deviation (by request): editing controls are hidden in demo mode, not shown disabled.
 Since step 3, import, similarity search, backup and the docs/ergebnis example are not shown in demo
 mode; the backend refusals from step 2 remain.
@@ -148,9 +153,11 @@ Attribution and licences, shown in the app per object and in `demo/LICENSES.md`:
 - Images: Public Domain Mark 1.0, source SBB-PK, with PPN and the original viewer link.
 - Colibri classes: Colibri dataset, CC BY 4.0, credit as given in each record, link to the licence,
   note of changes (selection, review decisions).
-- METS/MODS metadata: licence to be verified from SBB terms before publication (open item, not assumed).
+- METS/MODS metadata: descriptive metadata in SBB's CC BY 4.0 dataset (doi:10.5281/zenodo.13355215);
+  no known licence statement for the rest of the complete OAI-PMH files (see `rechtliches/lizenzen.md`).
 - Fonts: SIL OFL (existing `static/fonts/OFL-*.txt`).
-- Own review content and code: licence to be chosen by the owner (open item).
+- Own review contributions: CC BY 4.0, Shota Tsertsvadze (decided 2026-11-21); AI-drafted description and
+  keywords stay labelled as such. Code: licence to be chosen by the owner (open item).
 
 `docs/ergebnis/`: it is a real review record (AGENTS.md: preserve) and already public in git history,
 including the test names. Decided: leave the tracked file and history untouched; exclude it from the deployment image; stop using it in demo mode
@@ -238,6 +245,7 @@ Security responsibilities of the operator (you):
 - Logs: Caddy access logs contain IP addresses; set a short retention (for example 7 days) and state it in
   the privacy notice.
 - Monitoring: external uptime check; container restart policy `unless-stopped`.
+- Streamlit: set `client.showErrorDetails = "none"` for the public container (default `full` shows stack traces); checked 2026-11-17.
 - Updates: rebuild the image for dependency updates (Dependabot already configured); redeploy by tag.
 
 Rollback procedure:
@@ -251,7 +259,7 @@ Legal items (engineering guidance, not legal advice; LAWYER where marked):
 - Impressum obligation for a privately operated site used for an application: LAWYER.
 - Privacy notice for server logs (IP addresses), hosting with Hetzner and its data processing agreement:
   template with placeholders, content to be confirmed: LAWYER.
-- METS/MODS metadata licence: verify from SBB terms.
+- METS/MODS metadata licence: see `rechtliches/lizenzen.md` (dataset CC BY 4.0; rest of the OAI files unstated).
 
 Acceptance criteria (runtime on the target, later step): valid TLS; the browser loads no external
 resources (network log); no write possible from the UI, and `docker diff` empty after a session walk; all six

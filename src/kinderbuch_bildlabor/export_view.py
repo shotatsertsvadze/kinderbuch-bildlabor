@@ -193,7 +193,7 @@ def save_section(
 def saved_panel(cur, exported, result, approved, json_path: Path, csv_path: Path):
     with st.container(border=True, key=f"{cur.id}-saved-panel"):
         st.success(
-            "JSON und CSV gespeichert. Export aktuell: erstellt "
+            "Exportdateien gespeichert. Export aktuell: erstellt "
             f"{ui.local_time_exact(exported['exported_at'])}, seitdem nichts gespeichert.",
             icon=ui.OK,
         )
@@ -245,6 +245,30 @@ def downloads(cur, exported, json_path: Path, csv_path: Path):
             icon=":material/download:",
             on_click="ignore",
         )
+        # Ebenfalls nur bei "current": beide Dateien entstehen dann genau aus dieser JSON-Datei
+        for label, path, mime, kind in [
+            (
+                "Web Annotation herunterladen",
+                actions.annotations_path(cur.id),
+                "application/ld+json",
+                "annotations",
+            ),
+            (
+                "PAGE-XML herunterladen",
+                actions.pagexml_path(cur.id),
+                "application/xml",
+                "pagexml",
+            ),
+        ]:
+            st.download_button(
+                label,
+                data=path.read_bytes(),
+                file_name=path.name,
+                mime=mime,
+                key=f"{cur.id}-download-{kind}",
+                icon=":material/download:",
+                on_click="ignore",
+            )
 
 
 def verify_section(cur: Current, state: str, result: dict | None, approved: bool):

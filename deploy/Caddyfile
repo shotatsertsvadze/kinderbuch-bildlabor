@@ -1,0 +1,17 @@
+# TLS über Let's Encrypt. Kein Zugriffsprotokoll: IP-Adressen werden nicht gespeichert.
+# UPSTREAM nur für lokale Tests ändern; im Compose-Betrieb gilt app:8501.
+{$DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 2MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "frame-ancestors 'none'"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+	reverse_proxy {$UPSTREAM:app:8501}
+}

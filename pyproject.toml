@@ -35,7 +35,9 @@ pythonpath = ["."]
 files = ["app.py", "src/kinderbuch_bildlabor"]
 check_untyped_defs = true
 
+# Feste UTC-Zeitpunkte statt Datum: ein Datum wird in der lokalen Zeitzone gelesen, dann
+# scheitert `uv sync --locked` im Container (UTC) gegen das in Berlin geschriebene uv.lock
 [tool.uv.exclude-newer-package]
-ruff = "2026-11-07"
-mypy = "2026-11-07"
-streamlit = "2026-11-07"
+ruff = "2026-11-07T23:00:00Z"
+mypy = "2026-11-07T23:00:00Z"
+streamlit = "2026-11-07T23:00:00Z"

@@ -26,8 +26,8 @@ der Bibliothek.
 Die Anwendung arbeitet mit sechs vorbereiteten Beispielen aus zwei Büchern: fünf Illustrationen aus
 „Genovefa“ (Augsburg 1810) und einem Bildblatt aus „Die Heimath in Amerika“ (Augsburg 1850). Scans,
 IIIF-Bildinformationen, OAI-PMH-Antworten mit METS/MODS und die Colibri-Werte liegen gespeichert im
-Projekt und werden lokal ausgewertet. Eigene Bilder oder Metadaten lassen sich nicht importieren; ein
-solcher Import ist eine mögliche zukünftige Erweiterung.
+Projekt und werden lokal ausgewertet. Nur die lokale Fassung kann zusätzlich eigene Bücher importieren
+(siehe README); die öffentliche Demo zeigt ausschließlich den kuratierten Stand.
 
 ## Fallstudie: fünf Abbildungen aus „Genovefa“
 
@@ -51,11 +51,11 @@ Alle Aussagen gelten nur für diese fünf Beispiele; sie sagen nichts über die 
 Gewölbe. Die automatische Klasse lautet „Karte“. Der Unterschied ist am Bild leicht nachvollziehbar.
 Die Entscheidung trifft trotzdem die prüfende Person, nicht die Anwendung.
 
-**Ergebnis für Scan 22:** Am 08.11.2026 geprüft und exportiert von Shota Tsertsvadze: Klassifikation
+**Ergebnis für Scan 22:** Am 16.11.2026 geprüft, endbestätigt und exportiert von Shota Tsertsvadze: Klassifikation
 „Manuelle Klasse trifft zu: Abbildung“ mit Begründung am Bild, Illustrator bleibt unbekannt,
 Endbestätigung erteilt. Beide
-Colibri-Werte bleiben als Quellenangaben erhalten. Export, Begründungen im Wortlaut und
-Einschränkungen: [ergebnis/](ergebnis/README.md).
+Colibri-Werte bleiben als Quellenangaben erhalten. Export, Begründungen im Wortlaut und Herkunft:
+[`demo/`](../demo/PROVENANCE.md).
 
 ## Was die prüfende Person sieht
 
@@ -96,12 +96,13 @@ Einschränkungen: [ergebnis/](ergebnis/README.md).
 
 | Stand | Wo | Inhalt |
 |---|---|---|
-| Geprüftes Beispiel | [ergebnis/](ergebnis/README.md) | Genovefa, Scan 22: von mir geprüft, entschieden und endbestätigt; unveränderter Export als JSON und CSV |
+| Geprüftes Beispiel (maßgeblich) | [`demo/`](../demo/) | Genovefa, Scan 22: von mir geprüft, entschieden und endbestätigt; Arbeitskopie, vier Exportdateien, Herkunft in `PROVENANCE.md` |
+| Älterer Export | [ergebnis/](ergebnis/README.md) | früher Stand von Scan 22 mit Testeinträgen; nicht maßgeblich |
 | Weitere Beispiele | in der Anwendung; [OFFENE_PUNKTE.md](OFFENE_PUNKTE.md) | „Die Heimath in Amerika“ und Genovefa, Scans 14, 16, 17 und 85 sind am 12.11.2026 endbestätigt; die Exporte liegen nur lokal im Datenordner. Der Pilotexport unter [ergebnis/](ergebnis/README.md) ist der ältere Stand |
 | Frischer Arbeitsstand der App | eigener Datenordner nach dem Start | alle sechs Objekte im Quellstand, alle Prüfbereiche offen |
 
-Die Anwendung zeigt das geprüfte Beispiel auf der Startseite aus den Dateien unter `docs/ergebnis/`.
-Eigene Prüfungen in der Anwendung verändern diese Dateien nicht.
+Die nur lesbare Ansicht zeigt den Stand aus `demo/`; die lokale Startseite zeigt zusätzlich den älteren
+Export aus `docs/ergebnis/`. Eigene Prüfungen in der Anwendung verändern beide Ordner nicht.
 
 ## Mein Beitrag
 
@@ -109,7 +110,7 @@ Eigene Prüfungen in der Anwendung verändern diese Dateien nicht.
 - Erste Lesung der Bildunterschriften des Pilotobjekts und Prüfung der Region „Bildtitel“ am Scan.
 - Prüfung von Genovefa, Scan 22 am Bild: Regionsgrenzen, Beschreibung und Suchbegriffe bestätigt,
   Klassifikation und Illustrator-Hinweis entschieden und begründet, Endbestätigung erteilt und
-  exportiert. Die Entscheidungen stehen wörtlich unter [ergebnis/](ergebnis/README.md).
+  exportiert. Die Entscheidungen stehen wörtlich in [`demo/PROVENANCE.md`](../demo/PROVENANCE.md).
 - Durchsicht der Anwendung im Browser und Vorgaben zu Bedienung und Übergabe.
 
 ## KI-Unterstützung

@@ -219,7 +219,10 @@ def render(
                     f"Sie sehen: {view_name(viewed, step_tabs(all_steps))}. "
                     f"Nächster offener Schritt: {view_name(pending, step_tabs(all_steps))}."
                 )
-            label = "Offen im Prüfablauf" if store.DEMO else "Nächste Handlung"
+            if not store.DEMO:
+                label = "Nächste Handlung"
+            else:
+                label = "Offen im Prüfablauf" if pending else "Stand"
             st.markdown(
                 f"**{label}:** {ui.next_step(record, export_current, blockers)}"
             )

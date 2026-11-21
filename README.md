@@ -1,14 +1,81 @@
 # Kinderbuch-Bildlabor
 
-**Wie lassen sich abweichende Bildklassifikationen in digitalisierten Kinderbüchern am Originalbild
-prüfen, begründet entscheiden und mit ihrer Herkunft weitergeben?**
+**Portfolio-Prototyp zur Datenqualität in digitalisierten historischen Kinderbüchern.** Konzeption,
+fachliche Anforderungen und alle Prüfentscheidungen stammen von mir; die Software wurde mit
+Unterstützung eines KI-Programmierassistenten umgesetzt. Grundlage sind öffentlich zugängliche Daten der
+Staatsbibliothek zu Berlin (Colibri-Datensatz, METS/MODS über OAI-PMH, IIIF-Scans). Kein
+Produktivsystem einer Bibliothek.
 
-Lokaler Prototyp mit Daten der Staatsbibliothek zu Berlin (Colibri-Datensatz, METS/MODS, IIIF-Scans).
-Die Anwendung arbeitet mit sechs vorbereiteten Beispielen aus zwei Büchern und kann eigene Bücher
-importieren (siehe „Eigene Bücher und lokale OCR“).
+> **Die Frage:** Wie lassen sich abweichende Bildklassifikationen am Originalbild prüfen, begründet
+> entscheiden und mit ihrer Herkunft weitergeben?
 
-**[Projektüberblick](docs/PROJEKTUEBERSICHT.md)** · **[Geprüftes Beispiel](docs/ergebnis/README.md)** ·
-**[Demo ansehen](docs/DEMO.md)**
+## Fallstudie: „Genovefa“ (Augsburg 1810), Scan 22
+
+| | Colibri manuell | Colibri automatisch | Meine Entscheidung |
+|---|---|---|---|
+| Klasse der Illustration | **Abbildung** | **Karte** | **Abbildung**, begründet am Originalbild |
+
+1. **Das Problem.** Für dieselbe Illustration nennt der Colibri-Datensatz zwei verschiedene Klassen.
+   Keiner der beiden Werte ist allein verlässlich; entscheiden lässt sich nur am Original.
+2. **Prüfung am Bild.** Bildregion am Scan geprüft und bestätigt. Befund: eine szenische Darstellung mit
+   zwei Figuren in einem gemauerten Innenraum, keine kartografischen Merkmale.
+3. **Prüfung der Metadaten.** Die Anwendung stellt Titel, Verfasser, Ort und Jahr aus Colibri dem
+   METS/MODS-Datensatz der Staatsbibliothek gegenüber, exakt und ohne Normalisierung. Für die
+   Illustratorfrage habe ich die Buch-MODS geprüft: Christoph von Schmid ist als Verfasser („aut“)
+   erfasst, ein Illustrator nicht. Das Feld bleibt deshalb begründet leer.
+4. **Dokumentation.** Jede Bestätigung und Entscheidung trägt Begründung, Name und Zeitpunkt; beide
+   Ausgangswerte bleiben erhalten; spätere Änderungen heben Bestätigungen auf. Die Endbestätigung ist
+   ausdrücklich die Prüfung einer Person, nicht unabhängig verifiziert und keine Ground Truth.
+5. **Ergebnis.** Export als JSON, CSV, W3C Web Annotation und PAGE-XML sowie ein Prüfbericht als HTML,
+   jeweils mit Herkunftsangaben; eine Rückladeprüfung vergleicht den gespeicherten JSON-Export mit dem
+   Arbeitsstand. Der geprüfte Stand liegt unverändert unter [`demo/`](demo/).
+
+## So sieht es aus
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/portfolio/01-einstieg.png" alt="Startseite mit Fragestellung und der Illustration aus Genovefa, Scan 22"><br><sub><b>1 · Einstieg:</b> Fragestellung, Klassenkonflikt und direkter Weg zur Fallstudie.</sub></td>
+<td width="50%"><img src="docs/screenshots/portfolio/02-klassifikation.png" alt="Vergleich der Klassen Abbildung und Karte mit begründeter Entscheidung"><br><sub><b>2 · Klassen vergleichen:</b> manuell „Abbildung“, automatisch „Karte“; Entscheidung mit Begründung, Name und Zeitpunkt.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/portfolio/03-mets-mods.png" alt="Vergleich der lokalen Buchdaten mit dem MODS-Datensatz"><br><sub><b>3 · METS/MODS:</b> OAI-PMH-Antwort, exakter Feldvergleich mit dem MODS, Seitenbezug im METS.</sub></td>
+<td width="50%"><img src="docs/screenshots/portfolio/04-ergebnis-export.png" alt="Endbestätigter Stand mit geprüftem Export und Downloads"><br><sub><b>4 · Ergebnis:</b> endbestätigt, Export geprüft; Downloads in vier Formaten.</sub></td>
+</tr>
+</table>
+
+Aufnahmen der lokal laufenden Anwendung in der nur lesbaren Ansicht (`BILDLABOR_DEMO=1`), unverändert.
+Rundgang zum Nachklicken: [RUNDGANG_DEMO.md](docs/RUNDGANG_DEMO.md) ·
+[Projektüberblick](docs/PROJEKTUEBERSICHT.md)
+
+## Woran ich gearbeitet habe
+
+Ich komme aus dem Prozessmanagement und bilde mich beruflich im Bereich Digitalisierung weiter. Das
+Bildlabor ist eigene Lern- und Portfolioarbeit, keine Tätigkeit in oder für eine Bibliothek. Fachlich
+beschäftigt haben mich dabei:
+
+- **Metadaten lesen und abgleichen:** OAI-PMH-Antworten, METS-Struktur (logische Wurzel, Seitenbezug,
+  `DMDID`) und MODS-Felder mit Rollen; Abgleich mit Colibri, ohne Unterschiede wegzunormalisieren.
+- **Datenqualität als Ablauf:** ein Prüfpfad mit getrennten Bestätigungen je Bereich, begründete
+  Entscheidungen statt ausgeblendeter Hinweise; „nicht entscheidbar“ ist zulässig und lässt den
+  Hinweis offen.
+- **Provenienz:** wer was wann und warum bestätigt hat, bleibt im Datensatz und in jedem Export erhalten.
+- **Austauschformate:** W3C Web Annotation und PAGE-XML neben JSON und CSV, mit Prüfung des Exports.
+
+**Meine Arbeit und KI-Unterstützung.** Fragestellung, fachliche Anforderungen, Auswahl der Quellen und
+alle Prüfentscheidungen der Fallstudie stammen von mir; die Entscheidungen habe ich selbst in der
+Anwendung getroffen. Ein
+KI-Programmierassistent (Claude) hat Anwendung, Tests und Dokumentationsentwürfe nach meinen Vorgaben
+umgesetzt. Die Bildbeschreibung und die Suchbegriffe sind Entwürfe des KI-Assistenten; sie sind im
+Datensatz so gekennzeichnet und gelten erst durch meine Bestätigung mit Name und Zeitpunkt als geprüft.
+
+**Grenzen.** Eine geprüfte Fallstudie; die übrigen fünf Beispiele stehen bewusst im ungeprüften
+Quellstand. Keine Zweitprüfung durch eine andere Person, keine XSD-Validierung, kein vollständiges
+Harvesting.
+
+**Rechte.** Digitalisate Public Domain Mark 1.0; Colibri-Klassen CC BY 4.0; die beschreibenden
+METS/MODS-Metadaten veröffentlicht die Staatsbibliothek zu Berlin unter CC BY 4.0 (Abgrenzung zu den
+vollständigen OAI-PMH-Dateien in [`rechtliches/lizenzen.md`](rechtliches/lizenzen.md)); eigene
+Prüfbeiträge CC BY 4.0 (Shota Tsertsvadze). Einzelheiten: [`demo/LICENSES.md`](demo/LICENSES.md).
 
 ## Einrichtung
 
@@ -51,9 +118,11 @@ BILDLABOR_DATA_DIR=/tmp/bildlabor-probe uv run streamlit run app.py
    **„Weiter“** zum nächsten Schritt; die Reiter bleiben zum Nachsehen erreichbar.
 3. „Zweites Beispiel öffnen“ zeigt Verlagsangabe und OCR bei „Die Heimath in Amerika“.
 
-Ein frisch gestarteter Datenordner zeigt alle sechs Beispiele im Quellstand, also ungeprüft. Das
-geprüfte Beispiel steht davon getrennt auf der Startseite und unter
-[docs/ergebnis/](docs/ergebnis/README.md). Begriffe wie *Endbestätigung* und *Ground Truth* erklärt
+Ein frisch gestarteter Datenordner zeigt alle sechs Beispiele im Quellstand, also ungeprüft. Der
+maßgebliche geprüfte Stand der Fallstudie liegt unter [`demo/`](demo/) (Arbeitskopie, Exporte,
+Herkunft in [`PROVENANCE.md`](demo/PROVENANCE.md)) und erscheint in der nur lesbaren Ansicht
+(`BILDLABOR_DEMO=1`). [`docs/ergebnis/`](docs/ergebnis/README.md) ist ein älterer Export mit frühen
+Testeinträgen und nicht maßgeblich. Begriffe wie *Endbestätigung* und *Ground Truth* erklärt
 [docs/BEGRIFFE.md](docs/BEGRIFFE.md).
 
 ## Eigene Bücher und lokale OCR
@@ -121,6 +190,9 @@ Optional: `BILDLABOR_OLLAMA_MODEL` wählt das lokale Modell für Vorschläge (St
 
 `BILDLABOR_DEMO=1 uv run streamlit run app.py` zeigt den kuratierten Stand aus `demo/`, ohne Bearbeiten,
 Import, Netzabrufe oder externe Programme. Anlegen des Stands: [DEMO_KURATIERUNG.md](docs/DEMO_KURATIERUNG.md).
+Pflichtangaben und Lizenzangaben für den öffentlichen Betrieb stehen in `rechtliches/`, Rechte am
+Demonstrationsstand in `demo/LICENSES.md`; Container und Server:
+[BETRIEB.md](docs/BETRIEB.md).
 
 ## Weitere Dokumente
 

@@ -193,7 +193,8 @@ def edit_state(sync: str, consequence_de: str = "") -> None:
 
 
 DEMO_NOTICE = (
-    "**Öffentliche Demo – nur lesbar.** Die gezeigten Prüfungen und Entscheidungen sind "
+    "**Öffentliche Demo – nur lesbar.** Portfolio-Prototyp, kein Produktivsystem einer Bibliothek. "
+    "Die gezeigten Prüfungen und Entscheidungen sind "
     "Demonstrationsdaten des Bewerbers: nicht unabhängig verifiziert und keine Ground Truth. "
     "Bearbeiten, Import und lokale Werkzeuge gibt es nur in der lokalen Fassung."
 )

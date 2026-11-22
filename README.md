@@ -9,6 +9,15 @@ Produktivsystem einer Bibliothek.
 > **Die Frage:** Wie lassen sich abweichende Bildklassifikationen am Originalbild prüfen, begründet
 > entscheiden und mit ihrer Herkunft weitergeben?
 
+## Video-Rundgang (2:49 Min.)
+
+[![Vorschaubild des Video-Rundgangs: geprüfte Bildregion auf Scan 22 von „Genovefa“ im Kinderbuch-Bildlabor](https://img.youtube.com/vi/QMCF_Q_SVao/maxresdefault.jpg)](https://www.youtube.com/watch?v=QMCF_Q_SVao)
+
+**[Video-Rundgang auf YouTube ansehen](https://www.youtube.com/watch?v=QMCF_Q_SVao)**: die Fallstudie
+„Genovefa“, Scan 22, in der laufenden Anwendung, von der Prüfung am Originalbild über die
+METS/MODS-Metadaten bis zum Export. Ohne Ton; die Erläuterungen stehen als deutsche Texteinblendungen
+im Bild.
+
 ## Fallstudie: „Genovefa“ (Augsburg 1810), Scan 22
 
 | | Colibri manuell | Colibri automatisch | Meine Entscheidung |
